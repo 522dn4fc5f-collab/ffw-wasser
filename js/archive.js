@@ -101,10 +101,27 @@ async function importCompleteBackup(file) {
     saveRoleTargets(data.roleTargets && typeof data.roleTargets === "object" ? data.roleTargets : {});
     if (typeof data.adminPin === "string" && /^\d{3,12}$/.test(data.adminPin)) safeStorage.setItem(KEYS.pin, data.adminPin);
     chosenMemberId = ""; chosenMemberIds.clear(); chosenRole = "";
-    renderAll(); renderAdmin(); renderArchive(); renderStatistics();
+    renderSessionType();
+    renderMembers();
+    renderRoles();
+    renderEntries();
+    renderAdmin();
+    renderArchive();
+    renderStatistics();
+    updateSelection();
+    updateProbeWorkflow();
+    updatePrimaryAction();
     showToast("Komplett-Backup wurde erfolgreich wiederhergestellt.");
   } catch (error) {
-    showToast("Das Komplett-Backup ist ungültig oder unvollständig.", "error");
+    console.error("Komplett-Backup konnte nicht wiederhergestellt werden", error);
+    const message = error?.name === "QuotaExceededError"
+      ? "Das Backup ist gültig, aber der verfügbare Gerätespeicher reicht nicht aus."
+      : error?.message === "format"
+        ? "Die Datei ist kein vollständiges Backup dieser Anwendung."
+        : error?.message === "members"
+          ? "Das Backup enthält keine gültigen Mitglieder."
+          : "Das Backup konnte nicht vollständig gespeichert werden. Bitte die Web-App neu öffnen und erneut versuchen.";
+    showToast(message, "error");
   } finally {
     byId("completeBackupFileInput").value = "";
   }
