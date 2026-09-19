@@ -149,45 +149,77 @@ function saveAttendance() {
   const isStandard = sessionType === "Allgemeine Probe";
   const isSpecial = sessionType === "Sonderprobe";
   const isTraining = sessionType === "Unterricht";
-  const multiMode = (isStandard && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Organisation")) ||
-    (isSpecial && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Betrifft nicht")) ||
-    (isTraining && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt"));
+  const allowedStatuses = isStandard
+    ? ["Anwesend", "Entschuldigt", "Organisation"]
+    : isSpecial
+      ? ["Anwesend", "Entschuldigt", "Betrifft nicht"]
+      : isTraining
+        ? ["Anwesend", "Entschuldigt"]
+        : [];
+
+  // Robuster Abgleich: interne Auswahl und sichtbar markierte Karten zusammenführen.
+  document.querySelectorAll('#members .choice-button.selected[data-member]').forEach(button => {
+    if (button.dataset.member) chosenMemberIds.add(button.dataset.member);
+  });
+
   const now = new Date();
   const time = now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-  if (multiMode) {
-    const selectedMembers = members.filter(member => chosenMemberIds.has(member.id));
-    if (!selectedMembers.length) return showToast("Bitte mindestens ein Mitglied auswählen.", "error");
+  const selectedMembers = members.filter(member => chosenMemberIds.has(member.id));
+
+  if (allowedStatuses.includes(chosenRole) && selectedMembers.length) {
     selectedMembers.forEach(member => entries.unshift({
-      id: makeId(), date: today(), time,
-      displayName: nameForTile(member), storedName: nameForStorage(member),
-      role: isStandard && chosenRole === "Organisation" ? "Organisation" : (isTraining && chosenRole === "Anwesend" ? "Unterricht" : ""), status: chosenRole === "Organisation" ? "Anwesend" : chosenRole, sessionType
+      id: makeId(),
+      date: today(),
+      time,
+      displayName: nameForTile(member),
+      storedName: nameForStorage(member),
+      role: isStandard && chosenRole === "Organisation"
+        ? "Organisation"
+        : (isTraining && chosenRole === "Anwesend" ? "Unterricht" : ""),
+      status: chosenRole === "Organisation" ? "Anwesend" : chosenRole,
+      sessionType
     }));
     saveEntries();
     const count = selectedMembers.length;
-    chosenMemberIds.clear(); chosenMemberId = "";
-    renderMembers(); renderRoles(); renderEntries(); renderAdmin(); updateSelection(); updateProbeWorkflow();
-    showToast(`${count} Personen wurden als „${chosenRole}“ übernommen. Weitere Personen können markiert oder der Status kann geändert werden.`);
+    const savedRole = chosenRole;
+    chosenMemberIds.clear();
+    chosenMemberId = "";
+    renderMembers();
+    renderRoles();
+    renderEntries();
+    renderAdmin();
+    updateSelection();
+    updateProbeWorkflow();
+    showToast(`${count} Personen wurden als „${savedRole}“ übernommen. Weitere Personen können markiert oder der Status kann geändert werden.`);
     return;
   }
+
   const selected = members.find(member => member.id === chosenMemberId);
-  if (isStandard || isSpecial || isTraining) return showToast("Bitte Status und mindestens ein Mitglied auswählen.", "error");
+  if (isStandard || isSpecial || isTraining) {
+    return showToast(chosenRole
+      ? "Bitte mindestens ein Mitglied auswählen."
+      : "Bitte zuerst einen Status auswählen.", "error");
+  }
   if (!selected || !chosenRole) return showToast("Bitte Mitglied und Funktion auswählen.", "error");
   const isExcused = chosenRole === "Entschuldigt";
-  entries.unshift({ id: makeId(), date: today(), time, displayName: nameForTile(selected), storedName: nameForStorage(selected), role: isExcused ? "" : chosenRole, status: isExcused ? "Entschuldigt" : "Anwesend", sessionType });
-  saveEntries(); chosenMemberId = ""; chosenMemberIds.clear(); chosenRole = "";
-  renderMembers(); renderRoles(); renderEntries(); updateSelection(); updateProbeWorkflow();
-  renderAdmin();
-  showToast(`${nameForTile(selected)} wurde gespeichert. Mitglied und Funktion wurden zurückgesetzt.`);
-}
-function deleteEntry(id) {
-  entries = entries.filter(entry => entry.id !== id);
+  entries.unshift({
+    id: makeId(), date: today(), time,
+    displayName: nameForTile(selected), storedName: nameForStorage(selected),
+    role: isExcused ? "" : chosenRole,
+    status: isExcused ? "Entschuldigt" : "Anwesend",
+    sessionType
+  });
   saveEntries();
+  chosenMemberId = "";
+  chosenMemberIds.clear();
+  chosenRole = "";
   renderMembers();
+  renderRoles();
   renderEntries();
-  renderAdmin();
   updateSelection();
   updateProbeWorkflow();
-  showToast("Anmeldung gelöscht. Das Mitglied ist wieder auswählbar.");
+  renderAdmin();
+  showToast(`${nameForTile(selected)} wurde gespeichert. Mitglied und Funktion wurden zurückgesetzt.`);
 }
 function clearToday() {
   if (!todayEntries().length) return showToast("Für heute sind keine Anmeldungen vorhanden.", "error");
