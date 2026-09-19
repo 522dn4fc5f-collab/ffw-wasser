@@ -1401,3 +1401,9 @@ html body .participant-command-header .compact-menu{
 #attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar .attendance-status-tab.selected::before{background:#7963a5!important}
 #attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar .attendance-status-tab.selected::after{background:#eee8f7!important}
 #attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar + .participant-file-card .member-section,#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar + .participant-file-card .member-section-heading,#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar + .participant-file-card .member-grid,#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar + .participant-file-card #members{background:transparent!important}
+
+/* Version 2.0.3: Alternative Sonderprobe oder Unterricht anklickbar */
+.tactics-education .tactics-alternative-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.tactics-education .tactics-alternative-actions button{width:100%;min-height:48px;font-weight:900}
+.tactics-education:not([hidden]){display:block!important;border:2px solid #d7a928!important;background:#fff9e8!important}
+@media(max-width:680px){.tactics-education .tactics-alternative-actions{grid-template-columns:1fr}}
