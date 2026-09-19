@@ -1240,3 +1240,52 @@ html body .participant-command-header .compact-menu{
   background:#f2f7f9!important;
   color:#365763!important;
 }
+
+/* Alterskameraden: Beschriftung bleibt auch nach Übernahme vollständig in der Kachel. */
+#members .age-member-button{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:78px!important;
+  height:auto!important;
+  padding:10px 7px!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+  line-height:1.2!important;
+  text-align:center!important;
+}
+#members .age-member-button::before,
+#members .age-member-button::after{
+  position:static!important;
+  display:block!important;
+  max-width:100%!important;
+  margin:3px 0 0!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  line-height:1.15!important;
+}
+#members .age-member-button.recorded{
+  min-height:82px!important;
+  padding-top:9px!important;
+  padding-bottom:9px!important;
+}
+#members .age-member-button.recorded::before{
+  content:"✓"!important;
+  order:-1!important;
+  margin:0 0 3px!important;
+  font-size:.82rem!important;
+}
+#members .age-member-button.recorded::after{
+  content:"Anwesenheit übernommen"!important;
+  font-size:.61rem!important;
+  font-weight:750!important;
+}
+@media(max-width:520px){
+  #members .age-member-button{min-height:84px!important;font-size:.76rem!important;}
+  #members .age-member-button.recorded::after{font-size:.57rem!important;}
+}
