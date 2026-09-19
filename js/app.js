@@ -319,6 +319,8 @@ if(document.readyState==="loading"){
   const input=byId("pageAccessPin");
   const error=byId("pageAccessError");
   const reveal=()=>{
+    const content=byId("protectedAppContent");
+    if(content){content.hidden=false;content.removeAttribute("aria-hidden");}
     gate?.remove();
     document.documentElement.classList.remove("page-access-pending");
     document.body.classList.remove("page-access-pending");
