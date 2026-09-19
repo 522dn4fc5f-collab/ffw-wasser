@@ -79,51 +79,106 @@ async function exportCompleteBackup() {
 function validBackupMember(member) {
   return member && typeof member.id === "string" && typeof member.lastName === "string" && typeof member.firstName === "string";
 }
+async function parseCompleteBackupFile(file) {
+  const raw=await file.text();
+  const text=String(raw||"").replace(/^\uFEFF/,"").trim();
+  if(!text)throw new Error("empty");
+  let backup;
+  try{backup=JSON.parse(text);}catch(error){throw new Error("json");}
+  if(backup?.format!=="Feuerwehr-Wasser-Komplett-Backup")throw new Error("format");
+  if(!backup.data||!Array.isArray(backup.data.members))throw new Error("data");
+  return backup;
+}
+function normalizeCompleteBackupData(data) {
+  const importedMembers=data.members.filter(validBackupMember).map(member=>({
+    id:String(member.id),
+    lastName:String(member.lastName).trim(),
+    firstName:String(member.firstName).trim(),
+    roles:Array.isArray(member.roles)?member.roles.filter(role=>AVAILABLE_ROLES.includes(role)&&role!=="Maschinist"):[],
+    ageDepartment:Boolean(member.ageDepartment),
+    machinistVehicles:Array.isArray(member.machinistVehicles)?member.machinistVehicles.filter(value=>value==="LF"||value==="TSF"):[],
+    rfidId:String(member.rfidId||"").trim()
+  })).filter(member=>member.lastName&&member.firstName);
+  if(!importedMembers.length)throw new Error("members");
+  return {
+    members:importedMembers,
+    entries:Array.isArray(data.entries)?data.entries.filter(entry=>entry&&entry.id&&entry.date&&entry.storedName):[],
+    csvArchive:Array.isArray(data.csvArchive)?data.csvArchive.filter(item=>item&&item.id&&item.fileName&&typeof item.content==="string"):[],
+    functionEntryEnabled:data.functionEntryEnabled,
+    roleTargets:data.roleTargets&&typeof data.roleTargets==="object"?data.roleTargets:{},
+    adminPin:typeof data.adminPin==="string"?data.adminPin:""
+  };
+}
+function saveCompleteBackupData(data) {
+  const serialized={
+    members:JSON.stringify(data.members),
+    entries:JSON.stringify(data.entries),
+    archive:JSON.stringify(data.csvArchive),
+    targets:JSON.stringify(Object.fromEntries(AVAILABLE_ROLES.map(role=>[role,Math.max(0,Math.min(99,Number.parseInt(data.roleTargets[role],10)||0))])))
+  };
+  try{
+    safeStorage.setItem(KEYS.members,serialized.members);
+    safeStorage.setItem(KEYS.entries,serialized.entries);
+    safeStorage.setItem(KEYS.archive,serialized.archive);
+    safeStorage.setItem(KEYS.functionEntry,data.functionEntryEnabled===false?"false":"true");
+    safeStorage.setItem(KEYS.roleTargets,serialized.targets);
+    if(/^\d{3,12}$/.test(data.adminPin))safeStorage.setItem(KEYS.pin,data.adminPin);
+  }catch(error){
+    if(error?.name==="QuotaExceededError")throw new Error("storage");
+    throw new Error("save");
+  }
+  members=data.members;
+  entries=data.entries;
+  csvArchive=data.csvArchive;
+}
+function refreshAfterCompleteBackupImport() {
+  const updates=[
+    ["Probenart",()=>renderSessionType()],
+    ["Mitglieder",()=>renderMembers()],
+    ["Funktionen",()=>renderRoles()],
+    ["Tagesdaten",()=>renderEntries()],
+    ["Administration",()=>renderAdmin()],
+    ["Historie",()=>renderArchive()],
+    ["Statistik",()=>renderStatistics()],
+    ["Auswahl",()=>updateSelection()],
+    ["Arbeitsablauf",()=>updateProbeWorkflow()],
+    ["Hauptaktion",()=>updatePrimaryAction()]
+  ];
+  const failed=[];
+  updates.forEach(([name,action])=>{try{action();}catch(error){console.error(`Anzeige ${name} konnte nicht aktualisiert werden`,error);failed.push(name);}});
+  return failed;
+}
 async function importCompleteBackup(file) {
-  if (!confirm("Das Komplett-Backup ersetzt Mitglieder, Einstellungen, Jahresziele, Tagesdaten und das Archiv. Wirklich wiederherstellen?")) { byId("completeBackupFileInput").value=""; return; }
-  try {
-    const backup = JSON.parse(await file.text());
-    if (backup?.format !== "Feuerwehr-Wasser-Komplett-Backup" || !backup.data || !Array.isArray(backup.data.members)) throw new Error("format");
-    if (!confirm("Das Komplett-Backup ersetzt alle aktuellen lokalen Einstellungen, Mitglieder, Tagesdaten und Archive. Fortfahren?")) return;
-    const data = backup.data;
-    const importedMembers = data.members.filter(validBackupMember).map(member => ({
-      id: member.id, lastName: member.lastName.trim(), firstName: member.firstName.trim(),
-      roles: Array.isArray(member.roles) ? member.roles.filter(role => AVAILABLE_ROLES.includes(role) && role !== "Maschinist") : [],
-      ageDepartment: Boolean(member.ageDepartment),
-      machinistVehicles: Array.isArray(member.machinistVehicles) ? member.machinistVehicles.filter(value => value === "LF" || value === "TSF") : []
-    }));
-    if (!importedMembers.length) throw new Error("members");
-    members = importedMembers;
-    entries = Array.isArray(data.entries) ? data.entries.filter(entry => entry && entry.id && entry.date && entry.storedName) : [];
-    csvArchive = Array.isArray(data.csvArchive) ? data.csvArchive.filter(item => item && item.id && item.fileName && typeof item.content === "string") : [];
-    saveMembers(); saveEntries(); saveArchive();
-    safeStorage.setItem(KEYS.functionEntry, data.functionEntryEnabled === false ? "false" : "true");
-    saveRoleTargets(data.roleTargets && typeof data.roleTargets === "object" ? data.roleTargets : {});
-    if (typeof data.adminPin === "string" && /^\d{3,12}$/.test(data.adminPin)) safeStorage.setItem(KEYS.pin, data.adminPin);
-    chosenMemberId = ""; chosenMemberIds.clear(); chosenRole = "";
-    renderSessionType();
-    renderMembers();
-    renderRoles();
-    renderEntries();
-    renderAdmin();
-    renderArchive();
-    renderStatistics();
-    updateSelection();
-    updateProbeWorkflow();
-    updatePrimaryAction();
-    showToast("Komplett-Backup wurde erfolgreich wiederhergestellt.");
-  } catch (error) {
-    console.error("Komplett-Backup konnte nicht wiederhergestellt werden", error);
-    const message = error?.name === "QuotaExceededError"
-      ? "Das Backup ist gültig, aber der verfügbare Gerätespeicher reicht nicht aus."
-      : error?.message === "format"
-        ? "Die Datei ist kein vollständiges Backup dieser Anwendung."
-        : error?.message === "members"
-          ? "Das Backup enthält keine gültigen Mitglieder."
-          : "Das Backup konnte nicht vollständig gespeichert werden. Bitte die Web-App neu öffnen und erneut versuchen.";
-    showToast(message, "error");
-  } finally {
-    byId("completeBackupFileInput").value = "";
+  const input=byId("completeBackupFileInput");
+  if(!confirm("Das Komplett-Backup ersetzt Mitglieder, Einstellungen, Jahresziele, Tagesdaten und die Historie. Wirklich wiederherstellen?")){if(input)input.value="";return;}
+  try{
+    const backup=await parseCompleteBackupFile(file);
+    const normalized=normalizeCompleteBackupData(backup.data);
+    if(!confirm(`Backup geprüft: ${normalized.members.length} Mitglieder und ${normalized.csvArchive.length} Historieneinträge gefunden. Jetzt wiederherstellen?`))return;
+    saveCompleteBackupData(normalized);
+    chosenMemberId="";
+    chosenMemberIds.clear();
+    chosenRole="";
+    const displayFailures=refreshAfterCompleteBackupImport();
+    if(displayFailures.length){
+      showToast("Backup wurde gespeichert. Bitte die App einmal neu öffnen, damit alle Ansichten aktualisiert werden.","success");
+    }else{
+      showToast("Komplett-Backup wurde erfolgreich wiederhergestellt.","success");
+    }
+  }catch(error){
+    console.error("Komplett-Backup-Import fehlgeschlagen",error);
+    const messages={
+      empty:"Die ausgewählte Datei ist leer.",
+      json:"Die ausgewählte Datei enthält kein lesbares JSON.",
+      format:"Die Datei ist kein Komplett-Backup der Feuerwehr-Wasser-App.",
+      data:"Im Backup fehlt der vollständige Datenbereich.",
+      members:"Im Backup wurden keine gültigen Mitglieder gefunden.",
+      storage:"Das Backup ist gültig, aber der verfügbare Browser-Speicher reicht nicht aus.",
+      save:"Das Backup ist gültig, konnte aber nicht im Browser gespeichert werden."
+    };
+    showToast(messages[error?.message]||`Wiederherstellung fehlgeschlagen (${error?.message||"unbekannter Fehler"}).`,"error");
+  }finally{
+    if(input)input.value="";
   }
 }
 
