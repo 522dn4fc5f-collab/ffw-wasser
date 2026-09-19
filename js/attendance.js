@@ -5,7 +5,7 @@ function renderMembers() {
   const availableMembers = members.filter(member => !recordedNames.has(nameForStorage(member)) && !recordedNames.has(nameForTile(member)));
   if (!availableMembers.some(member => member.id === chosenMemberId)) chosenMemberId = "";
   chosenMemberIds = new Set([...chosenMemberIds].filter(id => availableMembers.some(member => member.id === id)));
-  const multiMode = (sessionType === "Allgemeine Probe" && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt")) ||
+  const multiMode = (sessionType === "Allgemeine Probe" && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Organisation")) ||
     (sessionType === "Sonderprobe" && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Betrifft nicht")) ||
     (sessionType === "Unterricht" && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt"));
   const renderMemberButton = member => {
@@ -160,7 +160,7 @@ function saveAttendance() {
     selectedMembers.forEach(member => entries.unshift({
       id: makeId(), date: today(), time,
       displayName: nameForTile(member), storedName: nameForStorage(member),
-      role: isTraining && chosenRole === "Anwesend" ? "Unterricht" : "", status: chosenRole, sessionType
+      role: isStandard && chosenRole === "Organisation" ? "Organisation" : (isTraining && chosenRole === "Anwesend" ? "Unterricht" : ""), status: chosenRole === "Organisation" ? "Anwesend" : chosenRole, sessionType
     }));
     saveEntries();
     const count = selectedMembers.length;
@@ -233,17 +233,17 @@ function updateProbeWorkflow(){
   if(byId("memberStepNumber"))byId("memberStepNumber").textContent="2";
   if(byId("roleStepNumber"))byId("roleStepNumber").textContent="1";
   if(byId("roleStepEyebrow"))byId("roleStepEyebrow").textContent="Status direkt auswählen";
-  if(byId("roleMemberName"))byId("roleMemberName").textContent=special?"Anwesend, Entschuldigt oder Betrifft nicht":"Anwesend oder Entschuldigt";
+  if(byId("roleMemberName"))byId("roleMemberName").textContent=standard?"Anwesend, Entschuldigt oder Organisation":special?"Anwesend, Entschuldigt oder Betrifft nicht":"Anwesend oder Entschuldigt";
   if(byId("roleSelectionHint"))byId("roleSelectionHint").textContent="Der ausgewählte Status bleibt aktiv. Zum Wechsel einfach einen anderen Status antippen.";
   updatePrimaryAction();
 }
 
 function renderRoles(){
-  const statuses=sessionType==="Sonderprobe"?["Anwesend","Entschuldigt","Betrifft nicht"]:["Anwesend","Entschuldigt"];
+  const statuses=sessionType==="Allgemeine Probe"?["Anwesend","Entschuldigt","Organisation"]:sessionType==="Sonderprobe"?["Anwesend","Entschuldigt","Betrifft nicht"]:["Anwesend","Entschuldigt"];
   if(!statuses.includes(chosenRole)){chosenRole="Anwesend";chosenMemberIds.clear();}
   const workspace=byId("attendanceSelectionWorkspace"),sheet=document.querySelector(".organisation-sheet");
-  const statusClass=chosenRole==="Entschuldigt"?"status-excused":chosenRole==="Betrifft nicht"?"status-not-applicable":"status-present";
-  [workspace,sheet].filter(Boolean).forEach(element=>{element.classList.remove("status-present","status-excused","status-not-applicable");element.classList.add(statusClass);});
+  const statusClass=chosenRole==="Entschuldigt"?"status-excused":chosenRole==="Betrifft nicht"?"status-not-applicable":chosenRole==="Organisation"?"status-organization":"status-present";
+  [workspace,sheet].filter(Boolean).forEach(element=>{element.classList.remove("status-present","status-excused","status-not-applicable","status-organization");element.classList.add(statusClass);});
 
   let toolbar=byId("attendanceStatusToolbar");
   if(!toolbar){toolbar=document.createElement("nav");toolbar.id="attendanceStatusToolbar";toolbar.className="attendance-status-toolbar";toolbar.setAttribute("aria-label","Teilnahmestatus");}
