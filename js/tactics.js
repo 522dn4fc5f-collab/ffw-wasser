@@ -212,6 +212,22 @@ function fillOpenSlotsWithoutReordering(people) {
   const lfFull=currentTacticsSlots.filter(slot=>slot.vehicle==="LF10").every(slot=>slot.member);
   fillVehicle("TSF",lfFull && currentTacticsSlots.some(slot=>slot.vehicle==="TSF"&&slot.member));
 }
+function vehicleIsFullyStaffed(vehicle){
+  const slots=currentTacticsSlots.filter(slot=>slot.vehicle===vehicle);
+  return slots.length>0 && slots.every(slot=>slot.member);
+}
+function updateTacticsAlternatives(){
+  const education=byId("tacticsEducation");
+  if(!education)return;
+  const noCompleteVehicle=!vehicleIsFullyStaffed("LF10")&&!vehicleIsFullyStaffed("TSF");
+  const waterMissing=sessionType==="Allgemeine Probe"&&!lfWaterTeamComplete();
+  const show=sessionType==="Allgemeine Probe"&&(noCompleteVehicle||waterMissing);
+  education.hidden=!show;
+  const text=byId("tacticsAlternativeText");
+  if(text&&show)text.textContent=waterMissing
+    ? "Der Wassertrupp ist nicht vollständig besetzt. Die Probe kann als Sonderprobe oder als Unterricht abgeschlossen werden."
+    : "Es ist weder eine vollständige Staffel noch eine vollständige Gruppe möglich. Die Probe kann als Sonderprobe oder als Unterricht abgeschlossen werden.";
+}
 function renderTactics() {
   const present=tacticsPresentMembers(), counts=tacticsYearRoleCounts(), targets=getRoleTargets();
   const people=buildPersonRecommendations(present,counts,targets);
@@ -221,7 +237,7 @@ function renderTactics() {
     refreshTacticsManualView();
     byId("tacticsSummary").textContent=`${present.length} anwesende Einsatzkräfte · ${sessionType}`;
     byId("tacticsRecommendation").innerHTML=`<strong>Empfehlung</strong><p>Bestehende Fahrzeugbesetzung beibehalten. Nachzügler werden nur auf noch freie, passende Positionen gesetzt; bereits zugeteilte Personen werden nicht umgesetzt.</p>`;
-    byId("tacticsEducation").hidden=present.length>=9;
+    updateTacticsAlternatives();
     return;
   }
   if(present.length>=9) {
@@ -249,9 +265,9 @@ function renderTactics() {
   currentTacticsSlots=protectCriticalVehicleSlots([...group.map(item=>({vehicle:"LF10",role:item.role,member:item.member})),...staff.map(item=>({vehicle:"TSF",role:item.role,member:item.member}))]);
   refreshTacticsManualView();
   byId("tacticsSummary").textContent=`${present.length} anwesende Einsatzkräfte · ${sessionType}`;
-  if(sessionType==="Allgemeine Probe" && !lfWaterTeamComplete()) recommendation="Wassertrupp nicht vollständig besetzbar. Die Probe kann nur als Sonderprobe durchgeführt und abgeschlossen werden.";
+  if(sessionType==="Allgemeine Probe" && !lfWaterTeamComplete()) recommendation="Wassertrupp nicht vollständig besetzbar. Als Alternative stehen Sonderprobe oder Unterricht zur Auswahl.";
   byId("tacticsRecommendation").innerHTML=`<strong>Empfehlung</strong><p>${escapeHtml(recommendation)}</p>`;
-  byId("tacticsEducation").hidden=present.length>=9;
+  updateTacticsAlternatives();
 }
 function openTactics(forClosing=false){tacticsClosingPending=forClosing;renderTactics();byId("tacticsCloseActions").hidden=!forClosing;byId("tacticsView").hidden=false;showView("attendanceView");setTimeout(()=>byId("tacticsView")?.scrollIntoView({behavior:"smooth",block:"start"}),0);}
 function lfWaterTeamComplete() {
@@ -262,6 +278,21 @@ function convertCurrentProbeToSpecial() {
   sessionType="Sonderprobe";
   entries=entries.map(entry=>entry.date!==today()?entry:{...entry,sessionType:"Sonderprobe",role:entry.role==="Organisation"?"Organisation":"",status:entry.status==="Anwesend"?"Anwesend":entry.status});
   saveEntries(); renderSessionType();
+}
+function convertCurrentProbeToTraining(){
+  sessionType="Unterricht";
+  entries=entries.map(entry=>entry.date!==today()?entry:{...entry,sessionType:"Unterricht",role:entry.role==="Organisation"?"Organisation":entry.status==="Anwesend"?"Unterricht":""});
+  saveEntries();renderSessionType();renderEntries();updatePrimaryAction();window.syncHeaderProbeSummary?.();
+}
+async function finishTacticsAlternative(type){
+  if(!tacticsClosingPending)return;
+  if(type==="Unterricht")convertCurrentProbeToTraining();
+  else convertCurrentProbeToSpecial();
+  tacticsClosingPending=false;
+  const actions=byId("tacticsCloseActions");if(actions)actions.hidden=true;
+  const view=byId("tacticsView");if(view)view.hidden=true;
+  showView("attendanceView");
+  await closeDay(currentClosingTopic);
 }
 function applyCalculatedTacticsFunctions() {
   entries = entries.map(entry => {
@@ -275,18 +306,17 @@ function applyCalculatedTacticsFunctions() {
 async function finalizeProbeFromTactics(){
   if(!tacticsClosingPending)return;
   if(sessionType==="Allgemeine Probe" && !lfWaterTeamComplete()){
-    if(!confirm("Der Wassertrupp ist nicht vollständig besetzt. Eine Allgemeine Probe ist damit nicht möglich. Als Sonderprobe abschließen?")){
-      tacticsClosingPending=true;
-      setHomeFlowStage(3);
-      const tacticsView=byId("tacticsView");if(tacticsView){tacticsView.hidden=false;tacticsView.style.display="block";tacticsView.removeAttribute("aria-hidden");}
-      const tacticsActions=byId("tacticsCloseActions");if(tacticsActions)tacticsActions.hidden=false;
-      showView("attendanceView");
-      requestAnimationFrame(()=>tacticsView?.scrollIntoView({behavior:"smooth",block:"start"}));
-      return;
-    }
-    convertCurrentProbeToSpecial();
-  } else applyCalculatedTacticsFunctions();
-  tacticsClosingPending=false;byId("tacticsCloseActions").hidden=true;byId("tacticsView").hidden=true;showView("attendanceView");await closeDay(currentClosingTopic);
+    updateTacticsAlternatives();
+    showToast("Bitte Sonderprobe oder Unterricht als alternative Durchführung auswählen.","error");
+    byId("tacticsEducation")?.scrollIntoView({behavior:"smooth",block:"center"});
+    return;
+  }
+  applyCalculatedTacticsFunctions();
+  tacticsClosingPending=false;
+  const actions=byId("tacticsCloseActions");if(actions)actions.hidden=true;
+  const view=byId("tacticsView");if(view)view.hidden=true;
+  showView("attendanceView");
+  await closeDay(currentClosingTopic);
 }
 
 initializeTacticsDragDrop();
