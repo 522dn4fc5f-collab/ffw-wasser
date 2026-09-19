@@ -11,7 +11,8 @@ function renderMembers() {
   const renderMemberButton = member => {
     const recorded = recordedNames.has(nameForStorage(member)) || recordedNames.has(nameForTile(member));
     const selected = !recorded && (multiMode ? chosenMemberIds.has(member.id) : member.id === chosenMemberId);
-    return `<button type="button" class="choice-button ${member.ageDepartment ? "age-member-button" : ""} ${selected ? "selected" : ""} ${recorded ? "recorded" : ""}" data-member="${escapeHtml(member.id)}" aria-pressed="${selected}" ${recorded ? 'disabled aria-disabled="true"' : ""}>${escapeHtml(nameForTile(member))}</button>`;
+    const organizationSelected = selected && chosenRole === "Organisation";
+    return `<button type="button" class="choice-button ${member.ageDepartment ? "age-member-button" : ""} ${selected ? "selected" : ""} ${organizationSelected ? "organization-selected" : ""} ${recorded ? "recorded" : ""}" data-member="${escapeHtml(member.id)}" aria-pressed="${selected}" ${recorded ? 'disabled aria-disabled="true"' : ""}>${escapeHtml(nameForTile(member))}</button>`;
   };
   const activeMembers = members.filter(member => !member.ageDepartment);
   const ageMembers = members.filter(member => member.ageDepartment);
