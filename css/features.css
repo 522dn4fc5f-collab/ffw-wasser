@@ -1395,3 +1395,9 @@ html body .participant-command-header .compact-menu{
     font-size:1.08rem!important;
   }
 }
+
+/* Version 2.0.1: Organisation-Reiter bei Allgemeiner Probe */
+#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar .attendance-status-tab.selected,#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar + .participant-file-card{background:#eee8f7!important;border-color:#7963a5!important;color:#514172!important}
+#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar .attendance-status-tab.selected::before{background:#7963a5!important}
+#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar .attendance-status-tab.selected::after{background:#eee8f7!important}
+#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar + .participant-file-card .member-section,#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar + .participant-file-card .member-section-heading,#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar + .participant-file-card .member-grid,#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar + .participant-file-card #members{background:transparent!important}
