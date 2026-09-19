@@ -1407,3 +1407,31 @@ html body .participant-command-header .compact-menu{
 .tactics-education .tactics-alternative-actions button{width:100%;min-height:48px;font-weight:900}
 .tactics-education:not([hidden]){display:block!important;border:2px solid #d7a928!important;background:#fff9e8!important}
 @media(max-width:680px){.tactics-education .tactics-alternative-actions{grid-template-columns:1fr}}
+
+
+/* Version 2.0.5: Organisationsauswahl farblich konsistent */
+#attendanceSelectionWorkspace.status-organization{
+  --folder-accent:#7963a5;
+  --folder-tab:#7963a5;
+  --folder-paper:#eee8f7;
+  --folder-line:#aa99ca;
+}
+#attendanceSelectionWorkspace.status-organization .participant-file-card,
+#attendanceSelectionWorkspace.status-organization .organisation-sheet{
+  background:#eee8f7!important;
+  border-color:#aa99ca!important;
+  border-left-color:#7963a5!important;
+}
+#attendanceSelectionWorkspace.status-organization #members .choice-button.selected,
+#attendanceSelectionWorkspace.status-organization .participant-file-card .choice-button.selected{
+  color:#fff!important;
+  background:#7963a5!important;
+  border-color:#5f4b89!important;
+  border-left-color:#f2d56b!important;
+  box-shadow:0 0 0 4px rgba(121,99,165,.25),0 7px 16px rgba(0,0,0,.18)!important;
+}
+#attendanceSelectionWorkspace.status-organization #saveButton:not(:disabled){
+  color:#fff!important;
+  background:#7963a5!important;
+  border-color:#5f4b89!important;
+}
