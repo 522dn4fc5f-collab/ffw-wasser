@@ -322,3 +322,11 @@ else removeStandaloneAttendanceVersion();
   requestAnimationFrame(()=>input.focus());
 })();
 
+
+/* Versionsanzeige der Fusszeile verbindlich setzen, auch bei altem HTML-Cache. */
+function enforceFooterVersion(){
+  const footer=document.querySelector(".app-footer");
+  if(footer)footer.textContent="© 2026 Markus Bürklin · Anwesenheit 2.0 · Build 2026-09-18";
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",enforceFooterVersion,{once:true});
+else enforceFooterVersion();
