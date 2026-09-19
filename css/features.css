@@ -1218,39 +1218,25 @@ html body .participant-command-header .compact-menu{
   opacity:1!important;
 }
 
-/* Zugangsschutz mit derselben PIN wie im Adminbereich. */
-html.page-access-locked,
-body.page-access-locked { overflow:hidden!important; }
-.page-access-gate {
-  position:fixed;
-  inset:0;
-  z-index:2147483647;
-  display:grid;
-  place-items:center;
-  padding:20px;
-  background:#182329;
+/* iPad/Safari: keine nicht unterstützte dauerhafte Ordnerwahl anzeigen. */
+.storage-card-ipad-mode .storage-folder-status,
+.storage-card-ipad-mode .folder-status{
+  border-color:#9db8c4!important;
+  background:#eef5f8!important;
 }
-.page-access-card {
-  display:grid;
-  gap:12px;
-  width:min(430px,100%);
-  padding:28px;
-  border:1px solid rgba(255,255,255,.16);
-  border-top:6px solid #f2c500;
-  border-radius:18px;
-  color:#1f2a30;
-  background:#fff;
-  box-shadow:0 24px 70px rgba(0,0,0,.48);
+.storage-card-ipad-mode .storage-folder-status strong,
+.storage-card-ipad-mode .folder-status strong{
+  color:#274d5d!important;
 }
-.page-access-card img { width:68px;height:68px;border-radius:14px; }
-.page-access-card .eyebrow { margin:4px 0 -8px;color:#9b1818; }
-.page-access-card h1 { margin:0;font-size:1.75rem; }
-.page-access-card p { margin:0;line-height:1.5; }
-.page-access-card label { margin-top:4px;font-weight:850; }
-.page-access-card .text-input { width:100%;font-size:1.1rem; }
-.page-access-card .primary-button { width:100%;min-height:48px; }
-.page-access-card small { color:#65737b;line-height:1.4;text-align:center; }
-@media(max-width:520px){
-  .page-access-gate{padding:12px;}
-  .page-access-card{padding:22px 18px;border-radius:14px;}
+.storage-card-ipad-mode .storage-folder-actions:empty,
+.storage-card-ipad-mode .csv-folder-actions:has(button[hidden]){
+  display:none!important;
+}
+.storage-card-ipad-mode .help-text{
+  margin-top:12px!important;
+  padding:11px 12px!important;
+  border-left:4px solid #4e7c90!important;
+  border-radius:8px!important;
+  background:#f2f7f9!important;
+  color:#365763!important;
 }
