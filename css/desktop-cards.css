@@ -1,0 +1,41 @@
+/* Nur Desktop mit Maus: Personenkarten wieder kompakt. iPad/Touch bleibt gross. */
+@media (hover:hover) and (pointer:fine){
+  #members .member-subgrid,
+  #attendanceSelectionWorkspace .organisation-sheet .member-subgrid{
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  #members .member-subgrid .choice-button,
+  #attendanceSelectionWorkspace .organisation-sheet .choice-button{
+    min-height:72px!important;
+    height:auto!important;
+    padding:10px 8px!important;
+    border-left-width:6px!important;
+    border-radius:8px!important;
+    font-size:.82rem!important;
+    font-weight:800!important;
+    line-height:1.2!important;
+    box-shadow:none!important;
+    transform:none!important;
+  }
+  #members .member-subgrid .choice-button.selected,
+  #attendanceSelectionWorkspace .organisation-sheet .choice-button.selected{
+    transform:none!important;
+  }
+  #members .member-subgrid .choice-button.recorded,
+  #members .member-subgrid .age-member-button{
+    min-height:72px!important;
+  }
+}
+@media (hover:hover) and (pointer:fine) and (max-width:1200px){
+  #members .member-subgrid,
+  #attendanceSelectionWorkspace .organisation-sheet .member-subgrid{
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  }
+}
+@media (hover:hover) and (pointer:fine) and (max-width:980px){
+  #members .member-subgrid,
+  #attendanceSelectionWorkspace .organisation-sheet .member-subgrid{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  }
+}
