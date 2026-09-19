@@ -39,3 +39,20 @@
     grid-template-columns:repeat(4,minmax(0,1fr))!important;
   }
 }
+
+
+/* Version 2.0.6: direkte Organisationsfarbe auf markierten Personenkarten */
+#members .choice-button.organization-selected,
+#members .choice-button.selected.organization-selected,
+.participant-file-card .choice-button.organization-selected{
+  color:#ffffff!important;
+  background:#7963a5!important;
+  border-color:#5f4b89!important;
+  border-left-color:#f2d56b!important;
+  box-shadow:0 0 0 4px rgba(121,99,165,.26),0 7px 16px rgba(0,0,0,.18)!important;
+  transform:none!important;
+}
+#members .choice-button.organization-selected::before,
+#members .choice-button.organization-selected::after{
+  color:#ffffff!important;
+}
