@@ -56,3 +56,18 @@
 #members .choice-button.organization-selected::after{
   color:#ffffff!important;
 }
+
+
+/* Version 2.0.8: Auswahl übernehmen bleibt immer grün */
+#attendanceSelectionWorkspace #saveButton.primary-button:not(:disabled),
+#attendanceSelectionWorkspace.status-organization #saveButton.primary-button:not(:disabled){
+  color:#ffffff!important;
+  background:#19783a!important;
+  border-color:#14652f!important;
+  box-shadow:none!important;
+}
+#attendanceSelectionWorkspace #saveButton.primary-button:not(:disabled):hover,
+#attendanceSelectionWorkspace.status-organization #saveButton.primary-button:not(:disabled):hover{
+  background:#12612d!important;
+  border-color:#0f5226!important;
+}
