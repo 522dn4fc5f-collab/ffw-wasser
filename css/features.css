@@ -1338,3 +1338,60 @@ html body .participant-command-header .compact-menu{
   #members .member-subgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;}
   #members .member-subgrid .choice-button{min-height:94px!important;padding:13px 9px!important;font-size:.96rem!important;}
 }
+
+/* Mobile/Touch getrennt behandeln: extra große Namenskarten auf iPad und Mobilgeräten. */
+@media (hover:none) and (pointer:coarse){
+  #members .member-subgrid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:14px!important;
+  }
+  #members .member-subgrid .choice-button{
+    min-height:122px!important;
+    padding:20px 14px!important;
+    border-left-width:9px!important;
+    border-radius:15px!important;
+    font-size:1.24rem!important;
+    font-weight:900!important;
+    line-height:1.28!important;
+    letter-spacing:.01em!important;
+    box-shadow:0 4px 11px rgba(0,0,0,.13)!important;
+  }
+  #members .member-subgrid .choice-button.selected{
+    box-shadow:0 0 0 5px rgba(25,120,58,.25),0 7px 16px rgba(0,0,0,.2)!important;
+  }
+  #members .member-subgrid .choice-button.recorded,
+  #members .member-subgrid .age-member-button{
+    min-height:122px!important;
+  }
+  #members .age-member-button.recorded::after{
+    font-size:.72rem!important;
+    line-height:1.2!important;
+  }
+}
+
+/* iPad mini Hochformat und schmale mobile Ansichten: nur zwei große Karten je Reihe. */
+@media (hover:none) and (pointer:coarse) and (max-width:820px){
+  #members .member-subgrid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:14px!important;
+  }
+  #members .member-subgrid .choice-button{
+    min-height:132px!important;
+    padding:22px 13px!important;
+    font-size:1.32rem!important;
+  }
+  #members .member-subgrid .choice-button.recorded,
+  #members .member-subgrid .age-member-button{
+    min-height:132px!important;
+  }
+}
+
+/* Sehr schmale Telefone: weiterhin zwei Karten, aber ohne seitliches Überlaufen. */
+@media (hover:none) and (pointer:coarse) and (max-width:430px){
+  #members .member-subgrid{gap:10px!important;}
+  #members .member-subgrid .choice-button{
+    min-height:118px!important;
+    padding:17px 8px!important;
+    font-size:1.08rem!important;
+  }
+}
