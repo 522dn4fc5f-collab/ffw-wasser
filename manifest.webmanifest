@@ -1,12 +1,12 @@
 {
-  "name": "Feuerwehr Wasser Anwesenheit 1.3",
-  "short_name": "Anwesenheit 1.3",
-  "description": "Anwesenheitserfassung der Feuerwehr Wasser, Version 1.3",
+  "name": "Feuerwehr Wasser",
+  "short_name": "Feuerwehr Wasser",
+  "description": "Anwesenheitserfassung der Feuerwehr Wasser",
   "lang": "de-DE",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#ececec",
+  "background_color": "#182329",
   "theme_color": "#c80000",
   "icons": [
     {
