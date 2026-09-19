@@ -145,7 +145,7 @@ function unitStrengthDetail(slots, fullValue) {
   return `${label} · offen: ${missing.join(", ")}`;
 }
 function currentTacticsRecommendationText() {
-  if(sessionType === "Allgemeine Probe" && !lfWaterTeamComplete()) return "Wassertrupp nicht vollständig besetzbar. Die Probe kann nur als Sonderprobe durchgeführt und abgeschlossen werden.";
+  if(sessionType === "Allgemeine Probe" && !hasCompleteStaffelOnAnyVehicle()) return "Auf keinem Fahrzeug kann eine vollständige Staffel 1/5 besetzt werden. Als Alternative stehen Sonderprobe oder Unterricht zur Auswahl.";
   const lf=currentTacticsSlots.filter(slot=>slot.vehicle === "LF10" && slot.member);
   return vehicleHasMinimumUnit(lf) ? "Die aktuelle Fahrzeugbesetzung ist plausibel." : "Auf dem LF10 kann keine einsatzfähige Einheit 1/3 gebildet werden. Unterricht oder angepasste Ausbildung durchführen.";
 }
@@ -216,17 +216,20 @@ function vehicleIsFullyStaffed(vehicle){
   const slots=currentTacticsSlots.filter(slot=>slot.vehicle===vehicle);
   return slots.length>0 && slots.every(slot=>slot.member);
 }
+function vehicleHasCompleteStaffel(vehicle){
+  const slots=currentTacticsSlots.filter(slot=>slot.vehicle===vehicle);
+  return STAFF_ROLES.every(role=>slots.some(slot=>slot.role===role&&slot.member));
+}
+function hasCompleteStaffelOnAnyVehicle(){
+  return vehicleHasCompleteStaffel("LF10")||vehicleHasCompleteStaffel("TSF");
+}
 function updateTacticsAlternatives(){
   const education=byId("tacticsEducation");
   if(!education)return;
-  const noCompleteVehicle=!vehicleIsFullyStaffed("LF10")&&!vehicleIsFullyStaffed("TSF");
-  const waterMissing=sessionType==="Allgemeine Probe"&&!lfWaterTeamComplete();
-  const show=sessionType==="Allgemeine Probe"&&(noCompleteVehicle||waterMissing);
+  const show=sessionType==="Allgemeine Probe"&&!hasCompleteStaffelOnAnyVehicle();
   education.hidden=!show;
   const text=byId("tacticsAlternativeText");
-  if(text&&show)text.textContent=waterMissing
-    ? "Der Wassertrupp ist nicht vollständig besetzt. Die Probe kann als Sonderprobe oder als Unterricht abgeschlossen werden."
-    : "Es ist weder eine vollständige Staffel noch eine vollständige Gruppe möglich. Die Probe kann als Sonderprobe oder als Unterricht abgeschlossen werden.";
+  if(text&&show)text.textContent="Auf keinem Fahrzeug kann eine vollständige Staffel 1/5 besetzt werden. Die Probe kann als Sonderprobe oder als Unterricht abgeschlossen werden.";
 }
 function renderTactics() {
   const present=tacticsPresentMembers(), counts=tacticsYearRoleCounts(), targets=getRoleTargets();
@@ -265,7 +268,7 @@ function renderTactics() {
   currentTacticsSlots=protectCriticalVehicleSlots([...group.map(item=>({vehicle:"LF10",role:item.role,member:item.member})),...staff.map(item=>({vehicle:"TSF",role:item.role,member:item.member}))]);
   refreshTacticsManualView();
   byId("tacticsSummary").textContent=`${present.length} anwesende Einsatzkräfte · ${sessionType}`;
-  if(sessionType==="Allgemeine Probe" && !lfWaterTeamComplete()) recommendation="Wassertrupp nicht vollständig besetzbar. Als Alternative stehen Sonderprobe oder Unterricht zur Auswahl.";
+  if(sessionType==="Allgemeine Probe" && !hasCompleteStaffelOnAnyVehicle()) recommendation="Auf keinem Fahrzeug kann eine vollständige Staffel 1/5 besetzt werden. Als Alternative stehen Sonderprobe oder Unterricht zur Auswahl.";
   byId("tacticsRecommendation").innerHTML=`<strong>Empfehlung</strong><p>${escapeHtml(recommendation)}</p>`;
   updateTacticsAlternatives();
 }
@@ -305,9 +308,9 @@ function applyCalculatedTacticsFunctions() {
 }
 async function finalizeProbeFromTactics(){
   if(!tacticsClosingPending)return;
-  if(sessionType==="Allgemeine Probe" && !lfWaterTeamComplete()){
+  if(sessionType==="Allgemeine Probe" && !hasCompleteStaffelOnAnyVehicle()){
     updateTacticsAlternatives();
-    showToast("Bitte Sonderprobe oder Unterricht als alternative Durchführung auswählen.","error");
+    showToast("Auf keinem Fahrzeug ist eine vollständige Staffel 1/5 besetzbar. Bitte Sonderprobe oder Unterricht als alternative Durchführung auswählen.","error");
     byId("tacticsEducation")?.scrollIntoView({behavior:"smooth",block:"center"});
     return;
   }

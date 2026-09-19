@@ -63,11 +63,13 @@ function completeBackupPayload() {
       members: members.map(member => ({
         id: member.id, lastName: member.lastName, firstName: member.firstName,
         roles: getMemberRoles(member), ageDepartment: Boolean(member.ageDepartment),
-        machinistVehicles: Array.isArray(member.machinistVehicles) ? [...member.machinistVehicles] : []
+        machinistVehicles: Array.isArray(member.machinistVehicles) ? [...member.machinistVehicles] : [],
+        rfidId: String(member.rfidId || "")
       })),
       entries: entries.map(entry => ({ ...entry })),
       csvArchive: csvArchive.map(item => ({ ...item })),
       roleTargets: getRoleTargets(),
+      functionEntryEnabled: isFunctionEntryEnabled(),
       adminPin: adminPin()
     }
   };
@@ -244,7 +246,8 @@ async function saveArchiveCorrection(){
     rows.map(x=>({time:x.time,name:x.name,status:x.status,role:x.role})),
     item.sessionType||rows[0]?.sessionType||"Probe",
     counts,
-    item.topic||rows[0]?.topic||""
+    item.topic||rows[0]?.topic||"",
+    row.date || rows[0]?.date || historyDateFromItem(item)
   );
 
   let csvOverwritten=false,pdfOverwritten=false;
@@ -329,7 +332,7 @@ function openHistoryPdf(id){
   const item=csvArchive.find(x=>x.id===id);if(!item)return;
   const data=historyCountsForItem(item), topic=item.topic||data.rows[0]?.topic||"";
   const pdfRows=data.rows.map(x=>({time:x.time,name:x.name,status:x.status,role:x.role}));
-  const blob=probePdfBlob(pdfRows,item.sessionType||data.rows[0]?.sessionType||"Probe",{present:data.present,excused:data.excused,missing:data.missing,notApplicable:data.notApplicable},topic);
+  const blob=probePdfBlob(pdfRows,item.sessionType||data.rows[0]?.sessionType||"Probe",{present:data.present,excused:data.excused,missing:data.missing,notApplicable:data.notApplicable},topic,data.rows[0]?.date||historyDateFromItem(item));
   const url=URL.createObjectURL(blob),opened=window.open(url,"_blank","noopener");
   if(!opened)downloadBlob(item.fileName.replace(/\.csv$/i,".pdf"),blob);
   setTimeout(()=>URL.revokeObjectURL(url),60000);
