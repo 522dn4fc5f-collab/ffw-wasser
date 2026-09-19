@@ -309,3 +309,50 @@ if(document.readyState==="loading"){
 }else{
   setTimeout(setVisibleVersionTo20,0);
 }
+
+/* Zugangsschutz: verwendet dieselbe PIN wie der Adminbereich. */
+const PAGE_UNLOCK_SESSION_KEY = "fw_page_unlocked";
+function isPageUnlockedForSession() {
+  try { return window.sessionStorage.getItem(PAGE_UNLOCK_SESSION_KEY) === "1"; }
+  catch (error) { return false; }
+}
+function rememberPageUnlockForSession() {
+  try { window.sessionStorage.setItem(PAGE_UNLOCK_SESSION_KEY, "1"); } catch (error) {}
+}
+function removePageAccessGate() {
+  byId("pageAccessGate")?.remove();
+  document.documentElement.classList.remove("page-access-locked");
+  document.body.classList.remove("page-access-locked");
+}
+function unlockPageAccess() {
+  const input=byId("pageAccessPin"),error=byId("pageAccessError");
+  if(!input)return;
+  if(input.value !== adminPin()) {
+    if(error)error.hidden=false;
+    input.select();
+    return;
+  }
+  rememberPageUnlockForSession();
+  input.value="";
+  removePageAccessGate();
+}
+function ensurePageAccessGate() {
+  if(isPageUnlockedForSession())return removePageAccessGate();
+  document.documentElement.classList.add("page-access-locked");
+  document.body.classList.add("page-access-locked");
+  let gate=byId("pageAccessGate");
+  if(!gate){
+    gate=document.createElement("div");
+    gate.id="pageAccessGate";
+    gate.className="page-access-gate";
+    gate.setAttribute("role","dialog");
+    gate.setAttribute("aria-modal","true");
+    gate.setAttribute("aria-labelledby","pageAccessTitle");
+    gate.innerHTML=`<form class="page-access-card" autocomplete="on"><img src="icon-192.png" alt="Wappen Feuerwehr Wasser"><p class="eyebrow">Geschützter Zugang</p><h1 id="pageAccessTitle">Feuerwehr Wasser</h1><p>Bitte die Admin-PIN eingeben, um die Anwendung zu öffnen.</p><label for="pageAccessPin">PIN</label><input id="pageAccessPin" class="text-input" type="password" inputmode="numeric" maxlength="12" autocomplete="current-password" required><p id="pageAccessError" class="error-box" hidden>Falsche PIN.</p><button class="primary-button" type="submit">Anwendung öffnen</button><small>Die Anwendung bleibt bis zum vollständigen Schließen dieses Browser-Tabs entsperrt.</small></form>`;
+    document.body.appendChild(gate);
+    gate.querySelector("form").addEventListener("submit",event=>{event.preventDefault();unlockPageAccess();});
+    byId("pageAccessPin").addEventListener("input",()=>{const error=byId("pageAccessError");if(error)error.hidden=true;});
+  }
+  requestAnimationFrame(()=>byId("pageAccessPin")?.focus());
+}
+ensurePageAccessGate();
