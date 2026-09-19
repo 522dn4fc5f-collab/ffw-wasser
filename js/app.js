@@ -2,10 +2,10 @@ let pendingSettingsTarget="";
 
 function cleanLegacyShell(){
   [...document.body.childNodes].forEach(node=>{
-    if(node.nodeType===Node.TEXT_NODE && /Anwesenheit\s*1\.3/i.test(node.textContent||""))node.remove();
+    if(node.nodeType===Node.TEXT_NODE && /Anwesenheit\s*(?:1\.3|2\.0)/i.test(node.textContent||""))node.remove();
   });
   document.querySelectorAll("body *").forEach(element=>{
-    if(element.children.length===0 && /^\s*Anwesenheit\s*1\.3\s*$/i.test(element.textContent||""))element.remove();
+    if(element.children.length===0 && /^\s*Anwesenheit\s*(?:1\.3|2\.0)\s*$/i.test(element.textContent||""))element.remove();
   });
   const title=document.querySelector("#attendanceView .participant-title");if(title)title.hidden=true;
   const legacyHeader=byId("headerSessionType");if(legacyHeader){legacyHeader.hidden=true;legacyHeader.setAttribute("aria-hidden","true");}
@@ -273,42 +273,19 @@ if (!safeStorage.persistent) {
   setTimeout(() => showToast("Safari erlaubt hier keine dauerhafte Speicherung. Die Sitzung funktioniert, Daten können nach dem Schließen verloren gehen.", "error"), 700);
 }
 
-/* Version 2.0: sichere Korrektur ausschließlich exakter Versions-Textknoten */
-function setVisibleVersionTo20(){
-  if(!document.body) return;
-  ["appVersion","version","versionText","buildVersion"].forEach(id=>{
-    const field=byId(id);
-    if(field)field.textContent=/Version/i.test(field.textContent)?"Version 2.0":"2.0";
-  });
-  document.querySelectorAll("[data-app-version],[data-version]").forEach(field=>{
-    field.textContent=/Version/i.test(field.textContent)?"Version 2.0":"2.0";
-  });
+/* Alte freistehende Versionsbezeichnungen entfernen, nicht umbenennen. */
+function removeStandaloneAttendanceVersion(){
+  if(!document.body)return;
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
-  const matches=[];
+  const remove=[];
   while(walker.nextNode()){
     const node=walker.currentNode;
-    const value=node.nodeValue.trim();
-    // Fußzeile und Hilfe enthalten die Version als Teil des Produktnamens.
-    // Diese konkrete Form muss deshalb innerhalb des Textknotens ersetzt werden.
-    if(/Anwesenheit\s+1\.3(?:\.0)?/i.test(node.nodeValue)){
-      node.nodeValue=node.nodeValue.replace(/Anwesenheit\s+1\.3(?:\.0)?/gi,"Anwesenheit 2.0");
-      continue;
-    }
-    // Nur eigenständige sichtbare Versionsangaben ändern, nicht andere Zahlen.
-    if(/^(?:Version\s*)?1\.(?:3(?:\.0)?|[4-9](?:\.\d+)?|10(?:\.\d+)?)$/i.test(value)) matches.push(node);
+    if(/^\s*Anwesenheit\s*(?:1\.3|2\.0)\s*$/i.test(node.nodeValue||""))remove.push(node);
   }
-  matches.forEach(node=>{
-    const leading=node.nodeValue.match(/^\s*/)?.[0]||"";
-    const trailing=node.nodeValue.match(/\s*$/)?.[0]||"";
-    const hadLabel=/Version/i.test(node.nodeValue);
-    node.nodeValue=`${leading}${hadLabel?"Version ":""}2.0${trailing}`;
-  });
+  remove.forEach(node=>node.remove());
 }
-if(document.readyState==="loading"){
-  document.addEventListener("DOMContentLoaded",()=>setTimeout(setVisibleVersionTo20,0),{once:true});
-}else{
-  setTimeout(setVisibleVersionTo20,0);
-}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",removeStandaloneAttendanceVersion,{once:true});
+else removeStandaloneAttendanceVersion();
 
 
 /* Sofortiger Seitenzugang ohne sichtbare Startseite vor der PIN-Eingabe. */
