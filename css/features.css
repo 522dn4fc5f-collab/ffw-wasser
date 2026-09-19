@@ -1460,3 +1460,133 @@ html body .participant-command-header .compact-menu{
   background:#12612d!important;
   border-color:#0f5226!important;
 }
+
+
+/* Version 2.0.9: zwei gleichwertige gelbe Taktikalternativen */
+.tactics-education:not([hidden]){
+  display:block!important;
+  border:2px solid #d7a928!important;
+  background:#fff9e8!important;
+}
+.tactics-alternative-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:16px!important;
+  margin-top:16px!important;
+}
+.tactics-alternative-card{
+  display:flex!important;
+  flex-direction:column!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  border:1px solid #d7b64b!important;
+  border-radius:14px!important;
+  background:#fffdf5!important;
+}
+.tactics-alternative-visual,
+.tactics-alternative-placeholder{
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  height:220px!important;
+  margin:0!important;
+  overflow:hidden!important;
+  background:#efe7c9!important;
+}
+.tactics-alternative-visual img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+}
+.tactics-alternative-placeholder{
+  background:linear-gradient(145deg,#ece3bf,#d9ca8c)!important;
+}
+.tactics-alternative-placeholder span{
+  padding:10px 14px!important;
+  border:2px solid #8b762b!important;
+  border-radius:8px!important;
+  color:#67550f!important;
+  background:rgba(255,255,255,.48)!important;
+  font-size:.9rem!important;
+  font-weight:900!important;
+  letter-spacing:.08em!important;
+}
+.tactics-alternative-copy{
+  flex:1 1 auto!important;
+  padding:15px 16px 8px!important;
+}
+.tactics-alternative-copy h4{
+  margin:0 0 7px!important;
+  color:#3a3216!important;
+  font-size:1.08rem!important;
+}
+.tactics-alternative-copy p{
+  margin:0!important;
+  color:#665d3e!important;
+  line-height:1.45!important;
+}
+.tactics-alternative-button{
+  width:calc(100% - 32px)!important;
+  min-height:49px!important;
+  margin:12px 16px 16px!important;
+  padding:10px 14px!important;
+  border:1px solid #b99000!important;
+  border-radius:9px!important;
+  color:#302700!important;
+  background:#f2c500!important;
+  font-weight:900!important;
+  cursor:pointer!important;
+}
+.tactics-alternative-button:hover,
+.tactics-alternative-button:focus-visible{
+  background:#ddb400!important;
+  border-color:#9a7800!important;
+}
+@media(max-width:760px){
+  .tactics-alternative-grid{grid-template-columns:1fr!important}
+  .tactics-alternative-visual,.tactics-alternative-placeholder{height:190px!important}
+}
+
+
+/* Version 2.0.10: Unterrichtsbild mittig und Karten sauber ausgerichtet */
+.tactics-alternative-grid{
+  align-items:stretch!important;
+}
+.tactics-alternative-card{
+  height:100%!important;
+}
+.tactics-training-card .tactics-alternative-visual{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  height:220px!important;
+  padding:0!important;
+  background:#efe7c9!important;
+}
+.tactics-training-card .tactics-alternative-visual img{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  margin:0 auto!important;
+  object-fit:cover!important;
+  object-position:50% 50%!important;
+}
+.tactics-special-card .tactics-alternative-placeholder{
+  height:220px!important;
+}
+.tactics-alternative-copy{
+  min-height:116px!important;
+}
+.tactics-alternative-button{
+  margin-top:auto!important;
+}
+@media(max-width:760px){
+  .tactics-training-card .tactics-alternative-visual,
+  .tactics-special-card .tactics-alternative-placeholder{
+    height:190px!important;
+  }
+  .tactics-alternative-copy{
+    min-height:0!important;
+  }
+}
