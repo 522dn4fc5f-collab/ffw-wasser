@@ -44,7 +44,7 @@ function updateSelection() {
   const isStandard = sessionType === "Allgemeine Probe";
   const isSpecial = sessionType === "Sonderprobe";
   const isTraining = sessionType === "Unterricht";
-  const multiMode = (isStandard && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt")) ||
+  const multiMode = (isStandard && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Organisation")) ||
     (isSpecial && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Betrifft nicht")) ||
     (isTraining && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt"));
   const selectedMemberLabel=byId("selectedMember");
@@ -149,7 +149,7 @@ function saveAttendance() {
   const isStandard = sessionType === "Allgemeine Probe";
   const isSpecial = sessionType === "Sonderprobe";
   const isTraining = sessionType === "Unterricht";
-  const multiMode = (isStandard && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt")) ||
+  const multiMode = (isStandard && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Organisation")) ||
     (isSpecial && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Betrifft nicht")) ||
     (isTraining && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt"));
   const now = new Date();
