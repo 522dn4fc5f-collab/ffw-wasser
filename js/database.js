@@ -68,17 +68,35 @@ function setDirectoryPathText(elementId, handle, emptyText) {
   element.textContent=path || emptyText;
   element.title=path || emptyText;
 }
+function supportsPersistentDirectoryPicker() {
+  return typeof window.showDirectoryPicker === "function";
+}
+function setIpadStorageCardState(kind) {
+  const map={
+    csv:{name:"csvFolderName",choose:"chooseCsvFolderButton",clear:"clearCsvFolderButton",hint:"csvSupportHint",label:"CSV-Dateien werden beim Probeabschluss über Teilen / In Dateien sichern ausgegeben."},
+    pdf:{name:"pdfFolderName",choose:"choosePdfFolderButton",clear:"clearPdfFolderButton",hint:"pdfSupportHint",label:"PDF-Berichte werden beim Probeabschluss gemeinsam mit der CSV über Teilen / In Dateien sichern ausgegeben."},
+    backup:{name:"backupFolderName",choose:"chooseBackupFolderButton",clear:"clearBackupFolderButton",hint:"backupSupportHint",label:"Backups werden über Teilen / In Dateien sichern ausgegeben."}
+  };
+  const item=map[kind];if(!item)return;
+  const name=byId(item.name),choose=byId(item.choose),clear=byId(item.clear),hint=byId(item.hint);
+  if(name){name.textContent="Auswahl beim Speichern";name.title="OneDrive-Ordner im iPad-Dialog auswählen";}
+  if(choose){choose.hidden=true;choose.disabled=true;choose.setAttribute("aria-hidden","true");}
+  if(clear){clear.hidden=true;clear.disabled=true;clear.setAttribute("aria-hidden","true");}
+  if(hint)hint.textContent=item.label+" Im iPad-Dialog anschließend „In Dateien sichern“ und den gewünschten OneDrive-Ordner wählen.";
+  name?.closest("article")?.classList.add("storage-card-ipad-mode");
+}
 
 function renderBackupFolderStatus() {
-  const supported="showDirectoryPicker" in window;
   if(!byId("backupFolderName")) return;
+  if(!supportsPersistentDirectoryPicker()) return setIpadStorageCardState("backup");
   setDirectoryPathText("backupFolderName",backupDirectoryHandle,"Kein Backup-Ordner ausgewählt");
-  byId("chooseBackupFolderButton").disabled=!supported;
+  byId("chooseBackupFolderButton").hidden=false;
+  byId("chooseBackupFolderButton").disabled=false;
+  byId("clearBackupFolderButton").hidden=false;
   byId("clearBackupFolderButton").disabled=!backupDirectoryHandle;
-  byId("backupSupportHint").textContent=supported
-    ? "Backups werden direkt in diesem Ordner gespeichert. Den übergeordneten Gerätepfad gibt der Browser nicht an die App weiter."
-    : "Direkte Ordnerauswahl ist in diesem Browser nicht verfügbar. Backups werden über Teilen oder Download ausgegeben.";
+  byId("backupSupportHint").textContent="Backups werden direkt in diesem Ordner gespeichert. Den übergeordneten Gerätepfad gibt der Browser nicht an die App weiter.";
 }
+
 async function chooseBackupFolder() {
   if (!("showDirectoryPicker" in window)) return showToast("Dieser Browser verwendet den Download- oder Teilen-Dialog für Backups.","error");
   try {
@@ -134,19 +152,16 @@ function isSafariBrowser() {
 }
 
 function renderCsvFolderStatus() {
-  const supported = "showDirectoryPicker" in window;
   if(!byId("csvFolderName")) return;
+  if(!supportsPersistentDirectoryPicker()) return setIpadStorageCardState("csv");
   setDirectoryPathText("csvFolderName",csvDirectoryHandle,"Noch kein Ordner ausgewählt");
-  byId("chooseCsvFolderButton").disabled = !supported;
-  byId("clearCsvFolderButton").disabled = !csvDirectoryHandle;
-  if (isSafariBrowser()) {
-    byId("csvSupportHint").textContent = "Safari nutzt beim CSV-Export zuerst den iPad-Teilen-Dialog. Dort „In Dateien sichern“ wählen.";
-  } else {
-    byId("csvSupportHint").textContent = supported
-      ? "Ausgewählter Ordner wird vollständig angezeigt. Den übergeordneten Gerätepfad gibt der Browser aus Sicherheitsgründen nicht an die App weiter."
-      : "Der Browser unterstützt keine direkte Ordnerwahl. Der Export verwendet deshalb den normalen Download-Ordner.";
-  }
+  byId("chooseCsvFolderButton").hidden=false;
+  byId("chooseCsvFolderButton").disabled=false;
+  byId("clearCsvFolderButton").hidden=false;
+  byId("clearCsvFolderButton").disabled=!csvDirectoryHandle;
+  byId("csvSupportHint").textContent="CSV-Dateien werden direkt in diesem Ordner gespeichert. Den übergeordneten Gerätepfad gibt der Browser nicht an die App weiter.";
 }
+
 async function chooseCsvFolder() {
   if (!("showDirectoryPicker" in window)) return showToast("Dieser Browser verwendet den Download- oder Teilen-Dialog für CSV-Dateien.", "error");
   try {
@@ -232,12 +247,15 @@ function ensurePdfFolderControls(){
 }
 function renderPdfFolderStatus(){
   if(!byId("pdfFolderName"))return;
-  const supported="showDirectoryPicker" in window;
+  if(!supportsPersistentDirectoryPicker()) return setIpadStorageCardState("pdf");
   setDirectoryPathText("pdfFolderName",pdfDirectoryHandle,"Kein PDF-Ordner ausgewählt");
-  byId("choosePdfFolderButton").disabled=!supported;
+  byId("choosePdfFolderButton").hidden=false;
+  byId("choosePdfFolderButton").disabled=false;
+  byId("clearPdfFolderButton").hidden=false;
   byId("clearPdfFolderButton").disabled=!pdfDirectoryHandle;
-  byId("pdfSupportHint").textContent=supported?"Neue PDF-Probenberichte werden bevorzugt direkt in diesem Ordner gespeichert.":"Direkte Ordnerauswahl ist in diesem Browser nicht verfügbar. PDF-Berichte werden über Teilen oder Download ausgegeben.";
+  byId("pdfSupportHint").textContent="Neue PDF-Probenberichte werden direkt in diesem Ordner gespeichert.";
 }
+
 async function choosePdfFolder(){
   if(!("showDirectoryPicker" in window))return showToast("Dieser Browser verwendet für PDFs den Teilen- oder Download-Dialog.","error");
   try{pdfDirectoryHandle=await window.showDirectoryPicker({mode:"readwrite",id:"feuerwehr-pdf"});await savePdfDirectoryHandle(pdfDirectoryHandle);renderPdfFolderStatus();showToast(`PDF-Speicherort „${pdfDirectoryHandle.name}“ wurde gespeichert.`);}catch(error){if(error?.name!=="AbortError")showToast("PDF-Speicherort konnte nicht ausgewählt werden.","error");}
