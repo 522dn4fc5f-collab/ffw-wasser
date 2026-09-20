@@ -1,7 +1,7 @@
 {
   "name": "FFW",
   "short_name": "FFW",
-  "description": "Anwesenheitserfassung der Feuerwehr Wasser",
+  "description": "Anwesenheitserfassung der FFW",
   "lang": "de-DE",
   "start_url": "./",
   "scope": "./",
