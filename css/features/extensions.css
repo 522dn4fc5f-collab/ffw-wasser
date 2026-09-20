@@ -199,3 +199,10 @@
 #settingsStatisticsView .individual-recent-row small{overflow-wrap:anywhere!important}
 @media(max-width:800px){#settingsStatisticsView .individual-statistics-grid,#settingsStatisticsView .individual-recent-list{grid-template-columns:1fr!important}#settingsStatisticsView .individual-recent-row{grid-template-columns:1fr!important;gap:3px!important}}
 @media print{body.printing-individual-statistics #settingsStatisticsView .individual-recent-section{display:block!important;grid-column:1/-1!important}body.printing-individual-statistics #settingsStatisticsView .individual-recent-list{grid-template-columns:1fr!important}}
+
+
+/* FFW 2.8.11: Altersmannschaft direkt unter der Personenkarte */
+#settingsStatisticsView .individual-statistics-panel{order:20!important}
+#settingsStatisticsView .age-statistics-section{order:21!important;width:100%!important;margin-top:18px!important}
+#settingsStatisticsView .age-ranking-panel{width:100%!important}
+@media print{body.printing-statistics #settingsStatisticsView .individual-statistics-panel{order:20!important}body.printing-statistics #settingsStatisticsView .age-statistics-section{order:21!important}}
