@@ -13,7 +13,7 @@ function renderArchive() {
   renderHistory?.();
 }
 async function exportArchiveItem(id) { const item=csvArchive.find(x=>x.id===id); if(!item)return; const result=await exportCsvFile(item.fileName,item.content,true); showToast(result==="failed"?"CSV konnte nicht ausgegeben werden.":result==="cancelled"?"Ausgabe wurde abgebrochen.":"CSV wurde erneut ausgegeben.",result==="failed"||result==="cancelled"?"error":"success"); }
-function deleteArchiveItem(id) { const item=csvArchive.find(x=>x.id===id); if(!item||!confirm(`Archivdatei „${item.fileName}“ löschen?`))return; csvArchive=csvArchive.filter(x=>x.id!==id); saveArchive(); renderArchive(); showToast("Archivdatei gelöscht."); }
+async function deleteArchiveItem(id) { const item=csvArchive.find(x=>x.id===id); if(!item||!confirm(`Archivdatei „${item.fileName}“ löschen?`))return; csvArchive=csvArchive.filter(x=>x.id!==id); await deleteImportedReportPdf?.(id); saveArchive(); renderArchive(); showToast("Archivdatei gelöscht."); }
 async function exportArchiveBackup() {
   const name = `FFW-Wasser_Archiv-Backup_${today()}.json`;
   await shareOrDownloadJson(name, { version:"1.0", createdAt:new Date().toISOString(), items:csvArchive }, "Archiv-Backup wurde ausgegeben.");
@@ -242,6 +242,8 @@ async function saveArchiveCorrection(){
   item.baseFileName=`${names.base}.csv`;
   item.fileName=names.csv;
   item.pdfFileName=names.pdf;
+  item.hasImportedPdf=false;
+  await deleteImportedReportPdf?.(item.id);
 
   const counts={
     present:rows.filter(x=>x.status==="Anwesend").length,
@@ -334,8 +336,10 @@ function renderHistory(){
     return `<details class="history-year"${yearOpen}><summary class="history-year-heading"><h3>${escapeHtml(year)}</h3><span>${yearCount} Bericht${yearCount===1?"":"e"}</span><i aria-hidden="true"></i></summary><div class="history-months">${monthHtml}</div></details>`;
   }).join("");
 }
-function openHistoryPdf(id){
+async function openHistoryPdf(id){
   const item=csvArchive.find(x=>x.id===id);if(!item)return;
+  const imported=item.hasImportedPdf?await loadImportedReportPdf?.(id):null;
+  if(imported){const url=URL.createObjectURL(imported),opened=window.open(url,"_blank","noopener");if(!opened)downloadBlob(item.pdfFileName||item.fileName.replace(/\.csv$/i,".pdf"),imported);setTimeout(()=>URL.revokeObjectURL(url),60000);return;}
   const data=historyCountsForItem(item), topic=item.topic||data.rows[0]?.topic||"";
   const pdfRows=data.rows.map(x=>({time:x.time,name:x.name,status:x.status,role:x.role}));
   const blob=probePdfBlob(pdfRows,item.sessionType||data.rows[0]?.sessionType||"Probe",{present:data.present,excused:data.excused,missing:data.missing,notApplicable:data.notApplicable},topic,data.rows[0]?.date||historyDateFromItem(item));

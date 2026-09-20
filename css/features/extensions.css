@@ -96,7 +96,11 @@
   }
 }
 
-/* FFW 2.8.2: Importabfrage vor Probeabschluss */
-#preCloseImportDialog .pre-close-import-actions{display:grid!important;grid-template-columns:auto 1fr 1.25fr!important;gap:10px!important}
-#preCloseImportDialog .pre-close-import-actions button{min-height:50px!important}
-@media(max-width:720px){#preCloseImportDialog .pre-close-import-actions{grid-template-columns:1fr!important}}
+/* FFW 2.8.4: Berichtimport direkt in der Historie */
+#settingsHistoryView .history-import-panel{margin:0 0 22px;padding:20px;border-top-color:#526a78}
+#settingsHistoryView .history-import-panel .panel-heading>div{min-width:0}
+#settingsHistoryView .history-import-panel .panel-heading p{margin:5px 0 0;color:var(--muted);line-height:1.45}
+#settingsHistoryView .history-import-actions{display:flex;gap:10px;margin-top:14px}
+#settingsHistoryView .history-import-actions .primary-button{width:auto;min-width:280px}
+#settingsHistoryView .history-item-details small::after{content:""}
+@media(max-width:620px){#settingsHistoryView .history-import-actions{display:block}#settingsHistoryView .history-import-actions .primary-button{width:100%;min-width:0}}

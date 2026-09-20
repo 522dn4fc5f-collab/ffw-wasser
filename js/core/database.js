@@ -338,3 +338,10 @@ function ensureArchiveStorageCenter(){
   renderPdfFolderStatus();
   renderBackupFolderStatus();
 }
+
+function openReportPdfDb(){
+  return new Promise((resolve,reject)=>{if(!("indexedDB" in window))return reject(new Error("IndexedDB nicht verfügbar"));const request=indexedDB.open("fw_v1_report_pdfs",1);request.onupgradeneeded=()=>request.result.createObjectStore("pdfs");request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+}
+async function saveImportedReportPdf(reportId,file){const db=await openReportPdfDb();await new Promise((resolve,reject)=>{const tx=db.transaction("pdfs","readwrite");tx.objectStore("pdfs").put(file,reportId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}
+async function loadImportedReportPdf(reportId){try{const db=await openReportPdfDb();const blob=await new Promise((resolve,reject)=>{const r=db.transaction("pdfs","readonly").objectStore("pdfs").get(reportId);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});db.close();return blob;}catch{return null;}}
+async function deleteImportedReportPdf(reportId){try{const db=await openReportPdfDb();await new Promise((resolve,reject)=>{const tx=db.transaction("pdfs","readwrite");tx.objectStore("pdfs").delete(reportId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}catch{}}
