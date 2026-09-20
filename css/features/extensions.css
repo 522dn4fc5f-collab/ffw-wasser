@@ -12,3 +12,41 @@
 #attendanceSelectionWorkspace .batch-selection-controls{position:relative!important;padding-bottom:8px!important}
 #attendanceSelectionWorkspace .batch-selection-controls #saveButton{position:sticky!important;bottom:10px!important;z-index:35!important;min-height:54px!important;box-shadow:0 8px 22px rgba(0,0,0,.3)!important}
 @media(max-width:700px){#attendanceSelectionWorkspace .sheet-status-tab{min-width:118px!important;padding:11px 12px!important}}
+
+
+/* FFW 2.7.2: Statusreiter noch markanter */
+#attendanceSelectionWorkspace #attendanceStatusToolbar{
+  scroll-margin-top:118px!important;
+  padding:0 12px!important;
+  border-bottom:4px solid #263238!important;
+  filter:drop-shadow(0 5px 7px rgba(0,0,0,.18))!important;
+}
+#attendanceSelectionWorkspace .sheet-status-tab{
+  min-height:60px!important;
+  height:60px!important;
+  border:3px solid #58676e!important;
+  border-bottom:0!important;
+  border-radius:15px 15px 0 0!important;
+  font-size:.98rem!important;
+  font-weight:900!important;
+  letter-spacing:.015em!important;
+  box-shadow:0 -5px 12px rgba(0,0,0,.18)!important;
+}
+#attendanceSelectionWorkspace .sheet-status-tab.selected{
+  min-height:78px!important;
+  height:78px!important;
+  border-width:4px!important;
+  border-bottom:0!important;
+  color:#fff!important;
+  background:#145f31!important;
+  transform:translateY(2px) scale(1.035)!important;
+  box-shadow:0 -9px 20px rgba(0,0,0,.28)!important;
+}
+#attendanceSelectionWorkspace .sheet-status-tab:focus-visible{
+  outline:4px solid #f2c500!important;
+  outline-offset:3px!important;
+}
+@media(max-width:700px){
+  #attendanceSelectionWorkspace .sheet-status-tab{min-width:124px!important;font-size:.84rem!important}
+  #attendanceSelectionWorkspace .sheet-status-tab.selected{transform:translateY(2px)!important}
+}

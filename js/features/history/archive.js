@@ -188,13 +188,27 @@ function updateCorrectionRoleVisibility(){
   byId("correctionRole").hidden=!present;byId("correctionRoleLabel").hidden=!present;
   if(!present)byId("correctionRole").value="";
 }
+function correctionMemberForRow(row){
+  const rowName=String(row?.name||"").trim();
+  return members.find(member=>nameForStorage(member)===rowName||nameForTile(member)===rowName)||null;
+}
+function correctionRolesForRow(row){
+  const member=correctionMemberForRow(row);
+  if(!member||member.ageDepartment)return [];
+  const roles=[...new Set(getMemberRoles(member).filter(Boolean))];
+  const vehicles=Array.isArray(member.machinistVehicles)?member.machinistVehicles:[];
+  if(vehicles.length&&!roles.includes("Maschinist"))roles.push("Maschinist");
+  return roles;
+}
 function loadSelectedCorrectionRow(){
   if(!archiveCorrectionState)return;
   const row=archiveCorrectionState.rows[Number(byId("correctionPerson").value)];if(!row)return;
+  const roleSelect=byId("correctionRole");
+  const isGeneral=(archiveCorrectionState.item.sessionType||archiveCorrectionState.rows[0]?.sessionType)==="Allgemeine Probe";
+  const allowedRoles=isGeneral?correctionRolesForRow(row):[row.role||""];
+  roleSelect.innerHTML='<option value="">Bitte Funktion auswählen</option>'+allowedRoles.map(role=>`<option value="${escapeHtml(role)}">${escapeHtml(role)}</option>`).join("");
   byId("correctionStatus").value=row.status||"Fehlt";
-  const roleSelect=byId("correctionRole"),currentRole=row.role||"";
-  if(currentRole && ![...roleSelect.options].some(option=>option.value===currentRole)) roleSelect.add(new Option(currentRole,currentRole));
-  roleSelect.value=currentRole;
+  roleSelect.value=allowedRoles.includes(row.role)?row.role:"";
   updateCorrectionRoleVisibility();
 }
 function correctArchiveItem(id){
@@ -213,6 +227,11 @@ async function saveArchiveCorrection(){
   if(!archiveCorrectionState)return;
   const {item,rows}=archiveCorrectionState,index=Number(byId("correctionPerson").value),row=rows[index];if(!row)return;
   const status=byId("correctionStatus").value,role=status==="Anwesend"?byId("correctionRole").value.trim():"";
+  const isGeneral=(item.sessionType||rows[0]?.sessionType)==="Allgemeine Probe";
+  if(status==="Anwesend"&&isGeneral&&!role){
+    showToast("Bitte eine für diese Person freigegebene Funktion auswählen.","error");
+    return;
+  }
   const original={status:row.status,role:row.role};row.status=status;row.role=role;
   item.revisions=[...(item.revisions||[]),{changedAt:new Date().toISOString(),name:row.name,original,updated:{status,role}}];
   item.topic=item.topic||rows[0]?.topic||"";

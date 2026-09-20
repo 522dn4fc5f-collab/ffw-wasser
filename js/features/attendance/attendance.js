@@ -194,8 +194,14 @@ function saveAttendance() {
     showToast(`${count} Personen wurden als „${savedRole}“ übernommen. Weitere Personen können markiert oder der Status kann geändert werden.`);
     const remainingMembers = members.some(member => !member.ageDepartment && !todayEntries().some(entry => entry.storedName === nameForStorage(member) || entry.displayName === nameForTile(member)));
     if (remainingMembers) requestAnimationFrame(() => {
-      const peoplePanel = byId("memberStepTitle")?.closest(".panel") || byId("members");
-      peoplePanel?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const statusTabs = byId("attendanceStatusToolbar");
+      const fallback = byId("memberStepTitle")?.closest(".panel") || byId("members");
+      const target = statusTabs || fallback;
+      if (!target) return;
+      const headerOffset = Math.max(96, document.querySelector(".site-header")?.getBoundingClientRect().height || 0);
+      const targetTop = window.scrollY + target.getBoundingClientRect().top - headerOffset - 12;
+      window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+      statusTabs?.querySelector("[data-role].selected")?.focus({ preventScroll: true });
     });
     return;
   }
