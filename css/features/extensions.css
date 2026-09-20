@@ -3,3 +3,12 @@
  * Neue Regeln nach der zuständigen Funktion gruppieren.
  * Bestehende Altregeln befinden sich in ../legacy/version-overrides.css.
  */
+
+/* FFW Bedienkorrekturen */
+#attendanceSelectionWorkspace .sheet-status-tabs{min-height:72px!important;height:72px!important;align-items:flex-end!important;gap:10px!important}
+#attendanceSelectionWorkspace .status-tab-rail{min-height:74px!important;height:74px!important}
+#attendanceSelectionWorkspace .sheet-status-tab{min-height:54px!important;height:54px!important;padding:12px 20px!important;border-width:2px!important;font-size:.9rem!important;box-shadow:0 -3px 9px rgba(0,0,0,.13)!important}
+#attendanceSelectionWorkspace .sheet-status-tab.selected{min-height:70px!important;height:70px!important;transform:translateY(1px)!important;box-shadow:0 -6px 14px rgba(0,0,0,.2)!important}
+#attendanceSelectionWorkspace .batch-selection-controls{position:relative!important;padding-bottom:8px!important}
+#attendanceSelectionWorkspace .batch-selection-controls #saveButton{position:sticky!important;bottom:10px!important;z-index:35!important;min-height:54px!important;box-shadow:0 8px 22px rgba(0,0,0,.3)!important}
+@media(max-width:700px){#attendanceSelectionWorkspace .sheet-status-tab{min-width:118px!important;padding:11px 12px!important}}

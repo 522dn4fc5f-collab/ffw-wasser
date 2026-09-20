@@ -192,6 +192,11 @@ function saveAttendance() {
     updateSelection();
     updateProbeWorkflow();
     showToast(`${count} Personen wurden als „${savedRole}“ übernommen. Weitere Personen können markiert oder der Status kann geändert werden.`);
+    const remainingMembers = members.some(member => !member.ageDepartment && !todayEntries().some(entry => entry.storedName === nameForStorage(member) || entry.displayName === nameForTile(member)));
+    if (remainingMembers) requestAnimationFrame(() => {
+      const peoplePanel = byId("memberStepTitle")?.closest(".panel") || byId("members");
+      peoplePanel?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
     return;
   }
 

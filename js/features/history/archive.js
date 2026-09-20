@@ -191,7 +191,11 @@ function updateCorrectionRoleVisibility(){
 function loadSelectedCorrectionRow(){
   if(!archiveCorrectionState)return;
   const row=archiveCorrectionState.rows[Number(byId("correctionPerson").value)];if(!row)return;
-  byId("correctionStatus").value=row.status||"Fehlt";byId("correctionRole").value=row.role||"";updateCorrectionRoleVisibility();
+  byId("correctionStatus").value=row.status||"Fehlt";
+  const roleSelect=byId("correctionRole"),currentRole=row.role||"";
+  if(currentRole && ![...roleSelect.options].some(option=>option.value===currentRole)) roleSelect.add(new Option(currentRole,currentRole));
+  roleSelect.value=currentRole;
+  updateCorrectionRoleVisibility();
 }
 function correctArchiveItem(id){
   const item=csvArchive.find(x=>x.id===id);if(!item)return;
