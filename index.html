@@ -20,7 +20,7 @@
 <link href="css/layout/responsive.css?v=20260919-25" rel="stylesheet"/>
 <link href="css/legacy/version-overrides.css?v=20260919-49" rel="stylesheet"/>
 <link href="css/layout/desktop-cards.css?v=20260919-47" rel="stylesheet"/>
-<link href="css/features/extensions.css?v=20260920-12" rel="stylesheet"/>
+<link href="css/features/extensions.css?v=20260920-18" rel="stylesheet"/>
 <style id="accessGateCriticalStyle">html.page-access-pending,html.page-access-pending body{margin:0;overflow:hidden;background:#182329}html.page-access-pending body>:not(#pageAccessGate):not(script){visibility:hidden!important}.page-access-gate-critical{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:20px;background:#182329}.page-access-card-critical{display:grid;gap:12px;width:min(430px,calc(100% - 24px));box-sizing:border-box;padding:28px;border-top:6px solid #f2c500;border-radius:18px;background:#fff;color:#1f2a30;box-shadow:0 24px 70px rgba(0,0,0,.48)}.page-access-card-critical img{width:68px;height:68px;border-radius:14px}.page-access-card-critical h1,.page-access-card-critical p{margin:0}.page-access-card-critical label{font-weight:850}.page-access-card-critical input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #9ca8ae;border-radius:8px;font-size:1.1rem}.page-access-card-critical button{min-height:48px;border:0;border-radius:9px;color:#fff;background:#19783a;font-weight:850}.page-access-card-critical small{color:#65737b;text-align:center}.page-access-card-critical .error-box{padding:9px;border-radius:7px;color:#8d1111;background:#ffeaea}#protectedAppContent[hidden]{display:none!important}html.page-access-pending #protectedAppContent{display:none!important}</style><script>document.documentElement.classList.add("page-access-pending");</script>
 </head>
 <body>
@@ -204,7 +204,7 @@
 <div class="tactics-close-actions" hidden="" id="tacticsCloseActions"><p>Besetzung prüfen. Erst danach wird die Probe abgeschlossen und CSV sowie PDF werden ausgegeben.</p><button class="primary-button" id="finalizeProbeButton" type="button">Probe abschließen · CSV + PDF</button><button class="outline-button" id="cancelTacticsCloseButton" type="button">Noch nicht abschließen</button></div>
 <div class="tactics-note"><strong>Hinweis:</strong> Ausgangspunkt sind die anwesenden Personen. Für jede Person wird aus den persönlich freigeschalteten Funktionen und offenen Jahreszielen eine passende Funktion empfohlen. Anschließend werden die Empfehlungen möglichst auf LF10 und TSF verteilt. Die verantwortliche Führungskraft prüft und ändert die Besetzung bei Bedarf.</div>
 </section><section class="view statistics-view" hidden="" id="statisticsView">
-<div class="statistics-print-header"><img alt="Wappen Feuerwehr Wasser" src="icon-192.png"/><div><strong>Feuerwehr Wasser</strong><span>Statistik Anwesenheit 1.3</span></div></div><div class="screen-heading statistics-heading"><div><p class="eyebrow">Auswertung</p><h2>Statistik</h2><p class="statistics-period" id="statisticsPeriod">Noch keine abgeschlossenen Proben vorhanden.</p></div><button class="primary-button" id="statisticsPdfButton" type="button">Statistik als PDF</button><button class="outline-button view-home-button" data-home-button="" type="button">Zurück zu Home</button></div>
+<div class="statistics-print-header"><img alt="Wappen Feuerwehr Wasser" src="icon-192.png"/><div><strong>Feuerwehr Wasser</strong><span>Statistik Anwesenheit 1.3</span></div></div><div class="screen-heading statistics-heading"><div><p class="eyebrow">Auswertung</p><h2>Statistik</h2><p class="statistics-period" id="statisticsPeriod">Noch keine abgeschlossenen Proben vorhanden.</p><label class="statistics-year-control" for="statisticsYearSelect"><span>Kalenderjahr</span><select class="text-input" id="statisticsYearSelect"></select></label></div><button class="primary-button" id="statisticsPdfButton" type="button">Statistik als PDF</button><button class="outline-button view-home-button" data-home-button="" type="button">Zurück zu Home</button></div>
 <div class="statistics-kpis">
 <article class="stat-kpi"><span>Probebesuch im Jahr</span><strong id="yearAttendanceRate">–</strong><small id="yearAttendanceDetail">Anwesenheitsquote</small></article>
 <article class="stat-kpi"><span>Mannschaftsstärke</span><strong id="teamStrength">0</strong><small id="teamStrengthDetail">Einsatzabteilung</small></article>
@@ -260,8 +260,12 @@
 <div class="screen-heading"><div><p class="eyebrow">Abgeschlossene Proben</p><h2>Historie</h2><p>Probenberichte nach Jahr und Datum sortiert.</p></div><button class="outline-button view-home-button" data-history-home="" type="button">Zurück zu Einstellungen</button></div>
 <article class="panel history-import-panel" id="historyImportPanel">
 <div class="panel-heading"><span class="step yellow">IMPORT</span><div><h3>CSV- und PDF-Berichte einlesen</h3><p>Wähle die Berichtsdateien aus dem gemeinsamen OneDrive-Ordner. CSV-Dateien ergänzen Historie und Statistik; gleichnamige PDF-Dateien werden dem Bericht zugeordnet.</p></div></div>
-<div class="history-import-actions"><button class="primary-button" id="importHistoryReportsButton" type="button">CSV- und PDF-Berichte auswählen</button><input accept=".csv,.pdf,text/csv,application/pdf" hidden="" id="historyReportsFileInput" multiple type="file"/></div>
+<div class="history-import-actions"><button class="primary-button" id="importHistoryReportsButton" type="button">Neue Berichte einlesen</button><button class="outline-button" id="syncHistoryReportsButton" type="button">Archiv mit Speicherorten abgleichen</button><input accept=".csv,.pdf,text/csv,application/pdf" hidden="" id="historyReportsFileInput" multiple type="file"/></div>
+<label class="history-subfolder-option"><input id="historyIncludeSubfolders" type="checkbox"/> <span>Unterordner einbeziehen</span></label>
 <p class="help-text" id="historyImportHint">Bereits vorhandene CSV-Berichte werden übersprungen. PDF-Dateien ohne passende CSV werden nicht als eigener Historieneintrag angelegt.</p>
+<p class="history-import-status" id="historyImportStatus">Noch kein Import auf diesem Gerät durchgeführt.</p>
+<div class="history-audit-actions"><button class="outline-button" id="auditHistoryButton" type="button">Archiv prüfen</button></div>
+<div class="history-audit-result" hidden id="historyAuditResult"></div>
 </article><section class="history-reports"><div class="history-section-heading"><span>Probenarchiv</span><h3>Abgeschlossene Proben</h3><p>PDF-Berichte nach Kalenderjahr und Monat öffnen.</p></div><div class="history-years" id="historyYears"></div><p class="empty-state" id="historyEmpty">Noch keine abgeschlossenen Proben vorhanden.</p></section>
 </section><section class="view help-view" hidden="" id="helpView">
 <article class="panel help-document">
@@ -274,7 +278,7 @@
 </div>
 <script src="js/core/config.js?v=20260919-25"></script>
 <script src="js/core/storage.js?v=20260919-25"></script>
-<script src="js/core/database.js?v=20260920-2"></script>
+<script src="js/core/database.js?v=20260920-3"></script>
 <script src="js/core/ui.js?v=20260919-25"></script>
 <script src="js/features/attendance/attendance.js?v=20260920-3"></script>
 <script src="js/features/reports/csv-engine.js?v=20260920-1"></script>
@@ -282,9 +286,9 @@
 <script src="js/features/history/backup-engine.js?v=20260920-1"></script>
 <script src="js/features/statistics/statistics-engine.js?v=20260920-1"></script>
 <script src="js/features/reports/probe-pdf.js?v=20260919-25"></script><script src="js/features/reports/csv.js?v=20260919-25"></script>
-<script src="js/features/history/archive.js?v=20260920-4"></script>
-<script src="js/features/history/report-csv-import.js?v=20260920-6"></script>
+<script src="js/features/history/archive.js?v=20260920-5"></script>
+<script src="js/features/history/report-csv-import.js?v=20260920-11"></script>
 <script src="js/features/settings/admin.js?v=20260919-25"></script>
-<script src="js/features/statistics/statistics.js?v=20260920-3"></script><script src="js/features/tactics/tactics-engine.js?v=20260920-1"></script><script src="js/features/tactics/tactics.js?v=20260920-1"></script><script src="js/app/app.js?v=20260919-41"></script>
+<script src="js/features/statistics/statistics.js?v=20260920-4"></script><script src="js/features/tactics/tactics-engine.js?v=20260920-1"></script><script src="js/features/tactics/tactics.js?v=20260920-1"></script><script src="js/app/app.js?v=20260919-41"></script>
 <dialog class="probe-topic-dialog" id="probeTopicDialog"><form class="probe-topic-form" method="dialog"><p class="eyebrow">Probe abschließen</p><h2>Thema der Probe</h2><p id="probeTopicDescription">Bitte das Thema der Probe eintragen. Das Thema erscheint in CSV, PDF und Archiv.</p><label for="probeTopicInput">Thema *</label><textarea id="probeTopicInput" maxlength="300" placeholder="z. B. Löschangriff, Funkübung oder Fahrzeugkunde" required="" rows="4"></textarea><p class="probe-topic-error" hidden="" id="probeTopicError">Bitte ein Thema eingeben.</p><div class="probe-topic-actions"><button class="outline-button" id="cancelProbeTopicButton" type="button">Abbrechen</button><button class="primary-button" id="confirmProbeTopicButton" type="button">Weiter zum Abschluss</button></div></form></dialog><dialog class="archive-correction-dialog" id="archiveCorrectionDialog"><form class="archive-correction-form" method="dialog"><p class="eyebrow">Abgeschlossene Probe</p><h2>Eintrag korrigieren</h2><p>Person auswählen und die gewünschten Angaben ändern.</p><label for="correctionPerson">Person</label><select class="text-input" id="correctionPerson"></select><label for="correctionStatus">Status</label><select class="text-input" id="correctionStatus"><option>Anwesend</option><option>Entschuldigt</option><option>Betrifft nicht</option><option>Fehlt</option></select><label for="correctionRole" id="correctionRoleLabel">Funktion / Status</label><select class="text-input" id="correctionRole"><option value="">Ohne Funktion</option><option value="Organisation">Organisation</option><option value="Reserve">Reserve</option><option value="GF">GF</option><option value="Maschinist">Maschinist</option><option value="ATF">ATF</option><option value="ATM">ATM</option><option value="WTF">WTF</option><option value="WTM">WTM</option><option value="STF">STF</option><option value="STM">STM</option><option value="Melder">Melder</option></select><div class="probe-topic-actions"><button class="outline-button" id="cancelCorrectionButton" type="button">Abbrechen</button><button class="primary-button" id="saveCorrectionButton" type="button">Korrektur speichern</button></div></form></dialog></body>
 </html>

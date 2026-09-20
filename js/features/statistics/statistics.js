@@ -1,3 +1,6 @@
+let selectedStatisticsYear=String(new Date().getFullYear());
+function availableStatisticsYears(){const years=new Set([String(new Date().getFullYear())]);statisticsArchiveData().forEach(data=>{const year=String(data.rows[0]?.date||data.item.createdAt||"").slice(0,4);if(/^\d{4}$/.test(year))years.add(year);});return [...years].sort((a,b)=>b.localeCompare(a));}
+function renderStatisticsYearSelect(){const select=byId("statisticsYearSelect");if(!select)return;const years=availableStatisticsYears();if(!years.includes(selectedStatisticsYear))selectedStatisticsYear=years[0];select.innerHTML=years.map(year=>`<option value="${year}"${year===selectedStatisticsYear?" selected":""}>${year}</option>`).join("");}
 function parseCsvRows(content) { return CsvEngine.parse(content); }
 function statisticsArchiveData() {
   return csvArchive.map(item => ({ item, rows: parseCsvRows(item.content) })).filter(data => data.rows.length);
@@ -6,6 +9,7 @@ function renderMetric(containerId, label, value, tone = "neutral") {
   return `<div class="metric-row metric-${tone}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
 }
 function renderStatistics() {
+  renderStatisticsYearSelect();
   populateIndividualMemberSelect();
   const year = String(new Date().getFullYear());
   const all = statisticsArchiveData();
@@ -112,7 +116,7 @@ function renderStatistics() {
 function exportStatisticsPdf() {
   renderStatistics();
   const originalTitle = document.title;
-  const year = new Date().getFullYear();
+  const year = selectedStatisticsYear;
   document.title = `Feuerwehr-Wasser_Statistik_${year}`;
   document.body.classList.add("printing-statistics");
   const cleanup = () => {

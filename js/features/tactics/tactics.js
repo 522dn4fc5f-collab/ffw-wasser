@@ -157,7 +157,11 @@ function refreshTacticsManualView() {
   updateTacticalUnitCards(group, staff);
   const assignedIds=new Set(currentTacticsSlots.filter(x=>x.member).map(x=>x.member.id));
   const reserve=tacticsPresentMembers().filter(member=>!assignedIds.has(member.id));
-  byId("reserveCrew").innerHTML=reserve.map(member=>`<span draggable="true" data-drag-member="${escapeHtml(member.id)}">${escapeHtml(nameForTile(member))} · Reserve</span>`).join(""); byId("reserveCount").textContent=reserve.length; byId("reserveEmpty").hidden=reserve.length>0;
+  const organizers=todayEntries().filter(entry=>entry.status==="Anwesend"&&entry.role==="Organisation");
+  const organizerNames=[...new Set(organizers.map(entry=>entry.displayName||entry.storedName||entry.name).filter(Boolean))];
+  const reserveMarkup=reserve.map(member=>`<span draggable="true" data-drag-member="${escapeHtml(member.id)}">${escapeHtml(nameForTile(member))} · Reserve</span>`).join("");
+  const organizerMarkup=organizerNames.map(name=>`<span class="tactics-organizer-entry">${escapeHtml(name)} · Organisation</span>`).join("");
+  byId("reserveCrew").innerHTML=reserveMarkup+organizerMarkup;byId("reserveCount").textContent=reserve.length+organizerNames.length;byId("reserveEmpty").hidden=reserve.length+organizerNames.length>0;
   rebuildTacticsAssignmentsFromSlots();
 }
 function findTacticsMember(id){return members.find(member=>member.id===id)||null;  updateTacticsRecommendationAfterManualChange();

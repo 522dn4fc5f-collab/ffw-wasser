@@ -372,7 +372,7 @@ function setHomeFlowStage(stage){
     item.classList.toggle("completed",number<stage);
     item.classList.toggle("upcoming",number>stage);
     if(isCurrent){item.setAttribute("aria-current","step");item.disabled=false;}
-    else{item.removeAttribute("aria-current");item.disabled=number!==1;}
+    else{item.removeAttribute("aria-current");item.disabled=!(number===1||(number===2&&stage===3));}
     item.style.setProperty("opacity","1","important");
   });
 }
@@ -419,7 +419,7 @@ function ensureStagedHomeFlow(){
   const attendance=byId("attendanceView"),workspace=byId("attendanceSelectionWorkspace"),sessionPanel=attendance?.querySelector(".home-session-type-panel");
   if(!attendance||!workspace||!sessionPanel)return;
   sessionPanel.classList.add("home-flow-card","home-flow-stage-1");
-  if(!byId("homeFlowProgress")){const progress=document.createElement("nav");progress.id="homeFlowProgress";progress.className="home-flow-progress";progress.setAttribute("aria-label","Probenablauf");progress.innerHTML=`<button type="button" data-flow-indicator="1"><b>1</b><span>Probenart</span></button><i></i><button type="button" data-flow-indicator="2" disabled><b>2</b><span>Anwesenheit</span></button><i></i><button type="button" data-flow-indicator="3" disabled><b>3</b><span>Abschluss</span></button>`;sessionPanel.parentElement.insertBefore(progress,sessionPanel);progress.querySelector('[data-flow-indicator="1"]').addEventListener("click",()=>{setHomeFlowStage(1);requestAnimationFrame(()=>{sessionPanel.scrollIntoView({behavior:"smooth",block:"center"});sessionPanel.querySelector("[data-session-type]")?.focus();});});}
+  if(!byId("homeFlowProgress")){const progress=document.createElement("nav");progress.id="homeFlowProgress";progress.className="home-flow-progress";progress.setAttribute("aria-label","Probenablauf");progress.innerHTML=`<button type="button" data-flow-indicator="1"><b>1</b><span>Probenart</span></button><i></i><button type="button" data-flow-indicator="2" disabled><b>2</b><span>Anwesenheit</span></button><i></i><button type="button" data-flow-indicator="3" disabled><b>3</b><span>Abschluss</span></button>`;sessionPanel.parentElement.insertBefore(progress,sessionPanel);progress.querySelector('[data-flow-indicator="1"]').addEventListener("click",()=>{setHomeFlowStage(1);requestAnimationFrame(()=>{sessionPanel.scrollIntoView({behavior:"smooth",block:"center"});sessionPanel.querySelector("[data-session-type]")?.focus();});});progress.querySelector('[data-flow-indicator="2"]').addEventListener("click",()=>{if(homeFlowStage!==3)return;setHomeFlowStage(2);requestAnimationFrame(()=>(byId("homeFlowProgress")||workspace)?.scrollIntoView({behavior:"smooth",block:"start"}));showToast("Schritt 2 ist wieder geöffnet. Bereits gespeicherte Teilnahmen bleiben erhalten.");});}
 
   const title=sessionPanel.querySelector("h2,h3");if(title)title.textContent="Probenart auswählen";
   const hint=byId("sessionHint");if(hint)hint.textContent="Probenart auswählen und anschließend zu Schritt 2 wechseln.";

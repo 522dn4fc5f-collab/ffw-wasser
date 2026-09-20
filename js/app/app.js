@@ -196,6 +196,7 @@ const cancelTacticsCloseButton=byId("cancelTacticsCloseButton");
 if(cancelTacticsCloseButton)cancelTacticsCloseButton.remove();
 byId("statisticsTab").addEventListener("click", () => { renderStatistics(); showView("statisticsView"); });
 byId("statisticsPdfButton").addEventListener("click", exportStatisticsPdf);
+byId("statisticsYearSelect").addEventListener("change",event=>{selectedStatisticsYear=event.target.value;renderStatistics();const selected=byId("individualMemberSelect").value;if(selected)renderIndividualStatistics(selected);});
 byId("individualMemberSelect").addEventListener("change", event => renderIndividualStatistics(event.target.value));
 byId("individualStatisticsPdfButton").addEventListener("click", exportIndividualStatisticsPdf);
 byId("loginButton").addEventListener("click", login);

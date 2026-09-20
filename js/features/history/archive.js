@@ -63,7 +63,10 @@ function completeBackupPayload() {
 }
 async function exportCompleteBackup() {
   const fileName = `FFW-Wasser_Komplett-Backup_${today()}.json`;
-  await shareOrDownloadJson(fileName, completeBackupPayload(), "Komplett-Backup wurde ausgegeben.");
+  const payload=completeBackupPayload();
+  payload.data.importedPdfs=await exportImportedReportPdfs();
+  payload.data.backupInfo={pdfCount:payload.data.importedPdfs.length,includesImportedPdfs:true};
+  await shareOrDownloadJson(fileName, payload, `Komplett-Backup wurde mit ${payload.data.importedPdfs.length} importierten PDF-Datei(en) ausgegeben.`);
 }
 function validBackupMember(member) {
   return member && typeof member.id === "string" && typeof member.lastName === "string" && typeof member.firstName === "string";
@@ -145,6 +148,8 @@ async function importCompleteBackup(file) {
     const normalized=normalizeCompleteBackupData(backup.data);
     if(!confirm(`Backup geprüft: ${normalized.members.length} Mitglieder und ${normalized.csvArchive.length} Historieneinträge gefunden. Jetzt wiederherstellen?`))return;
     saveCompleteBackupData(normalized);
+    csvArchive=normalized.csvArchive;
+    const restoredPdfs=await restoreImportedReportPdfs(backup.data.importedPdfs);
     chosenMemberId="";
     chosenMemberIds.clear();
     chosenRole="";
@@ -152,7 +157,7 @@ async function importCompleteBackup(file) {
     if(displayFailures.length){
       showToast("Backup wurde gespeichert. Bitte die App einmal neu öffnen, damit alle Ansichten aktualisiert werden.","success");
     }else{
-      showToast("Komplett-Backup wurde erfolgreich wiederhergestellt.","success");
+      showToast(`Komplett-Backup wurde erfolgreich wiederhergestellt. ${restoredPdfs} PDF-Datei(en) wurden übernommen.`,"success");
     }
   }catch(error){
     console.error("Komplett-Backup-Import fehlgeschlagen",error);

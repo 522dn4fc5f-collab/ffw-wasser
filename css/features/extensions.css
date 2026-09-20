@@ -206,3 +206,68 @@
 #settingsStatisticsView .age-statistics-section{order:21!important;width:100%!important;margin-top:18px!important}
 #settingsStatisticsView .age-ranking-panel{width:100%!important}
 @media print{body.printing-statistics #settingsStatisticsView .individual-statistics-panel{order:20!important}body.printing-statistics #settingsStatisticsView .age-statistics-section{order:21!important}}
+
+/* FFW 2.8.12: sichtbarer Elterncontainer fuer Statistikdruck */
+@media print{
+  body.printing-statistics>#protectedAppContent,
+  body.printing-individual-statistics>#protectedAppContent{
+    display:block!important;
+    visibility:visible!important;
+    position:static!important;
+    width:100%!important;
+    height:auto!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+  }
+  body.printing-statistics>#pageAccessGate,
+  body.printing-individual-statistics>#pageAccessGate,
+  body.printing-statistics>dialog,
+  body.printing-individual-statistics>dialog{
+    display:none!important;
+  }
+  body.printing-statistics #protectedAppContent>main,
+  body.printing-individual-statistics #protectedAppContent>main{
+    display:block!important;
+    visibility:visible!important;
+  }
+  body.printing-statistics #settingsStatisticsView,
+  body.printing-individual-statistics #settingsStatisticsView{
+    display:block!important;
+    visibility:visible!important;
+  }
+}
+
+/* FFW 2.9.0: Datenpflege, Jahresauswahl und Archivprüfung */
+.statistics-year-control{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.82rem;color:var(--muted)}
+.statistics-year-control .text-input{width:110px;min-height:38px;padding:7px 9px}
+.history-subfolder-option{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:750}
+.history-import-status{margin:10px 0 0;padding:10px 12px;border-radius:9px;background:#eef3f5;color:#40525c;font-size:.82rem}
+.history-audit-actions{margin-top:10px}.history-audit-result{margin-top:10px;padding:12px;border:1px solid #b9c7ce;border-radius:10px;background:#fff}
+.history-audit-result ul{margin:8px 0 0;padding-left:20px}.history-audit-result li{margin:4px 0}
+@media print{body.printing-statistics .statistics-year-control{display:none!important}}
+
+
+/* FFW 2.9.2: additiver Import und expliziter Archivabgleich */
+#settingsHistoryView .history-import-actions{flex-wrap:wrap!important}
+#settingsHistoryView .history-import-actions button{min-height:46px!important}
+@media(max-width:700px){#settingsHistoryView .history-import-actions button{width:100%!important;min-width:0!important}}
+
+
+/* FFW 2.9.4: Archivprüfung mit positiver Vollständigkeitsanzeige */
+.history-audit-result .audit-ok{margin:10px 0;padding:9px 11px;border-left:5px solid #2f7d32;background:#edf7ed;color:#245d27;font-weight:800}
+.history-audit-result .audit-warning{margin:10px 0;padding:9px 11px;border-left:5px solid #b26a00;background:#fff5df;color:#754700;font-weight:800}
+
+
+/* FFW 2.9.5: Schritt 2 im Ablauf direkt anklickbar */
+#homeFlowProgress[data-current-stage="3"] [data-flow-indicator="2"]{cursor:pointer!important;pointer-events:auto!important}
+#homeFlowProgress[data-current-stage="3"] [data-flow-indicator="2"]:hover{transform:translateY(-1px);filter:brightness(.97)}
+
+
+/* FFW 2.9.6: Organisation bei weiteren Anwesenden und flexible Schritt-3-Kennzeichnungen */
+#tacticsView .tactics-organizer-entry{border-color:#c9a852!important;background:#fff8dc!important;color:#59450e!important;font-weight:850!important;cursor:default!important}
+#tacticsView .panel-heading>.step.yellow,
+#tacticsView .panel-heading .step.yellow{width:auto!important;min-width:44px!important;max-width:100%!important;height:auto!important;min-height:34px!important;padding:6px 10px!important;line-height:1.05!important;white-space:nowrap!important;flex:0 0 auto!important}
+#tacticsView .panel-heading{min-width:0!important;flex-wrap:wrap!important}
+#tacticsView .panel-heading>div,#tacticsView .panel-heading>h3{min-width:0!important}
+@media(max-width:620px){#tacticsView .panel-heading>.step.yellow,#tacticsView .panel-heading .step.yellow{min-width:38px!important;padding:5px 8px!important;font-size:.65rem!important}}
