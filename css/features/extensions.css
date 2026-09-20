@@ -104,3 +104,36 @@
 #settingsHistoryView .history-import-actions .primary-button{width:auto;min-width:280px}
 #settingsHistoryView .history-item-details small::after{content:""}
 @media(max-width:620px){#settingsHistoryView .history-import-actions{display:block}#settingsHistoryView .history-import-actions .primary-button{width:100%;min-width:0}}
+
+/* FFW 2.8.5: Import-Kennzeichnung darf die Historienüberschrift nicht überlagern */
+#settingsHistoryView .history-import-panel .panel-heading{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  align-items:start!important;
+  gap:10px!important;
+}
+#settingsHistoryView .history-import-panel .panel-heading>.step{
+  position:static!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  justify-self:start!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:auto!important;
+  min-height:30px!important;
+  margin:0!important;
+  padding:6px 12px!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+}
+#settingsHistoryView .history-import-panel .panel-heading>div{
+  width:100%!important;
+  min-width:0!important;
+}
+#settingsHistoryView .history-import-panel .panel-heading h3{
+  margin:0!important;
+  padding:0!important;
+  overflow-wrap:anywhere!important;
+}

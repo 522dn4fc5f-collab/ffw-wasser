@@ -273,6 +273,7 @@ updateHelpForCurrentFeatures();
   renderPdfFolderStatus();
   ensureArchiveStorageCenter();
   window.FFWReportImport?.bind();
+  window.FFWReportImport?.updateHint();
 })();
 
 
