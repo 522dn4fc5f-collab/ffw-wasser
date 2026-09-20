@@ -137,3 +137,65 @@
   padding:0!important;
   overflow-wrap:anywhere!important;
 }
+
+/* FFW 2.8.8: Statistikdruck nach Umbenennung zur Einstellungs-Unterseite */
+@media print{
+  body.printing-statistics main>#settingsStatisticsView,
+  body.printing-statistics main>.statistics-view,
+  body.printing-statistics #settingsStatisticsView{
+    display:block!important;
+    visibility:visible!important;
+    position:static!important;
+    width:100%!important;
+    max-width:none!important;
+    height:auto!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+    opacity:1!important;
+  }
+  body.printing-statistics #settingsStatisticsView .statistics-print-header{
+    display:flex!important;
+  }
+  body.printing-statistics #settingsStatisticsView .statistics-actions,
+  body.printing-statistics #settingsStatisticsView .view-home-button,
+  body.printing-statistics #settingsStatisticsView #statisticsPdfButton{
+    display:none!important;
+  }
+  body.printing-individual-statistics main>#settingsStatisticsView,
+  body.printing-individual-statistics main>.statistics-view,
+  body.printing-individual-statistics #settingsStatisticsView{
+    display:block!important;
+    visibility:visible!important;
+    position:static!important;
+    width:100%!important;
+    max-width:none!important;
+    height:auto!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+    opacity:1!important;
+  }
+  body.printing-individual-statistics #settingsStatisticsView>*{display:none!important}
+  body.printing-individual-statistics #settingsStatisticsView .individual-statistics-panel{display:block!important}
+}
+
+
+/* FFW 2.8.9: Jahresübersicht der Probenthemen */
+#settingsStatisticsView .statistics-topics-panel{grid-column:1/-1!important}
+#settingsStatisticsView #probeTopics{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+#settingsStatisticsView #probeTopics .metric-row{break-inside:avoid!important}
+#settingsStatisticsView .individual-statistics-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+@media(max-width:800px){#settingsStatisticsView #probeTopics,#settingsStatisticsView .individual-statistics-grid{grid-template-columns:1fr!important}}
+@media print{body.printing-statistics #settingsStatisticsView .statistics-topics-panel{display:block!important;break-inside:auto!important}body.printing-statistics #settingsStatisticsView #probeTopics{grid-template-columns:repeat(2,1fr)!important}}
+
+
+/* FFW 2.8.10: Letzte Teilnahmen nur personenbezogen */
+#settingsStatisticsView .individual-statistics-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#settingsStatisticsView .individual-recent-section{grid-column:1/-1!important}
+#settingsStatisticsView .individual-recent-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+#settingsStatisticsView .individual-recent-row{display:grid!important;grid-template-columns:minmax(120px,.7fr) minmax(92px,.45fr) minmax(0,1.5fr)!important;align-items:center!important;gap:10px!important}
+#settingsStatisticsView .individual-recent-row small{overflow-wrap:anywhere!important}
+@media(max-width:800px){#settingsStatisticsView .individual-statistics-grid,#settingsStatisticsView .individual-recent-list{grid-template-columns:1fr!important}#settingsStatisticsView .individual-recent-row{grid-template-columns:1fr!important;gap:3px!important}}
+@media print{body.printing-individual-statistics #settingsStatisticsView .individual-recent-section{display:block!important;grid-column:1/-1!important}body.printing-individual-statistics #settingsStatisticsView .individual-recent-list{grid-template-columns:1fr!important}}

@@ -97,6 +97,14 @@ function renderStatistics() {
   const types = new Map(); yearData.forEach(data => { const type=data.rows[0]?.sessionType || data.item.sessionType || "Unbekannt"; types.set(type,(types.get(type)||0)+1); });
   byId("probeTypes").innerHTML = [...types.entries()].sort((a,b)=>b[1]-a[1]).map(([type,count]) => renderMetric("",type,count,"blue")).join("");
   byId("probeTypesEmpty").hidden = types.size > 0;
+
+  const topics = new Map();
+  yearData.forEach(data => {
+    const topic = String(data.item.topic || data.rows[0]?.topic || "").trim();
+    if (topic) topics.set(topic, (topics.get(topic) || 0) + 1);
+  });
+  byId("probeTopics").innerHTML = [...topics.entries()].sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0],"de")).map(([topic,count]) => renderMetric("",topic,count,"gold")).join("");
+  byId("probeTopicsEmpty").hidden = topics.size > 0;
   byId("statusOverview").innerHTML = [renderMetric("","Anwesend",presentRows.length,"green"),renderMetric("","Entschuldigt",excusedRows.length,"gold"),renderMetric("","Fehlt",missingRows.length,"gray")].join("");
   byId("statusOverviewEmpty").hidden = eligibleRows.length > 0;
 }
@@ -171,9 +179,13 @@ function renderIndividualStatistics(memberId) {
   byId("individualProbeTypes").innerHTML = [...types.entries()].sort((a,b)=>b[1]-a[1]).map(([type,count]) => renderMetric("",type,count,"blue")).join("");
   byId("individualProbeTypesEmpty").hidden = types.size > 0;
 
-  const recent = rows.filter(row => row.status === "Anwesend" || row.status === "Entschuldigt").sort((a,b) => String(b.date).localeCompare(String(a.date)) || String(b.time).localeCompare(String(a.time))).slice(0,10);
-  byId("individualRecentVisits").innerHTML = recent.map(row => `<div class="individual-recent-row"><span>${escapeHtml(row.date)}</span><strong>${escapeHtml(row.status)}</strong><small>${escapeHtml(row.role || "ohne Funktion")}</small></div>`).join("");
+  const recent = rows
+    .filter(row => row.status === "Anwesend" || row.status === "Entschuldigt")
+    .sort((a,b) => String(b.date).localeCompare(String(a.date)) || String(b.time).localeCompare(String(a.time)))
+    .slice(0,10);
+  byId("individualRecentVisits").innerHTML = recent.map(row => `<div class="individual-recent-row"><span>${escapeHtml(row.date)}${row.time ? ` · ${escapeHtml(row.time)}` : ""}</span><strong>${escapeHtml(row.status)}</strong><small>${escapeHtml(row.sessionType || "Probe")}${row.topic ? ` · ${escapeHtml(row.topic)}` : ""}${row.role ? ` · ${escapeHtml(row.role)}` : ""}</small></div>`).join("");
   byId("individualRecentVisitsEmpty").hidden = recent.length > 0;
+
   preview.hidden = false; button.disabled = false;
 }
 function exportIndividualStatisticsPdf() {
