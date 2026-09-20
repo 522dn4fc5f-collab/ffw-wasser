@@ -1,6 +1,6 @@
 {
-  "name": "Feuerwehr Wasser",
-  "short_name": "Feuerwehr Wasser",
+  "name": "FFW",
+  "short_name": "FFW",
   "description": "Anwesenheitserfassung der Feuerwehr Wasser",
   "lang": "de-DE",
   "start_url": "./",
@@ -20,5 +20,5 @@
       "type": "image/png"
     }
   ],
-  "version": "2.7.0"
+  "version": "2.7.1"
 }
