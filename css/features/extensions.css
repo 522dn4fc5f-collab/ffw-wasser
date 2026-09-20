@@ -95,3 +95,8 @@
     bottom:max(8px, env(safe-area-inset-bottom))!important;
   }
 }
+
+/* FFW 2.8.2: Importabfrage vor Probeabschluss */
+#preCloseImportDialog .pre-close-import-actions{display:grid!important;grid-template-columns:auto 1fr 1.25fr!important;gap:10px!important}
+#preCloseImportDialog .pre-close-import-actions button{min-height:50px!important}
+@media(max-width:720px){#preCloseImportDialog .pre-close-import-actions{grid-template-columns:1fr!important}}

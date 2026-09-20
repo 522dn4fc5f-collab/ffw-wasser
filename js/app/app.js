@@ -272,7 +272,7 @@ updateHelpForCurrentFeatures();
   renderBackupFolderStatus();
   renderPdfFolderStatus();
   ensureArchiveStorageCenter();
-  if (csvDirectoryHandle) await window.CentralArchive?.syncCentralArchiveFromFolder({notify:false});
+  window.FFWReportCsvImport?.bind();
 })();
 
 
