@@ -10,7 +10,7 @@
 #attendanceSelectionWorkspace .sheet-status-tab{min-height:54px!important;height:54px!important;padding:12px 20px!important;border-width:2px!important;font-size:.9rem!important;box-shadow:0 -3px 9px rgba(0,0,0,.13)!important}
 #attendanceSelectionWorkspace .sheet-status-tab.selected{min-height:70px!important;height:70px!important;transform:translateY(1px)!important;box-shadow:0 -6px 14px rgba(0,0,0,.2)!important}
 #attendanceSelectionWorkspace .batch-selection-controls{position:relative!important;padding-bottom:8px!important}
-#attendanceSelectionWorkspace .batch-selection-controls #saveButton{position:sticky!important;bottom:10px!important;z-index:35!important;min-height:54px!important;box-shadow:0 8px 22px rgba(0,0,0,.3)!important}
+#attendanceSelectionWorkspace .batch-selection-controls #saveButton{position:static!important;bottom:auto!important;z-index:auto!important;width:100%!important;min-height:54px!important;margin-top:12px!important;box-shadow:none!important}
 @media(max-width:700px){#attendanceSelectionWorkspace .sheet-status-tab{min-width:118px!important;padding:11px 12px!important}}
 
 
@@ -49,4 +49,16 @@
 @media(max-width:700px){
   #attendanceSelectionWorkspace .sheet-status-tab{min-width:124px!important;font-size:.84rem!important}
   #attendanceSelectionWorkspace .sheet-status-tab.selected{transform:translateY(2px)!important}
+}
+
+
+/* FFW 2.7.3: Auswahlbutton wie Abschlussbutton fest im Seitenfluss */
+#attendanceSelectionWorkspace .batch-selection-controls #saveButton{
+  position:static!important;
+  inset:auto!important;
+  display:block!important;
+  width:100%!important;
+  margin:14px 0 0!important;
+  transform:none!important;
+  box-shadow:none!important;
 }
