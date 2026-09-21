@@ -310,3 +310,66 @@
   #attendanceSelectionWorkspace #step3ActionArea.step-3-action-area{grid-template-columns:1fr!important;padding:16px!important}
   #step3ActionArea #exportResetButton.step-3-action-button{margin-top:5px!important;min-height:60px!important}
 }
+
+
+/* FFW 2.9.8: schwebende Schritt-2-Aktionen, iPhone-feste Beschriftung */
+#attendanceSelectionWorkspace{padding-bottom:300px!important}
+#attendanceSelectionWorkspace #step3ActionArea.step-3-action-area{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:max(8px,env(safe-area-inset-bottom))!important;
+  z-index:890!important;
+  width:min(760px,calc(100vw - 28px))!important;
+  margin:0!important;
+  transform:translateX(-50%)!important;
+  grid-template-columns:minmax(0,1fr) minmax(280px,.8fr)!important;
+  padding:14px 16px!important;
+  gap:14px!important;
+  box-shadow:0 12px 34px rgba(0,0,0,.34)!important;
+}
+#attendanceSelectionWorkspace .batch-selection-controls #saveButton{
+  bottom:calc(max(8px,env(safe-area-inset-bottom)) + 118px)!important;
+  z-index:900!important;
+}
+#step3ActionArea #exportResetButton.step-3-action-button{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  height:auto!important;
+  min-height:56px!important;
+  padding:11px 13px!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+  line-height:1.22!important;
+  text-align:center!important;
+}
+@media(max-width:760px){
+  #attendanceSelectionWorkspace{padding-bottom:270px!important}
+  #attendanceSelectionWorkspace #step3ActionArea.step-3-action-area{
+    width:calc(100vw - 18px)!important;
+    grid-template-columns:1fr!important;
+    padding:11px!important;
+    gap:8px!important;
+  }
+  #step3ActionArea .step3-action-copy{gap:2px!important;text-align:center!important}
+  #step3ActionArea .step3-action-copy strong{font-size:.98rem!important}
+  #step3ActionArea .step3-action-copy span{font-size:.82rem!important}
+  #step3ActionArea .step3-action-copy small{display:none!important}
+  #step3ActionArea #exportResetButton.step-3-action-button{
+    margin:0!important;
+    min-height:52px!important;
+    padding:10px 9px!important;
+    font-size:.9rem!important;
+  }
+  #attendanceSelectionWorkspace .batch-selection-controls #saveButton{
+    width:calc(100vw - 18px)!important;
+    bottom:calc(max(8px,env(safe-area-inset-bottom)) + 132px)!important;
+  }
+}
+@media(max-width:390px){
+  #step3ActionArea #exportResetButton.step-3-action-button{font-size:.82rem!important;padding-left:7px!important;padding-right:7px!important}
+  #attendanceSelectionWorkspace #step3ActionArea.step-3-action-area{width:calc(100vw - 12px)!important}
+  #attendanceSelectionWorkspace .batch-selection-controls #saveButton{width:calc(100vw - 12px)!important}
+}
