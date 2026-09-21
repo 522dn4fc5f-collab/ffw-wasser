@@ -271,3 +271,42 @@
 #tacticsView .panel-heading{min-width:0!important;flex-wrap:wrap!important}
 #tacticsView .panel-heading>div,#tacticsView .panel-heading>h3{min-width:0!important}
 @media(max-width:620px){#tacticsView .panel-heading>.step.yellow,#tacticsView .panel-heading .step.yellow{min-width:38px!important;padding:5px 8px!important;font-size:.65rem!important}}
+
+
+/* FFW 2.9.7: auffällige Abschlussaktion in Schritt 2 */
+#attendanceSelectionWorkspace #step3ActionArea.step-3-action-area{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(300px,.78fr)!important;
+  align-items:center!important;
+  gap:20px!important;
+  margin:26px 0 8px!important;
+  padding:20px!important;
+  border:2px solid #d5ad21!important;
+  border-left:9px solid #d5ad21!important;
+  border-radius:16px!important;
+  background:linear-gradient(135deg,#fffceb 0%,#fff1ad 100%)!important;
+  box-shadow:0 12px 28px rgba(92,72,9,.18)!important;
+}
+#step3ActionArea .step3-action-copy{display:grid!important;gap:5px!important;min-width:0!important}
+#step3ActionArea .step3-action-copy strong{color:#3f3309!important;font-size:1.22rem!important;font-weight:950!important}
+#step3ActionArea .step3-action-copy span{color:#176b36!important;font-size:1rem!important;font-weight:900!important}
+#step3ActionArea .step3-action-copy small{color:#695a1c!important;font-size:.84rem!important;line-height:1.4!important}
+#step3ActionArea #exportResetButton.step-3-action-button{
+  width:100%!important;
+  min-width:0!important;
+  min-height:64px!important;
+  padding:14px 18px!important;
+  border:2px solid #fff!important;
+  border-radius:13px!important;
+  color:#fff!important;
+  background:#176b36!important;
+  box-shadow:0 8px 19px rgba(23,107,54,.3)!important;
+  font-size:1.05rem!important;
+  font-weight:950!important;
+}
+#step3ActionArea #exportResetButton.step-3-action-button:hover{background:#0e4f27!important;transform:translateY(-1px)!important}
+#step3ActionArea #exportResetButton.step-3-action-button:disabled{color:#747d81!important;border-color:#e4e7e8!important;background:#d9dfe2!important;box-shadow:none!important;transform:none!important}
+@media(max-width:760px){
+  #attendanceSelectionWorkspace #step3ActionArea.step-3-action-area{grid-template-columns:1fr!important;padding:16px!important}
+  #step3ActionArea #exportResetButton.step-3-action-button{margin-top:5px!important;min-height:60px!important}
+}

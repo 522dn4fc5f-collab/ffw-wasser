@@ -24,11 +24,13 @@ function renderMembers() {
   byId("memberCount").textContent = multiMode ? `${chosenMemberIds.size} ausgewählt · ${availableMembers.length} offen` : `${availableMembers.length} offen`;
 }
 function updatePrimaryAction() {
-  const button=byId("exportResetButton"),hasEntries=todayEntries().length>0;
+  const button=byId("exportResetButton"),count=todayEntries().length,hasEntries=count>0;
   if(!button)return;
-  button.textContent="Weiter zu Schritt 3";
+  button.textContent=hasEntries?`Weiter zu Schritt 3 · ${count} ${count===1?"Person":"Personen"} erfasst →`:"Weiter zu Schritt 3 →";
   button.disabled=!hasEntries;
   button.title=hasEntries?(sessionType==="Allgemeine Probe"?"Taktik öffnen und Probe abschließen":"Probe abschließen"):"Mindestens eine Teilnahme erfassen";
+  const summary=byId("step3ActionSummary");
+  if(summary)summary.textContent=hasEntries?`${count} ${count===1?"Teilnahme":"Teilnahmen"} gespeichert.`:"Noch keine Teilnahme gespeichert.";
 }
 function backToMembers() {
   chosenMemberId = "";
@@ -440,7 +442,7 @@ function ensureStagedHomeFlow(){
       step3Action=document.createElement("section");
       step3Action.id="step3ActionArea";
       step3Action.className="step-3-action-area";
-      step3Action.innerHTML=`<div><strong>Teilnahmeerfassung abschließen</strong><small>Nach der Erfassung aller Personen mit Schritt 3 fortfahren.</small></div>`;
+      step3Action.innerHTML=`<div class="step3-action-copy"><strong>Anwesenheit vollständig?</strong><span id="step3ActionSummary">Noch keine Teilnahme gespeichert.</span><small>Die Einträge können über Schritt 2 später erneut bearbeitet werden.</small></div>`;
     }
     step3ActionButton.textContent="Weiter zu Schritt 3";
     step3ActionButton.classList.add("step-3-action-button");
