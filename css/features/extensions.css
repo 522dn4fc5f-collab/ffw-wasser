@@ -452,3 +452,82 @@
   .step3-confirm-actions{display:grid;grid-template-columns:1fr;gap:8px}
   .step3-confirm-actions button{width:100%;min-height:52px}
 }
+
+
+/* FFW 2.10.1: Auswahl übernehmen unter Heutige Anmeldungen */
+.desktop-save-button-dock{display:none}
+@media(min-width:900px) and (min-height:650px){
+  #attendanceSelectionWorkspace{padding-bottom:40px!important}
+  #attendanceView .desktop-save-button-dock{
+    display:block!important;
+    position:sticky!important;
+    bottom:12px!important;
+    z-index:70!important;
+    width:min(620px,100%)!important;
+    margin:12px 0 18px auto!important;
+    padding:10px!important;
+    border:1px solid #cbd5da!important;
+    border-radius:14px!important;
+    background:rgba(255,255,255,.96)!important;
+    box-shadow:0 9px 25px rgba(0,0,0,.2)!important;
+    backdrop-filter:blur(8px)!important;
+  }
+  #attendanceView .desktop-save-button-dock .batch-selection-controls{
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+    display:grid!important;
+    gap:8px!important;
+  }
+  #attendanceView .desktop-save-button-dock #saveButton{
+    position:static!important;
+    width:100%!important;
+    min-height:56px!important;
+    margin:0!important;
+  }
+}
+@media(max-width:899px), (max-height:649px){
+  #attendanceView .desktop-save-button-dock{display:contents!important}
+  #attendanceView .desktop-save-button-dock .batch-selection-controls{display:grid!important}
+}
+
+
+/* FFW 2.10.2: iPhone-Auswahlbutton wieder schwebend und exakt zentriert */
+@media(max-width:899px), (max-height:649px){
+  #attendanceView .desktop-save-button-dock{display:contents!important}
+  #attendanceView .desktop-save-button-dock .batch-selection-controls{display:contents!important}
+  #attendanceView #saveButton.primary-button{
+    position:fixed!important;
+    left:50%!important;
+    right:auto!important;
+    bottom:max(10px,env(safe-area-inset-bottom))!important;
+    z-index:950!important;
+    width:min(520px,calc(100vw - 20px))!important;
+    max-width:calc(100vw - 20px)!important;
+    min-width:0!important;
+    min-height:56px!important;
+    margin:0!important;
+    transform:translateX(-50%)!important;
+    box-sizing:border-box!important;
+    white-space:normal!important;
+    text-align:center!important;
+    box-shadow:0 8px 24px rgba(0,0,0,.28)!important;
+  }
+  #attendanceView #saveButton.primary-button:disabled{
+    position:fixed!important;
+    left:50%!important;
+    transform:translateX(-50%)!important;
+    opacity:.78!important;
+  }
+  #attendanceView{padding-bottom:calc(86px + env(safe-area-inset-bottom))!important}
+  #resetTodayParticipantsButton{scroll-margin-bottom:100px!important}
+}
+@media(max-width:390px){
+  #attendanceView #saveButton.primary-button{
+    width:calc(100vw - 14px)!important;
+    max-width:calc(100vw - 14px)!important;
+    font-size:.92rem!important;
+    padding-left:10px!important;
+    padding-right:10px!important;
+  }
+}
