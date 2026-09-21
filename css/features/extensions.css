@@ -531,3 +531,70 @@
     padding-right:10px!important;
   }
 }
+
+
+/* FFW 2.10.3: Statusreiter optisch mit Personen-markieren-Karte verbinden */
+#attendanceSelectionWorkspace{
+  gap:0!important;
+  overflow:visible!important;
+}
+#attendanceSelectionWorkspace #rolesPanel.status-tab-rail{
+  position:relative!important;
+  z-index:3!important;
+  margin:0 14px -1px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:14px 14px 0 0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+#attendanceSelectionWorkspace #attendanceStatusToolbar{
+  display:flex!important;
+  align-items:flex-end!important;
+  gap:5px!important;
+  margin:0!important;
+  padding:0 8px!important;
+  border-bottom:1px solid #c9d2d7!important;
+  background:transparent!important;
+  overflow-x:auto!important;
+  scrollbar-width:none!important;
+}
+#attendanceSelectionWorkspace #attendanceStatusToolbar::-webkit-scrollbar{display:none!important}
+#attendanceSelectionWorkspace #attendanceStatusToolbar [data-role]{
+  margin:0 0 -1px!important;
+  min-height:44px!important;
+  padding:9px 15px!important;
+  border:1px solid #c9d2d7!important;
+  border-bottom-color:#c9d2d7!important;
+  border-radius:11px 11px 0 0!important;
+  background:#e9eef1!important;
+  color:#44535b!important;
+  box-shadow:none!important;
+  white-space:nowrap!important;
+}
+#attendanceSelectionWorkspace #attendanceStatusToolbar [data-role].selected,
+#attendanceSelectionWorkspace #attendanceStatusToolbar [data-role][aria-pressed="true"]{
+  position:relative!important;
+  z-index:4!important;
+  border-color:#b7c4ca!important;
+  border-bottom-color:#fff!important;
+  background:#fff!important;
+  color:#176b36!important;
+  box-shadow:0 -4px 10px rgba(28,52,62,.07)!important;
+}
+#attendanceSelectionWorkspace .members-panel.organisation-sheet{
+  position:relative!important;
+  z-index:2!important;
+  margin-top:0!important;
+  border-top:1px solid #b7c4ca!important;
+  border-radius:14px!important;
+  background:#fff!important;
+  box-shadow:0 7px 20px rgba(26,47,57,.09)!important;
+}
+@media(max-width:620px){
+  #attendanceSelectionWorkspace #rolesPanel.status-tab-rail{margin-left:5px!important;margin-right:5px!important}
+  #attendanceSelectionWorkspace #attendanceStatusToolbar{gap:3px!important;padding-left:4px!important;padding-right:4px!important}
+  #attendanceSelectionWorkspace #attendanceStatusToolbar [data-role]{min-height:42px!important;padding:8px 10px!important;font-size:.75rem!important}
+  #attendanceSelectionWorkspace .members-panel.organisation-sheet{border-radius:12px!important}
+}
