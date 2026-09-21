@@ -417,6 +417,23 @@ function continueToAttendance(){
   window.__sessionTypeTransitionRunning=false;
 }
 
+function ensureStep3ConfirmDialog(){
+  let dialog=byId("step3ConfirmDialog");
+  if(dialog)return dialog;
+  dialog=document.createElement("dialog");
+  dialog.id="step3ConfirmDialog";
+  dialog.className="step3-confirm-dialog";
+  dialog.innerHTML=`<form method="dialog"><h3>Anwesenheitserfassung abschließen?</h3><p id="step3ConfirmSummary">Die gespeicherten Teilnahmen werden übernommen.</p><p class="step3-confirm-note">Schritt 2 kann anschließend über die obere Schrittanzeige wieder geöffnet werden.</p><div class="step3-confirm-actions"><button class="outline-button" value="cancel" type="submit">Abbrechen</button><button class="primary-button" id="confirmGoToStep3Button" value="default" type="button">Weiter zu Schritt 3</button></div></form>`;
+  document.body.appendChild(dialog);
+  byId("confirmGoToStep3Button").addEventListener("click",()=>{
+    dialog.close();
+    const finishType=byId("homeStageFinishType");if(finishType)finishType.textContent=sessionType;
+    setHomeFlowStage(3);
+    const target=sessionType==="Allgemeine Probe"?byId("tacticsView"):byId("homeStageFinish");
+    requestAnimationFrame(()=>target?.scrollIntoView({behavior:"smooth",block:"start"}));
+  });
+  return dialog;
+}
 function ensureStagedHomeFlow(){
   const attendance=byId("attendanceView"),workspace=byId("attendanceSelectionWorkspace"),sessionPanel=attendance?.querySelector(".home-session-type-panel");
   if(!attendance||!workspace||!sessionPanel)return;
@@ -465,10 +482,9 @@ function ensureStagedHomeFlow(){
       if(homeFlowStage!==2)return;
       event.preventDefault();event.stopImmediatePropagation();
       if(!todayEntries().length)return showToast("Bitte mindestens eine Teilnahme erfassen.","error");
-      const finishType=byId("homeStageFinishType");if(finishType)finishType.textContent=sessionType;
-      setHomeFlowStage(3);
-      const target=sessionType==="Allgemeine Probe"?byId("tacticsView"):byId("homeStageFinish");
-      requestAnimationFrame(()=>target?.scrollIntoView({behavior:"smooth",block:"start"}));
+      const dialog=ensureStep3ConfirmDialog(),count=todayEntries().length,summary=byId("step3ConfirmSummary");
+      if(summary)summary.textContent=`${count} ${count===1?"Teilnahme ist":"Teilnahmen sind"} gespeichert. Soll Schritt 3 jetzt geöffnet werden?`;
+      if(typeof dialog.showModal==="function")dialog.showModal();else if(confirm(summary?.textContent||"Weiter zu Schritt 3?"))byId("confirmGoToStep3Button")?.click();
     },true);
   }
   setHomeFlowStage(1);

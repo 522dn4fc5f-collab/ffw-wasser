@@ -373,3 +373,82 @@
   #attendanceSelectionWorkspace #step3ActionArea.step-3-action-area{width:calc(100vw - 12px)!important}
   #attendanceSelectionWorkspace .batch-selection-controls #saveButton{width:calc(100vw - 12px)!important}
 }
+
+
+/* FFW 2.9.9: mobile Schwebekarten einklappbar, Reset bleibt erreichbar */
+@media(max-width:760px){
+  #attendanceSelectionWorkspace{padding-bottom:175px!important}
+  #attendanceSelectionWorkspace #step3ActionArea.step-3-action-area{
+    position:sticky!important;
+    left:auto!important;
+    right:auto!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    transform:none!important;
+    width:100%!important;
+    margin:14px 0 10px!important;
+    z-index:40!important;
+  }
+  #attendanceSelectionWorkspace .batch-selection-controls #saveButton{
+    position:sticky!important;
+    left:auto!important;
+    right:auto!important;
+    bottom:calc(max(8px,env(safe-area-inset-bottom)) + 118px)!important;
+    width:100%!important;
+    z-index:45!important;
+  }
+  #attendanceSelectionWorkspace .flow-stage-2-support{
+    scroll-margin-bottom:190px!important;
+  }
+  #resetTodayParticipantsButton{
+    position:relative!important;
+    z-index:50!important;
+    margin-bottom:18px!important;
+  }
+}
+@media(max-width:390px){
+  #attendanceSelectionWorkspace #step3ActionArea.step-3-action-area,
+  #attendanceSelectionWorkspace .batch-selection-controls #saveButton{width:100%!important}
+}
+
+
+/* FFW 2.10.0: Anmeldung und Abschluss sicher trennen */
+#attendanceSelectionWorkspace{padding-bottom:120px!important}
+#attendanceSelectionWorkspace #step3ActionArea.step-3-action-area{
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  z-index:1!important;
+  width:100%!important;
+  margin:24px 0 12px!important;
+  transform:none!important;
+}
+.step3-confirm-dialog{
+  width:min(520px,calc(100vw - 28px));
+  padding:0;
+  border:0;
+  border-radius:16px;
+  color:#263238;
+  background:#fff;
+  box-shadow:0 24px 64px rgba(0,0,0,.38);
+}
+.step3-confirm-dialog::backdrop{background:rgba(15,25,30,.58);backdrop-filter:blur(2px)}
+.step3-confirm-dialog form{display:grid;gap:12px;padding:22px}
+.step3-confirm-dialog h3{margin:0;color:#8f1212;font-size:1.25rem}
+.step3-confirm-dialog p{margin:0;line-height:1.45}
+.step3-confirm-dialog .step3-confirm-note{padding:10px 12px;border-left:5px solid #d5ad21;background:#fff8dc;font-size:.86rem}
+.step3-confirm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:5px}
+.step3-confirm-actions button{min-height:48px}
+@media(max-width:760px){
+  #attendanceSelectionWorkspace{padding-bottom:105px!important}
+  #attendanceSelectionWorkspace #step3ActionArea.step-3-action-area{position:relative!important;width:100%!important;margin:20px 0 14px!important}
+  #attendanceSelectionWorkspace .batch-selection-controls #saveButton{
+    position:sticky!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    width:100%!important;
+    z-index:60!important;
+  }
+  .step3-confirm-dialog form{padding:18px 16px}
+  .step3-confirm-actions{display:grid;grid-template-columns:1fr;gap:8px}
+  .step3-confirm-actions button{width:100%;min-height:52px}
+}
