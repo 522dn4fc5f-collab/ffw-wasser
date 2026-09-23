@@ -27,6 +27,10 @@ function ensureProbeTopicDialog() {
     requestAnimationFrame(()=>byId("attendanceSelectionWorkspace")?.scrollIntoView({behavior:"smooth",block:"start"}));
   });
   byId("confirmProbeTopicButton").addEventListener("click",confirmProbeTopic);
+  const input=byId("probeTopicInput");
+  const focusTopicInput=()=>{try{input?.focus({preventScroll:true});}catch(error){input?.focus();}};
+  dialog.addEventListener("click",event=>{if(event.target===input||event.target.closest('label[for="probeTopicInput"]'))focusTopicInput();});
+  input?.addEventListener("pointerdown",focusTopicInput,{passive:true});
 }
 function openProbeTopicDialog() {
   ensureProbeTopicDialog();
@@ -36,7 +40,10 @@ function openProbeTopicDialog() {
   if(description)description.textContent=`Bitte das Thema der ${sessionType} eintragen. Das Thema erscheint in CSV, PDF und Archiv.`;
   input.value=currentClosingTopic;
   dialog.showModal();
-  setTimeout(()=>input.focus(),0);
+  // iPadOS/Safari öffnet die Bildschirmtastatur nur zuverlässig, wenn focus()
+  // noch innerhalb der auslösenden Benutzeraktion erfolgt.
+  try{input.focus({preventScroll:true});}catch(error){input.focus();}
+  input.setSelectionRange(input.value.length,input.value.length);
 }
 async function confirmProbeTopic() {
   const topic=byId("probeTopicInput").value.trim();

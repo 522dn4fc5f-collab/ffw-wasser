@@ -598,3 +598,48 @@
   #attendanceSelectionWorkspace #attendanceStatusToolbar [data-role]{min-height:42px!important;padding:8px 10px!important;font-size:.75rem!important}
   #attendanceSelectionWorkspace .members-panel.organisation-sheet{border-radius:12px!important}
 }
+
+
+/* FFW 2.10.4: iPadOS-18-Tastatur und einzelne Teilnehmer wieder löschbar */
+.probe-topic-dialog{max-height:calc(100dvh - 24px)!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important}
+.probe-topic-form #probeTopicInput{
+  display:block!important;
+  width:100%!important;
+  min-height:150px!important;
+  padding:15px!important;
+  font-size:16px!important;
+  line-height:1.45!important;
+  color:#1f2a30!important;
+  background:#fff!important;
+  -webkit-user-select:text!important;
+  user-select:text!important;
+  touch-action:auto!important;
+  pointer-events:auto!important;
+  -webkit-appearance:none!important;
+  appearance:none!important;
+}
+.participant-entries-panel td:last-child{min-width:78px!important;text-align:center!important}
+.participant-entries-panel .delete-entry{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:52px!important;
+  min-height:48px!important;
+  padding:8px 12px!important;
+  border:2px solid #9b1b1b!important;
+  border-radius:10px!important;
+  color:#fff!important;
+  background:#b32121!important;
+  font-size:1.15rem!important;
+  font-weight:900!important;
+  touch-action:manipulation!important;
+  pointer-events:auto!important;
+}
+.participant-entries-panel .delete-entry::after{content:" Löschen";font-size:.75rem;margin-left:4px}
+@media(max-width:760px){
+  .probe-topic-dialog{width:calc(100vw - 20px)!important;margin:auto!important}
+  .probe-topic-form{padding:18px 15px!important}
+  .probe-topic-form #probeTopicInput{min-height:180px!important}
+  .participant-entries-panel .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
+  .participant-entries-panel table{min-width:620px!important}
+}

@@ -235,6 +235,24 @@ function saveAttendance() {
   renderAdmin();
   showToast(`${nameForTile(selected)} wurde gespeichert. Mitglied und Funktion wurden zurückgesetzt.`);
 }
+function deleteEntry(id) {
+  const entry=entries.find(item=>item.id===id);
+  if(!entry)return showToast("Die Anmeldung wurde nicht gefunden.","error");
+  const name=entry.displayName||entry.storedName||"diese Person";
+  if(!confirm(`Anmeldung von ${name} wirklich aus der heutigen Liste entfernen?`))return;
+  entries=entries.filter(item=>item.id!==id);
+  saveEntries();
+  chosenMemberId="";
+  chosenMemberIds.delete(entry.memberId||"");
+  renderEntries();
+  renderMembers();
+  renderRoles();
+  renderAdmin();
+  updateSelection();
+  updateProbeWorkflow();
+  updatePrimaryAction();
+  showToast(`${name} wurde aus den heutigen Anmeldungen entfernt.`);
+}
 function clearToday() {
   if (!todayEntries().length) return showToast("Für heute sind keine Anmeldungen vorhanden.", "error");
   if (!confirm("Alle heutigen Anmeldungen zurücksetzen? Mitglieder, Einstellungen und Archiv bleiben erhalten.")) return;
