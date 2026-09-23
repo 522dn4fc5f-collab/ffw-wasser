@@ -309,7 +309,7 @@ else removeStandaloneAttendanceVersion();
     const content=byId("protectedAppContent");
     if(content){content.hidden=false;content.removeAttribute("aria-hidden");}
     gate?.remove();
-    setTimeout(()=>showBreathingClearanceWarnings(),350);
+    setTimeout(()=>{showBreathingClearanceWarnings();showDriverLicenseControlWarnings();},350);
     document.documentElement.classList.remove("page-access-pending");
     document.body.classList.remove("page-access-pending");
     byId("accessGateCriticalStyle")?.remove();
@@ -355,4 +355,23 @@ function enforceFooterVersion(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",enforceFooterVersion,{once:true});
 else enforceFooterVersion();
 
-function showBreathingClearanceWarnings(){const affected=members.filter(m=>!m.ageDepartment&&["expired","soon"].includes(breathingClearanceState(m,systemToday())));if(!affected.length)return;const expired=affected.filter(m=>breathingClearanceState(m,systemToday())==="expired").length,soon=affected.length-expired;showToast(`Atemschutzfreigaben: ${expired} abgelaufen · ${soon} laufen bald ab. Details in der Statistik.`,expired?"error":"success");}
+function showBreathingClearanceWarnings(){
+ const affected=members.filter(member=>!member.ageDepartment&&["expired","soon"].includes(breathingClearanceState(member,systemToday())));
+ const existing=byId("breathingClearanceStartupNotice");
+ if(!affected.length){existing?.remove();return;}
+ const expiredMembers=affected.filter(member=>breathingClearanceState(member,systemToday())==="expired");
+ const soonMembers=affected.filter(member=>breathingClearanceState(member,systemToday())==="soon");
+ let notice=existing;
+ if(!notice){
+  notice=document.createElement("aside");notice.id="breathingClearanceStartupNotice";notice.className="breathing-clearance-startup-notice";notice.setAttribute("role","alertdialog");notice.setAttribute("aria-modal","false");notice.setAttribute("aria-labelledby","breathingNoticeTitle");document.body.appendChild(notice);
+ }
+ const rows=[...expiredMembers.map(member=>`<li class="breathing-notice-expired"><strong>${escapeHtml(nameForTile(member))}</strong><span>abgelaufen am ${escapeHtml(member.breathingClearanceUntil||"nicht hinterlegt")}</span></li>`),...soonMembers.map(member=>`<li class="breathing-notice-soon"><strong>${escapeHtml(nameForTile(member))}</strong><span>gültig bis ${escapeHtml(member.breathingClearanceUntil||"nicht hinterlegt")}</span></li>`)];
+ notice.innerHTML=`<div class="breathing-notice-head"><div><span class="breathing-notice-kicker">Atemschutz-Status</span><h2 id="breathingNoticeTitle">Freigaben prüfen</h2></div><button type="button" class="breathing-notice-close" aria-label="Atemschutz-Hinweis schließen">×</button></div><p><strong>${expiredMembers.length}</strong> abgelaufen · <strong>${soonMembers.length}</strong> laufen innerhalb von 60 Tagen ab.</p><ul>${rows.join("")}</ul><div class="breathing-notice-actions"><button type="button" class="outline-button" data-breathing-statistics>Details in der Statistik</button><button type="button" class="primary-button" data-breathing-dismiss>Hinweis schließen</button></div>`;
+ const close=()=>notice.remove();notice.querySelector(".breathing-notice-close").onclick=close;notice.querySelector("[data-breathing-dismiss]").onclick=close;notice.querySelector("[data-breathing-statistics]").onclick=()=>{close();renderStatistics();showView("settingsStatisticsView");};
+ requestAnimationFrame(()=>notice.querySelector("[data-breathing-dismiss]")?.focus({preventScroll:true}));
+}
+
+function showDriverLicenseControlWarnings(){
+ const affected=members.filter(member=>["missing","overdue","soon"].includes(driverLicenseControlDue(member,systemToday())));const existing=byId("driverLicenseStartupNotice");if(!affected.length){existing?.remove();return;}
+ const missing=affected.filter(member=>driverLicenseControlDue(member,systemToday())==="missing"),overdue=affected.filter(member=>driverLicenseControlDue(member,systemToday())==="overdue"),soon=affected.filter(member=>driverLicenseControlDue(member,systemToday())==="soon");let notice=existing;if(!notice){notice=document.createElement("aside");notice.id="driverLicenseStartupNotice";notice.className="driver-license-startup-notice";notice.setAttribute("role","alertdialog");notice.setAttribute("aria-labelledby","driverLicenseNoticeTitle");document.body.appendChild(notice);}
+ const row=(member,status)=>`<li class="driver-license-${status}"><strong>${escapeHtml(nameForTile(member))}</strong><span>${status==="missing"?"Kontrolle fehlt":status==="overdue"?`fällig seit ${escapeHtml(driverLicenseDueDate(member))}`:`fällig bis ${escapeHtml(driverLicenseDueDate(member))}`}</span></li>`;notice.innerHTML=`<div class="breathing-notice-head"><div><span class="driver-license-kicker">Maschinisten</span><h2 id="driverLicenseNoticeTitle">Jährliche Führerscheinkontrolle</h2></div><button type="button" class="driver-license-close" aria-label="Führerschein-Hinweis schließen">×</button></div><p><strong>${missing.length}</strong> nicht dokumentiert · <strong>${overdue.length}</strong> überfällig · <strong>${soon.length}</strong> bald fällig.</p><ul>${[...missing.map(m=>row(m,"missing")),...overdue.map(m=>row(m,"overdue")),...soon.map(m=>row(m,"soon"))].join("")}</ul><div class="breathing-notice-actions"><button type="button" class="outline-button" data-driver-members>Mitglieder verwalten</button><button type="button" class="primary-button" data-driver-dismiss>Hinweis schließen</button></div>`;const close=()=>notice.remove();notice.querySelector(".driver-license-close").onclick=close;notice.querySelector("[data-driver-dismiss]").onclick=close;notice.querySelector("[data-driver-members]").onclick=()=>{close();showView("settingsMembersView");};}

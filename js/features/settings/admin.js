@@ -141,6 +141,8 @@ function updateMember(id, row) {
   member.breathingClearanceUntil = row.querySelector("[data-breathing-clearance-until]")?.value || "";
   if(member.breathingClearance&&!member.breathingClearanceUntil)return showToast("Bitte ein Verfallsdatum für die Atemschutzfreigabe eintragen.","error");
   member.machinistVehicles = [...row.querySelectorAll("[data-machinist-vehicle]:checked")].map(input => input.dataset.machinistVehicle);
+  member.driverLicenseCheckedOn = row.querySelector("[data-driver-license-checked]")?.value || "";
+  if(member.machinistVehicles.length&&!member.driverLicenseCheckedOn)return showToast("Bitte das Datum der letzten Führerscheinkontrolle eintragen.","error");
   members = sortMembers(members);
   saveMembers();
   renderMembers();

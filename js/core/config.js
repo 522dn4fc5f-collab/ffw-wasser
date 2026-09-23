@@ -28,6 +28,8 @@ let breathingProtectionPlanned = false;
 const BREATHING_ROLES = new Set(["ATF","ATM","WTF","WTM"]);
 function hasValidBreathingClearance(member,date=today()){return Boolean(member?.breathingClearance && member?.breathingClearanceUntil && member.breathingClearanceUntil>=date);}
 function breathingClearanceState(member,date=systemToday()){if(!member?.breathingClearance||!member?.breathingClearanceUntil)return "none";if(member.breathingClearanceUntil<date)return "expired";const soon=new Date(date+"T12:00:00");soon.setDate(soon.getDate()+60);return member.breathingClearanceUntil<=soon.toLocaleDateString("sv-SE")?"soon":"valid";}
+function driverLicenseControlDue(member,date=systemToday()){if(!Array.isArray(member?.machinistVehicles)||!member.machinistVehicles.length)return "not-machinist";if(!member.driverLicenseCheckedOn)return "missing";const checked=new Date(`${member.driverLicenseCheckedOn}T12:00:00`);if(Number.isNaN(checked.getTime()))return "missing";const due=new Date(checked);due.setFullYear(due.getFullYear()+1);const dueDate=due.toLocaleDateString("sv-SE");if(dueDate<date)return "overdue";const soon=new Date(`${date}T12:00:00`);soon.setDate(soon.getDate()+60);return dueDate<=soon.toLocaleDateString("sv-SE")?"soon":"valid";}
+function driverLicenseDueDate(member){if(!member?.driverLicenseCheckedOn)return "";const due=new Date(`${member.driverLicenseCheckedOn}T12:00:00`);if(Number.isNaN(due.getTime()))return "";due.setFullYear(due.getFullYear()+1);return due.toLocaleDateString("sv-SE");}
 const today = () => currentProbeDate || systemToday();
 const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const nameForStorage = member => `${member.lastName}, ${member.firstName}`;
