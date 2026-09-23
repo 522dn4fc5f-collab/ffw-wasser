@@ -101,7 +101,7 @@ async function closeDay(topic = currentClosingTopic) {
   chosenMemberIds.clear();
   chosenRole = "";
   currentClosingTopic = "";
-  documentReportPages.forEach(page=>URL.revokeObjectURL(page.url));documentReportPages=[];documentReportOcrText="";documentReportReady=false;
+  resetDocumentReportState();
   currentProbeDate = systemToday();
   saveEntries();
   renderMembers(); renderRoles(); renderEntries(); updateSelection();

@@ -842,3 +842,7 @@
 
 /* FFW 2.16.5: Zwei-Finger-Drehgeste */
 .manual-crop-preview{position:relative;touch-action:none;user-select:none;-webkit-user-select:none}.two-finger-rotate-hint{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);padding:7px 11px;border-radius:999px;background:rgba(0,0,0,.72);color:#fff;font-size:.8rem;font-weight:850;pointer-events:none;white-space:nowrap}.manual-crop-preview:active .two-finger-rotate-hint{background:rgba(25,120,58,.9)}
+
+/* FFW 2.16.6: iPad-Hinweise getrennt sichtbar */
+@media (min-width:621px) and (max-width:1180px){.driver-license-startup-notice,.breathing-clearance-startup-notice{left:12px!important;right:12px!important;width:auto!important;max-height:calc(44dvh - 10px)!important;overflow:auto!important}.driver-license-startup-notice{top:max(12px,env(safe-area-inset-top))!important;bottom:auto!important;z-index:1230!important}.breathing-clearance-startup-notice{top:auto!important;bottom:max(12px,env(safe-area-inset-bottom))!important;z-index:1230!important}}
+@media (max-width:620px){.driver-license-startup-notice,.breathing-clearance-startup-notice{left:8px!important;right:8px!important;width:auto!important;max-height:calc(43dvh - 8px)!important}.driver-license-startup-notice{top:max(8px,env(safe-area-inset-top))!important;bottom:auto!important;z-index:1230!important}.breathing-clearance-startup-notice{top:auto!important;bottom:max(8px,env(safe-area-inset-bottom))!important;z-index:1230!important}}
