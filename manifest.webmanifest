@@ -1,7 +1,7 @@
 {
   "name": "Feuerwehr Wasser",
   "short_name": "FFW Wasser",
-  "version": "2.14.9",
+  "version": "2.15.0",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ececec",
