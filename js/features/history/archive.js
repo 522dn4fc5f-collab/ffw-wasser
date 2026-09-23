@@ -90,7 +90,8 @@ function normalizeCompleteBackupData(data) {
     ageDepartment:Boolean(member.ageDepartment),
     machinistVehicles:Array.isArray(member.machinistVehicles)?member.machinistVehicles.filter(value=>value==="LF"||value==="TSF"):[],
     rfidId:String(member.rfidId||"").trim(),
-    committeeMember:Boolean(member.committeeMember)
+    committeeMember:Boolean(member.committeeMember),
+    atueQualified:Boolean(member.atueQualified),breathingClearance:Boolean(member.breathingClearance),breathingClearanceUntil:String(member.breathingClearanceUntil||"")
   })).filter(member=>member.lastName&&member.firstName);
   if(!importedMembers.length)throw new Error("members");
   return {
@@ -126,7 +127,7 @@ function saveCompleteBackupData(data) {
 }
 function refreshAfterCompleteBackupImport() {
   const updates=[
-    ["Probenart",()=>renderSessionType()],
+    ["Terminart",()=>renderSessionType()],
     ["Mitglieder",()=>renderMembers()],
     ["Funktionen",()=>renderRoles()],
     ["Tagesdaten",()=>renderEntries()],
@@ -178,7 +179,7 @@ async function importCompleteBackup(file) {
 }
 
 function archiveRowsFromContent(content){return parseCsvRows(content);}
-function archiveCsvFromRows(rows,topic=""){const header="Datum;Uhrzeit;Name;Probenart;Status;Funktion / Status;Thema";return "\ufeff"+[header,...rows.map(row=>[row.date,row.time,row.name,row.sessionType,row.status,row.role,row.topic||topic].map(csvCell).join(";"))].join("\r\n");}
+function archiveCsvFromRows(rows,topic=""){const header="Datum;Uhrzeit;Name;Terminart;Status;Funktion / Status;Thema";return "\ufeff"+[header,...rows.map(row=>[row.date,row.time,row.name,row.sessionType,row.status,row.role,row.topic||topic].map(csvCell).join(";"))].join("\r\n");}
 let archiveCorrectionState=null;
 function ensureArchiveCorrectionDialog(){
   const dialog=byId("archiveCorrectionDialog");

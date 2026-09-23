@@ -15,7 +15,7 @@ function probePdfBlob(rows, sessionType, counts, topic="", reportDate=today()){
   pages.forEach((page,pi)=>{
     const ops=['0.08 0.10 0.09 rg']; const t=(x,y,size,text,b=false)=>ops.push(`BT /${b?'F2':'F1'} ${size} Tf ${x} ${y} Td (${pdfEscape(pdfLatin1(text))}) Tj ET`);
     ops.push('0.06 0.24 0.12 rg 36 792 523 32 re f'); ops.push('1 1 1 rg'); t(48,803,16,'Feuerwehr Wasser - Probenbericht',true); ops.push('0.08 0.10 0.09 rg');
-    t(36,770,10,`Datum: ${reportDate}    Probenart: ${sessionType}`,true);
+    t(36,770,10,`Datum: ${reportDate}    Terminart: ${sessionType}`,true);
     t(36,753,9,`Thema: ${String(topic||"-").slice(0,90)}`,true);
     t(36,738,9,`Anwesend: ${counts.present}    Entschuldigt: ${counts.excused}    Fehlt: ${counts.missing}    Betrifft nicht: ${counts.notApplicable}`);
     ops.push('0.30 0.40 0.50 rg 36 708 523 22 re f');

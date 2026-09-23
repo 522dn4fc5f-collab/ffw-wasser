@@ -37,12 +37,12 @@ async function closeDay(topic = currentClosingTopic) {
     if (entry.role === "Organisation") return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", "Organisation"];
     if (exportSessionType === "Sonderprobe" && entry.status === "Anwesend") return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", "Anwesend"];
     if (exportSessionType === "Unterricht" && entry.status === "Anwesend") return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", "Unterricht"];
-    if (exportSessionType === "Ausschuss" && entry.status === "Anwesend") return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", "Ausschuss"];
+    if (exportSessionType === "Ausschuss Sitzung" && entry.status === "Anwesend") return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", "Ausschuss Sitzung"];
     return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", csvRoleForEntry(entry, member)];
   });
 
   const rowsWithTopic = rows.map(row => [...row, topic]);
-  const lines = ["Datum;Uhrzeit;Name;Probenart;Status;Funktion / Status;Thema", ...rowsWithTopic.map(row => row.map(csvCell).join(";"))];
+  const lines = ["Datum;Uhrzeit;Name;Terminart;Status;Funktion / Status;Thema", ...rowsWithTopic.map(row => row.map(csvCell).join(";"))];
   const safeType = exportSessionType.replace(/ /g, "-");
   const fileName = `FFW-Wasser_${today()}_${safeType}.csv`;
   const csvContent = "\ufeff" + lines.join("\r\n");
@@ -101,6 +101,7 @@ async function closeDay(topic = currentClosingTopic) {
   chosenMemberIds.clear();
   chosenRole = "";
   currentClosingTopic = "";
+  documentReportPages.forEach(page=>URL.revokeObjectURL(page.url));documentReportPages=[];documentReportOcrText="";documentReportReady=false;
   currentProbeDate = systemToday();
   saveEntries();
   renderMembers(); renderRoles(); renderEntries(); updateSelection();

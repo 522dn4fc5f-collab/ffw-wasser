@@ -24,6 +24,10 @@ const KEYS = { members: "fw_v5_members", entries: "fw_v5_entries", pin: "fw_v5_p
 const byId = id => document.getElementById(id);
 const systemToday = () => new Date().toLocaleDateString("sv-SE");
 let currentProbeDate = systemToday();
+let breathingProtectionPlanned = false;
+const BREATHING_ROLES = new Set(["ATF","ATM","WTF","WTM"]);
+function hasValidBreathingClearance(member,date=today()){return Boolean(member?.breathingClearance && member?.breathingClearanceUntil && member.breathingClearanceUntil>=date);}
+function breathingClearanceState(member,date=systemToday()){if(!member?.breathingClearance||!member?.breathingClearanceUntil)return "none";if(member.breathingClearanceUntil<date)return "expired";const soon=new Date(date+"T12:00:00");soon.setDate(soon.getDate()+60);return member.breathingClearanceUntil<=soon.toLocaleDateString("sv-SE")?"soon":"valid";}
 const today = () => currentProbeDate || systemToday();
 const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const nameForStorage = member => `${member.lastName}, ${member.firstName}`;

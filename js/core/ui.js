@@ -22,7 +22,7 @@ function showView(viewId) {
 function renderSessionType() {
   const isSpecial = sessionType === "Sonderprobe";
   const isTraining = sessionType === "Unterricht";
-  const isCommittee = sessionType === "Ausschuss";
+  const isCommittee = sessionType === "Ausschuss Sitzung";
   byId("sessionTypes")?.querySelectorAll("[data-session-type]").forEach(button => {
     const selected = button.dataset.sessionType === sessionType;
     button.classList.toggle("selected", selected);
@@ -37,12 +37,12 @@ function renderSessionType() {
     : isTraining
       ? "Status „Anwesend“ wählen, danach mehrere Mitglieder markieren und gemeinsam als Unterrichtsteilnehmer speichern."
       : isCommittee
-        ? "Nur Ausschussmitglieder werden angezeigt. Die Erfassung verhält sich wie beim Unterricht."
+        ? "Nur Mitglieder des Ausschusses werden angezeigt. Die Erfassung verhält sich wie beim Unterricht."
         : "Bei einer allgemeinen Probe wird das Mitglied direkt angemeldet. Die Funktion wird beim Start der Probe automatisch berechnet.";
 }
 function chooseSessionType(type) {
-  const validTypes=["Allgemeine Probe","Sonderprobe","Unterricht","Ausschuss"];
-  if(!validTypes.includes(type))return showToast("Unbekannte Probenart.","error");
+  const validTypes=["Allgemeine Probe","Sonderprobe","Unterricht","Ausschuss Sitzung"];
+  if(!validTypes.includes(type))return showToast("Unbekannter Terminart.","error");
   pendingSessionType=type;
   const sessionTypes=byId("sessionTypes");
   if(sessionTypes)sessionTypes.dataset.selectedSessionType=type;
@@ -51,6 +51,17 @@ function chooseSessionType(type) {
     button.classList.toggle("selected",selected);
     button.setAttribute("aria-pressed",String(selected));
   });
+  const previewSpecial = type === "Sonderprobe";
+  const previewTraining = type === "Unterricht";
+  const previewCommittee = type === "Ausschuss Sitzung";
+  const sessionHint=byId("sessionHint");
+  if(sessionHint)sessionHint.textContent=previewSpecial
+    ? "Status „Anwesend“ oder „Betrifft nicht“ wählen, danach mehrere Mitglieder markieren und gemeinsam speichern."
+    : previewTraining
+      ? "Status „Anwesend“ wählen, danach mehrere Mitglieder markieren und gemeinsam als Unterrichtsteilnehmer speichern."
+      : previewCommittee
+        ? "Nur Mitglieder des Ausschusses werden angezeigt. Die Erfassung verhält sich wie beim Unterricht."
+        : "Bei einer allgemeinen Probe wird das Mitglied direkt angemeldet. Die Funktion wird beim Start der Probe automatisch berechnet.";
   const next=byId("continueToAttendanceButton");
   if(next){next.disabled=false;next.textContent=`Weiter mit ${type}`;}
   const headerType=byId("headerProbeType");if(headerType)headerType.textContent=type;

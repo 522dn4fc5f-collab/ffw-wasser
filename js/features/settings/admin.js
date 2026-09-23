@@ -12,6 +12,7 @@ function resetAdminTimeout() {
 }
 async function requestCloseProbe() {
   if (!todayEntries().length) return showToast("Es muss mindestens eine Teilnahme erfasst sein.", "error");
+  if(!(await prepareDocumentReportBeforeClose()))return;
   openProbeTopicDialog();
 }
 function ensureProbeTopicDialog() {
@@ -135,6 +136,10 @@ function updateMember(id, row) {
   member.roles = [...row.querySelectorAll("[data-member-role]:checked")].map(input => input.dataset.memberRole).filter(role => role !== "Maschinist");
   member.ageDepartment = Boolean(row.querySelector("[data-age-department]")?.checked);
   member.committeeMember = Boolean(row.querySelector("[data-committee-member]")?.checked);
+  member.atueQualified = Boolean(row.querySelector("[data-atue-qualified]")?.checked);
+  member.breathingClearance = Boolean(row.querySelector("[data-breathing-clearance]")?.checked);
+  member.breathingClearanceUntil = row.querySelector("[data-breathing-clearance-until]")?.value || "";
+  if(member.breathingClearance&&!member.breathingClearanceUntil)return showToast("Bitte ein Verfallsdatum für die Atemschutzfreigabe eintragen.","error");
   member.machinistVehicles = [...row.querySelectorAll("[data-machinist-vehicle]:checked")].map(input => input.dataset.machinistVehicle);
   members = sortMembers(members);
   saveMembers();

@@ -454,7 +454,7 @@ body:not(.x) .roles-panel .group-special-status{margin:0}.members-panel[hidden]{
 
 .age-statistics-section{margin-top:22px;padding:20px;border:2px solid #d2dae0;border-radius:18px;background:#f5f7f8}.age-statistics-heading{margin-bottom:14px}.age-statistics-kpis{margin-bottom:14px}.age-ranking-panel{margin-top:14px}.age-statistics-heading>div{min-width:0}.age-statistics-heading p{margin:.3rem 0 0;line-height:1.4}@media(max-width:760px){.age-statistics-section{padding:14px}}
 
-/* Probenart direkt auf Home */
+/* Terminart direkt auf Home */
 .home-session-type-panel{margin:0 0 16px;padding:16px 18px;border:2px solid #c8d3da;background:#f7f9fa}.home-session-type-panel .panel-heading{margin-bottom:12px}.home-session-type-panel .session-type-grid{margin:0;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.home-session-type-panel .session-type-button{height:auto;min-height:54px;padding:10px 12px;white-space:normal;line-height:1.25}@media(max-width:680px){.home-session-type-panel .session-type-grid{grid-template-columns:1fr}.home-session-type-panel{padding:14px}}
 
 .special-organization{border-color:#6d5aa7!important;background:#f0ecfa!important}.special-organization.selected{background:#6d5aa7!important;color:#fff!important}
