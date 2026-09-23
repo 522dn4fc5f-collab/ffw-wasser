@@ -22,7 +22,9 @@ const DEFAULT_MEMBERS = [
 
 const KEYS = { members: "fw_v5_members", entries: "fw_v5_entries", pin: "fw_v5_pin", archive: "fw_v35_csv_archive", functionEntry: "fw_v1_function_entry_enabled", roleTargets: "fw_v1_annual_role_targets" };
 const byId = id => document.getElementById(id);
-const today = () => new Date().toLocaleDateString("sv-SE");
+const systemToday = () => new Date().toLocaleDateString("sv-SE");
+let currentProbeDate = systemToday();
+const today = () => currentProbeDate || systemToday();
 const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const nameForStorage = member => `${member.lastName}, ${member.firstName}`;
 const nameForTile = member => `${member.lastName}, ${member.firstName}`;

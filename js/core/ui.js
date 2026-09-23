@@ -22,6 +22,7 @@ function showView(viewId) {
 function renderSessionType() {
   const isSpecial = sessionType === "Sonderprobe";
   const isTraining = sessionType === "Unterricht";
+  const isCommittee = sessionType === "Ausschuss";
   byId("sessionTypes")?.querySelectorAll("[data-session-type]").forEach(button => {
     const selected = button.dataset.sessionType === sessionType;
     button.classList.toggle("selected", selected);
@@ -35,10 +36,12 @@ function renderSessionType() {
     ? "Status „Anwesend“ oder „Betrifft nicht“ wählen, danach mehrere Mitglieder markieren und gemeinsam speichern."
     : isTraining
       ? "Status „Anwesend“ wählen, danach mehrere Mitglieder markieren und gemeinsam als Unterrichtsteilnehmer speichern."
-      : "Bei einer allgemeinen Probe wird das Mitglied direkt angemeldet. Die Funktion wird beim Start der Probe automatisch berechnet.";
+      : isCommittee
+        ? "Nur Ausschussmitglieder werden angezeigt. Die Erfassung verhält sich wie beim Unterricht."
+        : "Bei einer allgemeinen Probe wird das Mitglied direkt angemeldet. Die Funktion wird beim Start der Probe automatisch berechnet.";
 }
 function chooseSessionType(type) {
-  const validTypes=["Allgemeine Probe","Sonderprobe","Unterricht"];
+  const validTypes=["Allgemeine Probe","Sonderprobe","Unterricht","Ausschuss"];
   if(!validTypes.includes(type))return showToast("Unbekannte Probenart.","error");
   pendingSessionType=type;
   const sessionTypes=byId("sessionTypes");

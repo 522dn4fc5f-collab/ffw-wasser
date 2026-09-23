@@ -134,6 +134,7 @@ function updateMember(id, row) {
   member.firstName = firstName;
   member.roles = [...row.querySelectorAll("[data-member-role]:checked")].map(input => input.dataset.memberRole).filter(role => role !== "Maschinist");
   member.ageDepartment = Boolean(row.querySelector("[data-age-department]")?.checked);
+  member.committeeMember = Boolean(row.querySelector("[data-committee-member]")?.checked);
   member.machinistVehicles = [...row.querySelectorAll("[data-machinist-vehicle]:checked")].map(input => input.dataset.machinistVehicle);
   members = sortMembers(members);
   saveMembers();

@@ -37,6 +37,7 @@ async function closeDay(topic = currentClosingTopic) {
     if (entry.role === "Organisation") return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", "Organisation"];
     if (exportSessionType === "Sonderprobe" && entry.status === "Anwesend") return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", "Anwesend"];
     if (exportSessionType === "Unterricht" && entry.status === "Anwesend") return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", "Unterricht"];
+    if (exportSessionType === "Ausschuss" && entry.status === "Anwesend") return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", "Ausschuss"];
     return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", csvRoleForEntry(entry, member)];
   });
 
@@ -100,6 +101,7 @@ async function closeDay(topic = currentClosingTopic) {
   chosenMemberIds.clear();
   chosenRole = "";
   currentClosingTopic = "";
+  currentProbeDate = systemToday();
   saveEntries();
   renderMembers(); renderRoles(); renderEntries(); updateSelection();
   tacticsClosingPending=false;

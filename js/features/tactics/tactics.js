@@ -101,13 +101,12 @@ function rebuildTacticsAssignmentsFromSlots() {
   currentTacticsAssignments = new Map(currentTacticsSlots.filter(slot => slot.member).map(slot => [nameForStorage(slot.member), { vehicle:slot.vehicle, role:slot.role }]));
 }
 function memberMayFillSlot(member, vehicle, role) {
-  const allowedRoles=getMemberRoles(member);
-  if(!allowedRoles.includes(role)) return false;
-  return role !== "Maschinist" || canDriveVehicle(member, vehicle);
+  // Manuelle Verschiebung ist bewusst frei: Jede anwesende Person darf auf
+  // jede Position gesetzt werden. Die automatische Empfehlung bleibt unverändert.
+  return Boolean(member && vehicle && role);
 }
 function deniedTacticsSlotMessage(member, vehicle, role) {
-  if(!getMemberRoles(member).includes(role)) return `${nameForTile(member)} ist für die Funktion ${role} nicht freigeschaltet.`;
-  return `Für die Maschinistenposition auf ${vehicle} fehlt die passende Fahrzeugberechtigung.`;
+  return "Diese Position konnte nicht übernommen werden.";
 }
 function hasTacticalUnit(slots) {
   const filled=new Set(slots.filter(slot=>slot.member).map(slot=>slot.role));

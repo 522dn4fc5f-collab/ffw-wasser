@@ -89,7 +89,8 @@ function normalizeCompleteBackupData(data) {
     roles:Array.isArray(member.roles)?member.roles.filter(role=>AVAILABLE_ROLES.includes(role)&&role!=="Maschinist"):[],
     ageDepartment:Boolean(member.ageDepartment),
     machinistVehicles:Array.isArray(member.machinistVehicles)?member.machinistVehicles.filter(value=>value==="LF"||value==="TSF"):[],
-    rfidId:String(member.rfidId||"").trim()
+    rfidId:String(member.rfidId||"").trim(),
+    committeeMember:Boolean(member.committeeMember)
   })).filter(member=>member.lastName&&member.firstName);
   if(!importedMembers.length)throw new Error("members");
   return {
@@ -186,6 +187,7 @@ function ensureArchiveCorrectionDialog(){
   byId("cancelCorrectionButton").addEventListener("click",()=>dialog.close());
   byId("correctionPerson").addEventListener("change",loadSelectedCorrectionRow);
   byId("correctionStatus").addEventListener("change",updateCorrectionRoleVisibility);
+  if(!byId("correctionDate")){const person=byId("correctionPerson");const label=document.createElement("label");label.htmlFor="correctionDate";label.textContent="Probetermin";const input=document.createElement("input");input.id="correctionDate";input.type="date";input.className="text-input";person.parentElement.insertBefore(input,person);person.parentElement.insertBefore(label,input);}
   byId("saveCorrectionButton").addEventListener("click",saveArchiveCorrection);
 }
 function updateCorrectionRoleVisibility(){
@@ -221,7 +223,7 @@ function correctArchiveItem(id){
   const rows=archiveRowsFromContent(item.content);if(!rows.length)return showToast("Keine korrigierbaren Einträge.","error");
   ensureArchiveCorrectionDialog();archiveCorrectionState={item,rows};
   byId("correctionPerson").innerHTML=rows.map((row,index)=>`<option value="${index}">${escapeHtml(row.name)} · ${escapeHtml(row.status)}${row.role?` · ${escapeHtml(row.role)}`:""}</option>`).join("");
-  loadSelectedCorrectionRow();byId("archiveCorrectionDialog").showModal();
+  loadSelectedCorrectionRow();byId("correctionDate").value=rows[0]?.date||historyDateFromItem(item);byId("archiveCorrectionDialog").showModal();
 }
 function pairedArchiveFileNames(item){
   const current=String(item.fileName||"Probe.csv");
@@ -232,18 +234,22 @@ async function saveArchiveCorrection(){
   if(!archiveCorrectionState)return;
   const {item,rows}=archiveCorrectionState,index=Number(byId("correctionPerson").value),row=rows[index];if(!row)return;
   const status=byId("correctionStatus").value,role=status==="Anwesend"?byId("correctionRole").value.trim():"";
+  const correctedDate=byId("correctionDate")?.value||row.date;
+  if(!correctedDate)return showToast("Bitte einen gültigen Probetermin auswählen.","error");
   const isGeneral=(item.sessionType||rows[0]?.sessionType)==="Allgemeine Probe";
   if(status==="Anwesend"&&isGeneral&&!role){
     showToast("Bitte eine für diese Person freigegebene Funktion auswählen.","error");
     return;
   }
-  const original={status:row.status,role:row.role};row.status=status;row.role=role;
+  const original={status:row.status,role:row.role,date:row.date};rows.forEach(item=>item.date=correctedDate);row.status=status;row.role=role;
   item.revisions=[...(item.revisions||[]),{changedAt:new Date().toISOString(),name:row.name,original,updated:{status,role}}];
   item.topic=item.topic||rows[0]?.topic||"";
   item.content=archiveCsvFromRows(rows,item.topic);
   item.correctedAt=new Date().toISOString();
 
-  const names=pairedArchiveFileNames(item);
+  const oldNames=pairedArchiveFileNames(item);
+  const safeType=String(item.sessionType||rows[0]?.sessionType||"Probe").replace(/ /g,"-");
+  const names={base:`FFW-Wasser_${correctedDate}_${safeType}`,csv:`FFW-Wasser_${correctedDate}_${safeType}.csv`,pdf:`FFW-Wasser_${correctedDate}_${safeType}.pdf`};
   item.baseFileName=`${names.base}.csv`;
   item.fileName=names.csv;
   item.pdfFileName=names.pdf;

@@ -328,8 +328,20 @@ else removeStandaloneAttendanceVersion();
     input.value="";
     reveal();
   });
-  input.addEventListener("input",()=>{if(error)error.hidden=true;});
-  requestAnimationFrame(()=>input.focus());
+  const focusPinInput=()=>{
+    input.readOnly=false;
+    try{input.focus({preventScroll:true});}catch(focusError){input.focus();}
+    try{input.setSelectionRange(input.value.length,input.value.length);}catch(selectionError){}
+  };
+  input.addEventListener("input",()=>{input.value=input.value.replace(/\D/g,"").slice(0,12);if(error)error.hidden=true;});
+  input.addEventListener("pointerdown",focusPinInput,{passive:true});
+  input.addEventListener("touchend",focusPinInput,{passive:true});
+  input.addEventListener("click",focusPinInput);
+  document.querySelector('label[for="pageAccessPin"]')?.addEventListener("click",focusPinInput);
+  gate.addEventListener("pageshow",focusPinInput);
+  // Automatischer Fokus ist nur Komfort. Auf iPadOS öffnet sich die Tastatur
+  // zuverlässig durch das direkte Antippen des sichtbaren PIN-Feldes.
+  requestAnimationFrame(()=>{try{input.focus({preventScroll:true});}catch(focusError){}});
 })();
 
 

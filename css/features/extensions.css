@@ -643,3 +643,40 @@
   .participant-entries-panel .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
   .participant-entries-panel table{min-width:620px!important}
 }
+
+
+/* FFW 2.11.0: Probetermin, Ausschuss und freie manuelle Taktik */
+.home-session-type-panel .session-type-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.probe-date-control{display:grid;grid-template-columns:auto minmax(150px,190px);align-items:center;gap:9px;margin-left:auto!important;font-size:.78rem;font-weight:850;color:#52636e}
+.probe-date-control input{min-height:42px;padding:7px 9px;border:2px solid #b8c4ca;border-radius:8px;background:#fff;font:inherit;font-size:16px}
+.committee-member-toggle{display:flex;align-items:center;gap:11px;margin:4px 15px 12px!important;padding:11px 12px;border:2px solid #b99b45;border-left:7px solid #99781c;border-radius:9px;background:#fff8dc}
+.committee-member-toggle input{width:22px;height:22px;flex:0 0 22px;margin:0;appearance:auto;-webkit-appearance:checkbox;accent-color:#99781c}
+.committee-member-toggle span{display:grid;gap:2px}.committee-member-toggle small{color:#6a5a2d;font-size:.75rem}
+@media(max-width:760px){.home-session-type-panel .session-type-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.probe-date-control{grid-template-columns:1fr;width:100%;margin:8px 0 0!important}.probe-date-control input{width:100%}.home-flow-stage-2>.flow-stage-heading{flex-wrap:wrap!important}}
+@media(max-width:430px){.home-session-type-panel .session-type-grid{grid-template-columns:1fr!important}}
+
+
+/* FFW 2.11.1: PIN-Eingabe für iOS/iPadOS 18 */
+#pageAccessGate,#pageAccessForm,#pageAccessPin{pointer-events:auto!important;touch-action:manipulation!important}
+#pageAccessPin{
+  display:block!important;
+  position:relative!important;
+  z-index:2!important;
+  min-height:56px!important;
+  padding:13px 14px!important;
+  border:2px solid #7d8e97!important;
+  background:#fff!important;
+  color:#1f2a30!important;
+  font-size:20px!important;
+  line-height:1.2!important;
+  letter-spacing:.18em!important;
+  -webkit-user-select:text!important;
+  user-select:text!important;
+  -webkit-appearance:none!important;
+  appearance:none!important;
+}
+#pageAccessPin:focus{border-color:#19783a!important;outline:4px solid rgba(25,120,58,.2)!important;outline-offset:2px!important}
+@supports(-webkit-touch-callout:none){
+  .page-access-gate-critical{height:100dvh!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important}
+  .page-access-card-critical{margin:auto!important}
+}

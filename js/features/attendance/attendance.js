@@ -2,19 +2,20 @@ function renderMembers() {
   members = sortMembers(members);
   const current = todayEntries();
   const recordedNames = new Set(current.flatMap(entry => [entry.storedName, entry.displayName].filter(Boolean)));
-  const availableMembers = members.filter(member => !recordedNames.has(nameForStorage(member)) && !recordedNames.has(nameForTile(member)));
+  const eligibleMembers = sessionType === "Ausschuss" ? members.filter(member => member.committeeMember) : members;
+  const availableMembers = eligibleMembers.filter(member => !recordedNames.has(nameForStorage(member)) && !recordedNames.has(nameForTile(member)));
   if (!availableMembers.some(member => member.id === chosenMemberId)) chosenMemberId = "";
   chosenMemberIds = new Set([...chosenMemberIds].filter(id => availableMembers.some(member => member.id === id)));
   const multiMode = (sessionType === "Allgemeine Probe" && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Organisation")) ||
     (sessionType === "Sonderprobe" && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Betrifft nicht")) ||
-    (sessionType === "Unterricht" && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt"));
+    ((sessionType === "Unterricht" || sessionType === "Ausschuss") && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt"));
   const renderMemberButton = member => {
     const recorded = recordedNames.has(nameForStorage(member)) || recordedNames.has(nameForTile(member));
     const selected = !recorded && (multiMode ? chosenMemberIds.has(member.id) : member.id === chosenMemberId);
     const organizationSelected = selected && chosenRole === "Organisation";
     return `<button type="button" class="choice-button ${member.ageDepartment ? "age-member-button" : ""} ${selected ? "selected" : ""} ${organizationSelected ? "organization-selected" : ""} ${recorded ? "recorded" : ""}" data-member="${escapeHtml(member.id)}" aria-pressed="${selected}" ${recorded ? 'disabled aria-disabled="true"' : ""}>${escapeHtml(nameForTile(member))}</button>`;
   };
-  const activeMembers = members.filter(member => !member.ageDepartment);
+  const activeMembers = (sessionType === "Ausschuss" ? members.filter(member => member.committeeMember) : members).filter(member => !member.ageDepartment);
   const ageMembers = members.filter(member => member.ageDepartment);
   const sections = [
     `<section class="member-section member-section-active"><div class="member-section-heading"><h4>Einsatzabteilung</h4><span>${activeMembers.length}</span></div><div class="member-subgrid">${activeMembers.map(renderMemberButton).join("")}</div></section>`,
@@ -47,9 +48,10 @@ function updateSelection() {
   const isStandard = sessionType === "Allgemeine Probe";
   const isSpecial = sessionType === "Sonderprobe";
   const isTraining = sessionType === "Unterricht";
+  const isCommittee = sessionType === "Ausschuss";
   const multiMode = (isStandard && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Organisation")) ||
     (isSpecial && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Betrifft nicht")) ||
-    (isTraining && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt"));
+    ((isTraining || isCommittee) && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt"));
   const selectedMemberLabel=byId("selectedMember");
   if(selectedMemberLabel)selectedMemberLabel.textContent = multiMode
     ? (chosenMemberIds.size ? `${chosenMemberIds.size} Mitglieder ausgewählt` : "Noch keine Mitglieder gewählt")
@@ -100,7 +102,7 @@ function renderAdmin() {
     const roleGroups = ROLE_GROUPS.map(group => `<fieldset class="admin-role-group role-theme-${group.key}"><legend>${escapeHtml(group.title)}</legend><div class="admin-role-options">${group.roles.map(role => `<label class="role-checkbox"><input type="checkbox" data-member-role="${escapeHtml(role)}" ${memberRoles.includes(role) ? "checked" : ""}><span>${escapeHtml(role)}</span></label>`).join("")}</div></fieldset>`).join("");
     const machinistVehicles = Array.isArray(member.machinistVehicles) ? member.machinistVehicles : [];
     const vehicleOptions = member.ageDepartment ? "" : `<fieldset class="admin-role-group role-theme-vehicles machinist-vehicle-group"><legend>Maschinistenberechtigung</legend><p>LF10 und/oder TSF auswählen. Dadurch wird die Person automatisch als Maschinist freigeschaltet.</p><div class="admin-role-options"><label class="role-checkbox"><input type="checkbox" data-machinist-vehicle="LF" ${machinistVehicles.includes("LF") ? "checked" : ""}><span>LF</span></label><label class="role-checkbox"><input type="checkbox" data-machinist-vehicle="TSF" ${machinistVehicles.includes("TSF") ? "checked" : ""}><span>TSF</span></label></div></fieldset>`;
-    return `<article class="admin-row member-card member-card-${index % 3}"><header class="member-card-header"><span class="member-card-number">${index + 1}</span><strong>${escapeHtml(nameForTile(member))}</strong>${member.ageDepartment ? '<span class="age-department-badge">Altersabteilung</span>' : ''}</header><div class="member-name-fields"><label><span>Nachname</span><input class="text-input" data-last-name value="${escapeHtml(member.lastName)}"></label><label><span>Vorname</span><input class="text-input" data-first-name value="${escapeHtml(member.firstName)}"></label></div><label class="age-department-toggle"><input type="checkbox" data-age-department ${member.ageDepartment ? "checked" : ""}><span><strong>Altersabteilung</strong><small>Antippen meldet direkt als anwesend; ohne Anmeldung automatisch „Betrifft nicht“</small></span></label>${member.ageDepartment ? '<div class="age-no-role-note">Für Mitglieder der Altersabteilung ist keine Funktionsauswahl erforderlich.</div>' : `<div class="member-role-editor">${roleGroups}${vehicleOptions}</div>`}<div class="member-card-actions"><button type="button" class="admin-save" data-save-member="${escapeHtml(member.id)}">Einstellungen speichern</button><button type="button" class="danger-button" data-delete-member="${escapeHtml(member.id)}">Mitglied löschen</button></div></article>`;
+    return `<article class="admin-row member-card member-card-${index % 3}"><header class="member-card-header"><span class="member-card-number">${index + 1}</span><strong>${escapeHtml(nameForTile(member))}</strong>${member.ageDepartment ? '<span class="age-department-badge">Altersabteilung</span>' : ''}</header><div class="member-name-fields"><label><span>Nachname</span><input class="text-input" data-last-name value="${escapeHtml(member.lastName)}"></label><label><span>Vorname</span><input class="text-input" data-first-name value="${escapeHtml(member.firstName)}"></label></div><label class="age-department-toggle"><input type="checkbox" data-age-department ${member.ageDepartment ? "checked" : ""}><span><strong>Altersabteilung</strong><small>Antippen meldet direkt als anwesend; ohne Anmeldung automatisch „Betrifft nicht“</small></span></label><label class="committee-member-toggle"><input type="checkbox" data-committee-member ${member.committeeMember ? "checked" : ""}><span><strong>Ausschussmitglied</strong><small>Wird bei der Terminart Ausschuss zur Auswahl angeboten.</small></span></label>${member.ageDepartment ? '<div class="age-no-role-note">Für Mitglieder der Altersabteilung ist keine Funktionsauswahl erforderlich.</div>' : `<div class="member-role-editor">${roleGroups}${vehicleOptions}</div>`}<div class="member-card-actions"><button type="button" class="admin-save" data-save-member="${escapeHtml(member.id)}">Einstellungen speichern</button><button type="button" class="danger-button" data-delete-member="${escapeHtml(member.id)}">Mitglied löschen</button></div></article>`;
   };
   const activeMembers = members.filter(member => !member.ageDepartment);
   const ageMembers = members.filter(member => member.ageDepartment);
@@ -136,7 +138,7 @@ function chooseMember(id) {
   if(!clickedMember || !chosenRole) return;
   const allowed=(sessionType==="Allgemeine Probe" && ["Anwesend","Entschuldigt","Organisation"].includes(chosenRole)) ||
     (sessionType==="Sonderprobe" && ["Anwesend","Entschuldigt","Betrifft nicht"].includes(chosenRole)) ||
-    (sessionType==="Unterricht" && ["Anwesend","Entschuldigt"].includes(chosenRole));
+    ((sessionType==="Unterricht" || sessionType==="Ausschuss") && ["Anwesend","Entschuldigt"].includes(chosenRole));
   if(!allowed) return;
   if(chosenMemberIds.has(id)) chosenMemberIds.delete(id); else chosenMemberIds.add(id);
   chosenMemberId="";
@@ -152,11 +154,12 @@ function saveAttendance() {
   const isStandard = sessionType === "Allgemeine Probe";
   const isSpecial = sessionType === "Sonderprobe";
   const isTraining = sessionType === "Unterricht";
+  const isCommittee = sessionType === "Ausschuss";
   const allowedStatuses = isStandard
     ? ["Anwesend", "Entschuldigt", "Organisation"]
     : isSpecial
       ? ["Anwesend", "Entschuldigt", "Betrifft nicht"]
-      : isTraining
+      : (isTraining || isCommittee)
         ? ["Anwesend", "Entschuldigt"]
         : [];
 
@@ -178,7 +181,7 @@ function saveAttendance() {
       storedName: nameForStorage(member),
       role: isStandard && chosenRole === "Organisation"
         ? "Organisation"
-        : (isTraining && chosenRole === "Anwesend" ? "Unterricht" : ""),
+        : (isCommittee && chosenRole === "Anwesend" ? "Ausschuss" : (isTraining && chosenRole === "Anwesend" ? "Unterricht" : "")),
       status: chosenRole === "Organisation" ? "Anwesend" : chosenRole,
       sessionType
     }));
@@ -209,7 +212,7 @@ function saveAttendance() {
   }
 
   const selected = members.find(member => member.id === chosenMemberId);
-  if (isStandard || isSpecial || isTraining) {
+  if (isStandard || isSpecial || isTraining || isCommittee) {
     return showToast(chosenRole
       ? "Bitte mindestens ein Mitglied auswählen."
       : "Bitte zuerst einen Status auswählen.", "error");
@@ -284,7 +287,7 @@ function setupUnifiedHomeWorkflow(){
   byId("backToMembersButton")?.remove();byId("changeStatusButton")?.remove();
 }
 function updateProbeWorkflow(){
-  const standard=sessionType==="Allgemeine Probe",special=sessionType==="Sonderprobe",training=sessionType==="Unterricht";
+  const standard=sessionType==="Allgemeine Probe",special=sessionType==="Sonderprobe",training=sessionType==="Unterricht",committee=sessionType==="Ausschuss";
   const hasStatus=Boolean(chosenRole);
   const membersPanel=document.querySelector(".members-panel"),rolesPanel=byId("rolesPanel");
   if(membersPanel)membersPanel.hidden=false;if(rolesPanel)rolesPanel.hidden=false;
@@ -293,11 +296,11 @@ function updateProbeWorkflow(){
   if(byId("batchSelectionHint"))byId("batchSelectionHint").hidden=true;
   if(byId("participantOverview"))byId("participantOverview").hidden=chosenMemberIds.size===0;
   if(byId("roleSaveButton"))byId("roleSaveButton").hidden=true;
-  if(byId("memberStepTitle"))byId("memberStepTitle").textContent=standard?"Personen markieren":training?"Teilnehmende markieren":"Personen markieren";
+  if(byId("memberStepTitle"))byId("memberStepTitle").textContent=committee?"Ausschussmitglieder markieren":standard?"Personen markieren":training?"Teilnehmende markieren":"Personen markieren";
   if(byId("memberStepNumber"))byId("memberStepNumber").textContent="2";
   if(byId("roleStepNumber"))byId("roleStepNumber").textContent="1";
   if(byId("roleStepEyebrow"))byId("roleStepEyebrow").textContent="Status direkt auswählen";
-  if(byId("roleMemberName"))byId("roleMemberName").textContent=standard?"Anwesend, Entschuldigt oder Organisation":special?"Anwesend, Entschuldigt oder Betrifft nicht":"Anwesend oder Entschuldigt";
+  if(byId("roleMemberName"))byId("roleMemberName").textContent=standard?"Anwesend, Entschuldigt oder Organisation":special?"Anwesend, Entschuldigt oder Betrifft nicht":committee?"Ausschuss: Anwesend oder Entschuldigt":"Anwesend oder Entschuldigt";
   if(byId("roleSelectionHint"))byId("roleSelectionHint").textContent="Der ausgewählte Status bleibt aktiv. Zum Wechsel einfach einen anderen Status antippen.";
   updatePrimaryAction();
 }
@@ -368,6 +371,7 @@ function setHomeFlowStage(stage){
   document.querySelectorAll("#attendanceView .flow-stage-2-support").forEach(element=>applyVisibility(element,stage===2,""));
 
   if(stage===1){
+    if(!todayEntries().length)currentProbeDate=systemToday();
     pendingSessionType="";
     if(byId("sessionTypes"))delete byId("sessionTypes").dataset.selectedSessionType;
     byId("sessionTypes")?.querySelectorAll("[data-session-type]").forEach(button=>{
@@ -470,6 +474,7 @@ function ensureStagedHomeFlow(){
   workspace.classList.add("home-flow-card","home-flow-stage-2");
   if(!byId("stage2Heading")){const h=document.createElement("div");h.id="stage2Heading";h.className="flow-stage-heading";workspace.prepend(h);}
   const stage2Heading=byId("stage2Heading");if(stage2Heading)stage2Heading.innerHTML=`<span>2</span><div><strong>Anwesenheit erfassen</strong><small>${escapeHtml(sessionType)}</small></div>`;
+  if(stage2Heading&&!byId("probeDateInput")){const dateWrap=document.createElement("label");dateWrap.className="probe-date-control";dateWrap.innerHTML=`<span>Probetermin</span><input id="probeDateInput" type="date" value="${escapeHtml(today())}" max="${escapeHtml(systemToday())}">`;stage2Heading.appendChild(dateWrap);byId("probeDateInput").addEventListener("change",event=>{if(todayEntries().length){event.target.value=currentProbeDate;return showToast("Das Datum kann nach der ersten Anmeldung nicht mehr geändert werden.","error");}currentProbeDate=event.target.value||systemToday();renderEntries();renderMembers();updatePrimaryAction();});}
   const step3ActionButton=byId("exportResetButton");
   if(step3ActionButton){
     let step3Action=byId("step3ActionArea");
