@@ -1,0 +1,129 @@
+let currentOperationId=safeStorage.getItem("fw_v1_current_operation_id")||"";
+let currentOperationDraft=null;
+const OP_VEHICLES=["EM 5/47 TSF","EM 5/42 LF10"];
+const OP_DEVICES=["Wärmebildkamera","Pressluftatmer","Kettensäge","Sprungpolster","Belüftungsgerät","Stromerzeuger","Tauchpumpe","Wassersauger","Rettungsschere","Rettungsspreizer","Rettungszylinder","Türöffnungswerkzeug"];
+const OP_AGENCIES=["Polizei","Streifendienst","KDD","Kripo","Bundespolizei","Rettungsdienst","RTW","NEF","KTW","RTH","DRK Ortsverein","KBM","Stadt Emmendingen","Stadtwerke","Netze BW","Badenova","THW","DLRG","Abschleppdienst","Straßen-/Autobahnmeisterei","DB-Notfallmanager","Bestatter","Weitere Feuerwehren"];
+function operationSessionKey(){return currentOperationId||"";}
+function startOperationSession(){if(currentOperationId&&entries.some(e=>e.operationId===currentOperationId))return;currentOperationId=`op-${today()}-${Date.now()}-${Math.random().toString(16).slice(2)}`;safeStorage.setItem("fw_v1_current_operation_id",currentOperationId);currentOperationDraft=null;}
+function operationEntries(){return entries.filter(e=>e.operationId===currentOperationId);}
+function operationNames(){return operationEntries().filter(e=>e.status==="Anwesend").map(e=>e.storedName||e.displayName);}
+function ensureOperationForm(){
+ let section=byId("operationReportForm");if(section)return section;
+ section=document.createElement("section");section.id="operationReportForm";section.className="panel operation-report-form";section.hidden=true;
+ const checks=(items,name)=>items.map(v=>`<label class="operation-check"><input type="checkbox" name="${name}" value="${escapeHtml(v)}"><span>${escapeHtml(v)}</span></label>`).join("");
+ section.innerHTML=`<div class="flow-stage-heading"><span>3</span><div><strong>Einsatzbericht erfassen</strong><small>Mehrere Einsätze am selben Tag werden getrennt gespeichert.</small></div></div>
+ <div class="operation-grid operation-basics"><label>Einsatzdatum<input id="opDate" type="date"></label><label>Einsatznummer<input id="opNumber" placeholder="z. B. 29 / 2026"></label><label>Einsatzart *<input id="opType" placeholder="z. B. B1 Mülleimerbrand"></label><label>Einsatzstelle *<input id="opLocation"></label><label>Einsatzleiter<input id="opLeader"></label><label>ZvD<input id="opZvd"></label><label>Verursacher / Geschädigte<input id="opAffected"></label><label>Anschrift<input id="opAddress"></label></div>
+ <fieldset><legend>Alarmierung</legend><div class="operation-check-grid">${checks(["Schleife","telefonisch","per Funk","mündlich","selbst"],"alarmMethod")}</div><label>Schleifennummer<input id="opLoop"></label></fieldset>
+ <fieldset><legend>Zeiten</legend><div class="operation-grid operation-times"><label>Alarm *<input id="opAlarm" type="time"></label><label>Ausgerückt<input id="opDeparted" type="time"></label><label>Einsatzstelle<input id="opArrived" type="time"></label><label>Einsatzende<input id="opEnded" type="time"></label><label>Eingerückt<input id="opReturned" type="time"></label></div></fieldset>
+ <fieldset><legend>Rohre und Wasserentnahme</legend><div class="operation-grid"><label>C-Rohre<input id="opCPipes" min="0" type="number"></label><label>B-Rohre<input id="opBPipes" min="0" type="number"></label><label>Wasserwerfer<input id="opMonitor" min="0" type="number"></label><label>Kleinlöschgeräte<input id="opSmall" min="0" type="number"></label></div><div class="operation-check-grid">${checks(["Tank","Hydrant","Offenes Gewässer","Löschteich"],"waterSource")}</div></fieldset>
+ <fieldset><legend>Eingesetzte Geräte</legend><div class="operation-check-grid">${checks(OP_DEVICES,"device")}</div><label>Sonstige Geräte<input id="opOtherDevices"></label></fieldset>
+ <fieldset><legend>Öleinsatz, optional</legend><div class="operation-grid"><label>Öl-ex hart, Sack<input id="opOilHard" min="0" type="number"></label><label>Oel-ex 82, Sack<input id="opOil82" min="0" type="number"></label><label>Flüssigreiniger, Liter<input id="opCleaner" min="0" step="0.1" type="number"></label><label>Entsorgung, Euro<input id="opDisposal" min="0" step="0.01" type="number"></label></div></fieldset>
+ <fieldset><legend>Fahrzeuge</legend><div class="operation-check-grid">${checks(OP_VEHICLES,"vehicle")}</div><label>Weitere Fahrzeuge<input id="opOtherVehicles"></label></fieldset>
+ <fieldset><legend>Bericht</legend><label>Lage und Zustand beim Eintreffen *<textarea id="opSituation" rows="4"></textarea></label><label>Verlauf der Tätigkeit *<textarea id="opActions" rows="5"></textarea></label><label>Menschenrettung, Unglücksfälle oder Verletzungen<textarea id="opPersons" rows="3"></textarea></label><label>Besondere Vorkommnisse<textarea id="opSpecial" rows="3"></textarea></label></fieldset>
+ <fieldset><legend>Weitere Kräfte und Behörden</legend><div class="operation-check-grid">${checks(OP_AGENCIES,"agency")}</div><label>Sonstige beteiligte Stellen<input id="opOtherAgencies"></label></fieldset>
+ <fieldset><legend>Atemschutz</legend><label class="operation-check"><input id="opAtueUsed" type="checkbox"><span>Atemschutzüberwachung wurde durchgeführt</span></label><label>ATÜ-Person<select id="opAtuePerson"><option value="">Bitte auswählen</option></select></label></fieldset>
+ <div id="operationValidation" class="operation-validation" hidden></div><div class="operation-actions"><button class="outline-button" id="operationBack" type="button">Zurück zu Schritt 2</button><button class="primary-button" id="operationFinish" type="button">Einsatz abschließen · CSV + PDF</button></div>`;
+ byId("attendanceView").appendChild(section);
+ byId("operationBack").onclick=()=>setHomeFlowStage(2);
+ byId("operationFinish").onclick=finishOperation;
+ byId("opAtueUsed").addEventListener("change",event=>{
+   if(event.target.checked){documentReportReady=false;showDocumentReportPanel();}
+   else{const panel=byId("documentReportPanel");if(panel)panel.hidden=true;documentReportReady=false;}
+ });
+ byId("opAtuePerson").addEventListener("change",()=>{if(byId("opAtueUsed")?.checked&&!documentReportReady)showDocumentReportPanel();});
+ return section;
+}
+function operationValue(id){return String(byId(id)?.value||"").trim();}
+function checkedValues(name){return [...document.querySelectorAll(`#operationReportForm input[name="${name}"]:checked`)].map(x=>x.value);}
+function collectOperationData(){return {id:currentOperationId,date:operationValue("opDate")||today(),number:operationValue("opNumber"),type:operationValue("opType"),location:operationValue("opLocation"),leader:operationValue("opLeader"),zvd:operationValue("opZvd"),affected:operationValue("opAffected"),address:operationValue("opAddress"),alarmMethods:checkedValues("alarmMethod"),loop:operationValue("opLoop"),times:{alarm:operationValue("opAlarm"),departed:operationValue("opDeparted"),arrived:operationValue("opArrived"),ended:operationValue("opEnded"),returned:operationValue("opReturned")},pipes:{c:operationValue("opCPipes"),b:operationValue("opBPipes"),monitor:operationValue("opMonitor"),small:operationValue("opSmall")},waterSources:checkedValues("waterSource"),devices:checkedValues("device"),otherDevices:operationValue("opOtherDevices"),oil:{hard:operationValue("opOilHard"),oil82:operationValue("opOil82"),cleaner:operationValue("opCleaner"),disposal:operationValue("opDisposal")},vehicles:checkedValues("vehicle"),otherVehicles:operationValue("opOtherVehicles"),situation:operationValue("opSituation"),actions:operationValue("opActions"),persons:operationValue("opPersons"),special:operationValue("opSpecial"),agencies:checkedValues("agency"),otherAgencies:operationValue("opOtherAgencies"),atueUsed:Boolean(byId("opAtueUsed")?.checked),atuePerson:operationValue("opAtuePerson"),members:operationNames()};}
+function timeMinutes(value){if(!/^\d{2}:\d{2}$/.test(value))return null;const [h,m]=value.split(":").map(Number);return h*60+m;}
+function validateOperation(d){const errors=[],warnings=[];if(!d.members.length)errors.push("Mindestens eine anwesende Einsatzkraft ist erforderlich.");if(!d.type)errors.push("Einsatzart fehlt.");if(!d.location)errors.push("Einsatzstelle fehlt.");if(!d.times.alarm)errors.push("Alarmzeit fehlt.");if(!d.situation)errors.push("Lage beim Eintreffen fehlt.");if(!d.actions)errors.push("Verlauf der Tätigkeit fehlt.");const seq=[d.times.alarm,d.times.departed,d.times.arrived,d.times.ended,d.times.returned].filter(Boolean).map(timeMinutes);for(let i=1;i<seq.length;i++)if(seq[i]<seq[i-1]){warnings.push("Die Zeitreihenfolge ist ungewöhnlich. Bitte prüfen.");break;}if(d.devices.includes("Pressluftatmer")&&!d.atueUsed)warnings.push("Pressluftatmer ist ausgewählt, aber keine Atemschutzüberwachung angegeben.");if(d.atueUsed&&!d.atuePerson)errors.push("Bei Atemschutzüberwachung muss eine ATÜ-Person ausgewählt werden.");const duplicate=csvArchive.some(item=>item.sessionType==="Einsatz"&&item.operationData?.number&&d.number&&item.operationData.number===d.number);if(duplicate)errors.push("Diese Einsatznummer ist bereits vorhanden.");return {errors,warnings};}
+function showOperationForm(){const section=ensureOperationForm();section.hidden=false;byId("opDate").value=today();const select=byId("opAtuePerson");select.innerHTML='<option value="">Bitte auswählen</option>'+members.filter(m=>!m.ageDepartment&&m.atueQualified).map(m=>`<option>${escapeHtml(nameForTile(m))}</option>`).join("");requestAnimationFrame(()=>section.scrollIntoView({behavior:"smooth",block:"start"}));}
+function operationPdfEscape(v){return pdfEscape(pdfLatin1(String(v||"")));}
+function operationWrap(text,max=92){const words=String(text||"").split(/\s+/),out=[];let line="";for(const w of words){if((line+" "+w).trim().length>max){out.push(line);line=w}else line=(line+" "+w).trim()}if(line)out.push(line);return out;}
+function opPdfBytes(value){const text=String(value??"");const bytes=new Uint8Array(text.length);for(let i=0;i<text.length;i++)bytes[i]=text.charCodeAt(i)&255;return bytes;}
+function opConcatBytes(parts){const length=parts.reduce((sum,part)=>sum+part.length,0),result=new Uint8Array(length);let offset=0;for(const part of parts){result.set(part,offset);offset+=part.length;}return result;}
+function opPdfText(ops,x,y,size,value,bold=false){ops.push(`BT /${bold?"F2":"F1"} ${size} Tf ${x} ${y} Td (${operationPdfEscape(value)}) Tj ET`);}
+function opLine(ops,x1,y1,x2,y2,width=.7){ops.push(`${width} w ${x1} ${y1} m ${x2} ${y2} l S`);}
+function opRect(ops,x,y,w,h,fill=false){ops.push(`${x} ${y} ${w} ${h} re ${fill?"B":"S"}`);}
+function opWrap(text,max=85){return operationWrap(String(text||"-"),max);}
+function opParagraph(ops,x,y,text,max=85,limit=8,size=8.3,leading=12){opWrap(text,max).slice(0,limit).forEach((line,i)=>opPdfText(ops,x,y-i*leading,size,line));}
+function opField(ops,label,value,x,y,labelWidth=105,totalWidth=470){opPdfText(ops,x,y,9,label,true);opPdfText(ops,x+labelWidth,y,9,value||"-");opLine(ops,x+labelWidth-4,y-3,x+totalWidth,y-3,.45);}
+function opSection(ops,title,y){ops.push(`0.88 0.88 0.88 rg 40 ${y-3} 515 19 re f 0 0 0 rg`);opRect(ops,40,y-3,515,19);opPdfText(ops,47,y+3,9,title,true);return y-24;}
+function opCheckbox(ops,x,y,label,checked){opRect(ops,x,y-2,10,10);if(checked){opLine(ops,x+2,y+3,x+5,y,1.2);opLine(ops,x+5,y,x+9,y+7,1.2);}opPdfText(ops,x+15,y,8.2,label);}
+function opTableRow(ops,y,cells,widths,height=18,bold=false){let x=40;cells.forEach((cell,i)=>{opRect(ops,x,y-height,widths[i],height);opPdfText(ops,x+4,y-height+6,8,String(cell||""),bold);x+=widths[i];});return y-height;}
+function opPageHeader(ops,page){ops.push('0.90 0.90 0.90 rg 70 798 455 24 re f 0 0 0 rg');opPdfText(ops,167,806,14,'EINSATZBERICHT Feuerwehr Emmendingen',true);opPdfText(ops,40,777,9,'Feuerwehr Emmendingen, Abt. Wasser');opPdfText(ops,480,777,8,`Seite ${page} / 2`);}
+async function operationPdfBlob(d){
+ const objects=[null],add=value=>(objects.push(value),objects.length-1),font=add(opPdfBytes('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>')),bold=add(opPdfBytes('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>')),pagesId=add(null),pageIds=[];
+ const streams=[];
+ {
+  const ops=['0 0 0 RG 0 0 0 rg'];opPageHeader(ops,1);let y=750;
+  opField(ops,'Einsatz Nr.',d.number||'XX / 2026',45,y);y-=23;opField(ops,'Einsatzart',d.type,45,y);y-=23;opField(ops,'Einsatzstelle',d.location,45,y);y-=23;opField(ops,'Einsatzleiter',d.leader,45,y);y-=23;opField(ops,'ZvD',d.zvd,45,y);y-=23;opField(ops,'Verursacher / Geschädigte',d.affected,45,y,138);y-=23;opField(ops,'Anschrift',d.address,45,y);y-=29;
+  y=opSection(ops,'Alarmierung',y+8);const methods=['Schleife','telefonisch','per Funk','mündlich','selbst'];methods.forEach((m,i)=>opCheckbox(ops,48+i*99,y,m,d.alarmMethods.includes(m)));y-=22;opField(ops,'Schleifennummer',d.loop,45,y);y-=28;
+  y=opSection(ops,'Uhrzeiten',y+8);y=opTableRow(ops,y,['Alarm','Ausgerückt','Einsatzstelle','Einsatzende','Eingerückt'],[103,103,103,103,103],20,true);y=opTableRow(ops,y,[d.times.alarm,d.times.departed,d.times.arrived,d.times.ended,d.times.returned],[103,103,103,103,103],22);opPdfText(ops,45,y-15,8,`Datum: ${d.date}`);y-=34;
+  y=opSection(ops,'Lage und Zustand beim Eintreffen',y+8);opParagraph(ops,48,y,d.situation,91,5);y-=68;
+  y=opSection(ops,'Löschmittel und Wasserentnahme',y+8);opPdfText(ops,48,y,8.4,`C-Rohre: ${d.pipes.c||0}     B-Rohre: ${d.pipes.b||0}     Wasserwerfer: ${d.pipes.monitor||0}     Kleinlöschgeräte: ${d.pipes.small||0}`);y-=20;['Tank','Hydrant','Offenes Gewässer','Löschteich'].forEach((w,i)=>opCheckbox(ops,48+i*126,y,w,d.waterSources.includes(w)));y-=28;
+  y=opSection(ops,'Eingesetzte Geräte',y+8);const dev=OP_DEVICES;for(let row=0;row<3;row++){for(let col=0;col<4;col++){const item=dev[row*4+col];opCheckbox(ops,48+col*126,y-row*18,item,d.devices.includes(item));}}y-=62;opField(ops,'Sonstige Geräte',d.otherDevices,45,y);y-=28;
+  y=opSection(ops,'Angaben bei Öleinsätzen',y+8);y=opTableRow(ops,y,['Öl-ex hart','Oel-ex 82','Flüssigreiniger','Entsorgung'],[129,129,129,128],18,true);y=opTableRow(ops,y,[`${d.oil.hard||0} Sack`,`${d.oil.oil82||0} Sack`,`${d.oil.cleaner||0} Liter`,`${d.oil.disposal||0} Euro`],[129,129,129,128],20);
+  streams.push(ops.join('\n'));
+ }
+ {
+  const ops=['0 0 0 RG 0 0 0 rg'];opPageHeader(ops,2);let y=750;
+  y=opSection(ops,'Verlauf der Tätigkeit (Brandbekämpfung / Löscherfolg / Technische Rettung / Hilfeleistung)',y+8);opParagraph(ops,48,y,d.actions,91,10);y-=132;
+  y=opSection(ops,'Mannschaft',y+8);opPdfText(ops,48,y,9,`Mannschaftsstärke: ${d.members.length}`,true);y-=18;opParagraph(ops,48,y,d.members.join(', '),91,4);y-=62;
+  y=opSection(ops,'Eingesetzte Fahrzeuge',y+8);opCheckbox(ops,48,y,'EM 5/47 TSF',d.vehicles.includes('EM 5/47 TSF'));opCheckbox(ops,230,y,'EM 5/42 LF10',d.vehicles.includes('EM 5/42 LF10'));y-=22;opField(ops,'Weitere Fahrzeuge',d.otherVehicles,45,y);y-=29;
+  y=opSection(ops,'Personalangaben bei Menschenrettung, Unglücksfällen oder Verletzungen',y+8);opParagraph(ops,48,y,d.persons,91,4);y-=62;
+  y=opSection(ops,'Besondere Vorkommnisse',y+8);opParagraph(ops,48,y,d.special,91,4);y-=62;
+  y=opSection(ops,'Weitere Kräfte und Behörden',y+8);const agencies=[...d.agencies,d.otherAgencies].filter(Boolean);opParagraph(ops,48,y,agencies.join(', '),91,5);y-=75;
+  y=opSection(ops,'Einsatzleitung und Atemschutz',y+8);opField(ops,'Einsatzleiter',d.leader,45,y);y-=21;opField(ops,'ZvD',d.zvd,45,y);y-=21;opField(ops,'Atemschutzüberwachung',d.atueUsed?`Ja, ${d.atuePerson}`:'Nein',45,y,138);y-=38;
+  opPdfText(ops,45,y,8.5,`Emmendingen, ${d.date}`,true);opLine(ops,300,y-3,545,y-3,.6);opPdfText(ops,355,y-15,7.5,'Unterschrift Einsatzleiter');
+  streams.push(ops.join('\n'));
+ }
+ for(const stream of streams){const bytes=opPdfBytes(stream),cid=add(opPdfBytes(`<< /Length ${bytes.length} >>\nstream\n${stream}\nendstream`));pageIds.push(add(opPdfBytes(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${font} 0 R /F2 ${bold} 0 R >> >> /Contents ${cid} 0 R >>`)));}
+ objects[pagesId]=opPdfBytes(`<< /Type /Pages /Count ${pageIds.length} /Kids [${pageIds.map(id=>`${id} 0 R`).join(' ')}] >>`);const catalog=add(opPdfBytes(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`)),parts=[opPdfBytes('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n')],offsets=[0];let length=parts[0].length;for(let i=1;i<objects.length;i++){offsets[i]=length;const part=opConcatBytes([opPdfBytes(`${i} 0 obj\n`),objects[i],opPdfBytes('\nendobj\n')]);parts.push(part);length+=part.length;}const xref=length;let tail=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;for(let i=1;i<objects.length;i++)tail+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';tail+=`trailer\n<< /Size ${objects.length} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`;parts.push(opPdfBytes(tail));return new Blob(parts,{type:'application/pdf'});
+}
+function showOperationPdfPreview(blob,fileName,onFinalUpload){
+ return new Promise(resolve=>{
+  let dialog=byId("operationPdfPreviewDialog");
+  if(!dialog){
+   dialog=document.createElement("dialog");dialog.id="operationPdfPreviewDialog";dialog.className="operation-pdf-preview-dialog";
+   dialog.innerHTML='<div class="operation-preview-head"><div><strong>PDF-Vorschau Einsatzbericht</strong><small>Bitte den Bericht prüfen und danach final hochladen.</small></div><button type="button" class="outline-button" data-preview-close>Abbrechen</button></div><iframe title="PDF-Vorschau Einsatzbericht"></iframe><div class="operation-preview-actions"><button type="button" class="primary-button" data-preview-final>PDF final hochladen</button></div>';
+   document.body.appendChild(dialog);
+  }
+  const old=dialog.dataset.url;if(old)URL.revokeObjectURL(old);const url=URL.createObjectURL(blob);dialog.dataset.url=url;dialog.querySelector("iframe").src=url;
+  const finalButton=dialog.querySelector("[data-preview-final]"),closeButton=dialog.querySelector("[data-preview-close]");
+  let settled=false;
+  const finish=value=>{if(settled)return;settled=true;dialog.close();resolve(value);};
+  closeButton.onclick=()=>finish(false);
+  finalButton.onclick=async()=>{finalButton.disabled=true;finalButton.textContent="PDF wird final hochgeladen …";try{const ok=await onFinalUpload();if(ok)finish(true);}finally{finalButton.disabled=false;finalButton.textContent="PDF final hochladen";}};
+  dialog.oncancel=event=>{event.preventDefault();finish(false);};
+  dialog.showModal();
+ });
+}
+function operationCsv(d){const header=["Datum","Alarmzeit","Einsatznummer","Einsatzart","Einsatzstelle","Name","Status","Fahrzeuge","Geräte","Einsatzleiter","Einsatzende"],rows=d.members.map(name=>[d.date,d.times.alarm,d.number,d.type,d.location,name,"Anwesend",[...d.vehicles,d.otherVehicles].filter(Boolean).join(", "),[...d.devices,d.otherDevices].filter(Boolean).join(", "),d.leader,d.times.ended]);return '\ufeff'+[header,...rows].map(r=>r.map(csvCell).join(';')).join('\r\n');}
+async function finishOperation(){
+ const d=collectOperationData();
+ if(d.atueUsed&&!documentReportReady){showDocumentReportPanel();showToast("Bitte zuerst den Bericht der Atemschutzüberwachung fotografieren oder auswählen.","error");return;}
+ const check=validateOperation(d),box=byId("operationValidation");box.hidden=!(check.errors.length||check.warnings.length);box.innerHTML=[...check.errors.map(x=>`<p class="error">${escapeHtml(x)}</p>`),...check.warnings.map(x=>`<p class="warning">${escapeHtml(x)}</p>`)].join("");
+ if(check.errors.length)return showToast("Bitte die Pflichtangaben und Hinweise prüfen.","error");
+ if(check.warnings.length&&!confirm(check.warnings.join("\n")+"\n\nTrotzdem fortfahren?"))return;
+ const button=byId("operationFinish");button.disabled=true;
+ try{
+  const stamp=(d.times.alarm||new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})).replace(":","-"),base=`FFW-Wasser_${d.date}_${stamp}_Einsatz`,csvName=`${base}.csv`,pdfName=`${base}.pdf`,csv=operationCsv(d),pdf=await operationPdfBlob(d);
+  const completed=await showOperationPdfPreview(pdf,pdfName,async()=>{
+   const folderSelected=Boolean(csvDirectoryHandle||pdfDirectoryHandle);let ok=true;
+   if(folderSelected){ok=await writeCsvToSelectedFolder(csvName,csv)&&await saveBlobToSelectedFolder(pdfName,pdf);}
+   else{const result=await exportCsvFile(csvName,csv,false);ok=!['failed','cancelled'].includes(result);if(ok)downloadBlob(pdfName,pdf);}
+   if(!ok){showToast("CSV und PDF konnten nicht final gespeichert werden. Daten bleiben erhalten.","error");return false;}
+   const item={id:makeId(),fileName:csvName,pdfFileName:pdfName,content:csv,sessionType:"Einsatz",topic:`${d.type} · ${d.location}`,createdAt:new Date().toISOString(),presentCount:d.members.length,excusedCount:0,missingCount:0,operationData:d,hasImportedPdf:true};
+   await saveImportedReportPdf(item.id,new File([pdf],pdfName,{type:"application/pdf"}));csvArchive=[item,...csvArchive];saveArchive();entries=entries.filter(e=>e.operationId!==currentOperationId);saveEntries();
+   documentReportPages.forEach(page=>URL.revokeObjectURL(page.url));documentReportPages=[];documentReportOcrText="";documentReportReady=false;const reportPanel=byId("documentReportPanel");if(reportPanel)reportPanel.hidden=true;resetOperationState();renderEntries();renderMembers();renderStatistics();renderHistory();setHomeFlowStage(1);showToast("Einsatzbericht wurde final hochgeladen und archiviert.");return true;
+  });
+  if(!completed)showToast("Finales Hochladen abgebrochen. Einsatzdaten bleiben zur Bearbeitung erhalten.","error");
+ }catch(error){console.error("Einsatzabschluss fehlgeschlagen",error);const detail=error?.message?` (${error.message})`:"";showToast(`Einsatz konnte nicht abgeschlossen werden. Daten bleiben erhalten.${detail}`,"error");}
+ finally{button.disabled=false;}
+}
+function resetOperationState(){safeStorage.setItem("fw_v1_current_operation_id","");currentOperationId="";currentOperationDraft=null;const s=byId("operationReportForm");if(s){s.remove();}chosenMemberIds.clear();chosenMemberId="";chosenRole="";currentProbeDate=systemToday();}
+function operationStatisticsData(year){return csvArchive.filter(i=>i.sessionType==="Einsatz"&&String(i.operationData?.date||i.createdAt).startsWith(year));}
+function renderOperationStatistics(){const year=selectedStatisticsYear||String(new Date().getFullYear()),items=operationStatisticsData(year),box=byId("operationStatisticsPanel");if(!box)return;const types=new Map(),membersMap=new Map();items.forEach(i=>{const d=i.operationData||{};types.set(d.type||"Unbekannt",(types.get(d.type||"Unbekannt")||0)+1);(d.members||[]).forEach(n=>membersMap.set(n,(membersMap.get(n)||0)+1));});box.querySelector("[data-op-count]").textContent=items.length;box.querySelector("[data-op-atue]").textContent=items.filter(i=>i.operationData?.atueUsed).length;box.querySelector("[data-op-types]").innerHTML=[...types.entries()].sort((a,b)=>b[1]-a[1]).map(([n,c])=>renderMetric("",n,c,"red")).join("");box.querySelector("[data-op-members]").innerHTML=[...membersMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([n,c])=>renderMetric("",n,c,"blue")).join("");}
+function ensureOperationStatisticsPanel(){if(byId("operationStatisticsPanel"))return;const anchor=byId("settingsStatisticsView")?.querySelector(".statistics-grid");if(!anchor)return;const panel=document.createElement("article");panel.id="operationStatisticsPanel";panel.className="panel statistics-panel operation-statistics-panel";panel.innerHTML=`<div class="panel-heading"><span class="step yellow">EINSATZ</span><h3>Einsatzstatistik</h3></div><div class="statistics-kpis"><div><span>Einsätze</span><strong data-op-count>0</strong></div><div><span>mit ATÜ</span><strong data-op-atue>0</strong></div></div><h4>Einsatzarten</h4><div class="metric-list" data-op-types></div><h4>Teilnahmen je Mitglied, Top 10</h4><div class="metric-list" data-op-members></div>`;anchor.insertAdjacentElement("afterend",panel);}

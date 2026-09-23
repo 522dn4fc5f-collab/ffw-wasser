@@ -347,9 +347,10 @@ else removeStandaloneAttendanceVersion();
 
 
 /* Versionsanzeige der Fusszeile verbindlich setzen, auch bei altem HTML-Cache. */
+const originalRenderStatistics=renderStatistics;renderStatistics=function(){originalRenderStatistics();ensureOperationStatisticsPanel();renderOperationStatistics();};
 function enforceFooterVersion(){
   const footer=document.querySelector(".app-footer");
-  if(footer)footer.textContent="© 2026 Markus Bürklin · Anwesenheit 2.0 · Build 2026-09-18";
+  if(footer)footer.textContent="© 2026 Markus Bürklin · Feuerwehr Wasser 2.14.0 · Einsätze";
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",enforceFooterVersion,{once:true});
 else enforceFooterVersion();

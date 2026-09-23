@@ -8,7 +8,8 @@ function renderMembers() {
   chosenMemberIds = new Set([...chosenMemberIds].filter(id => availableMembers.some(member => member.id === id)));
   const multiMode = (sessionType === "Allgemeine Probe" && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Organisation")) ||
     (sessionType === "Sonderprobe" && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Betrifft nicht")) ||
-    ((sessionType === "Unterricht" || sessionType === "Ausschuss Sitzung") && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt"));
+    ((sessionType === "Unterricht" || sessionType === "Ausschuss Sitzung") && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt")) ||
+    (sessionType === "Einsatz" && chosenRole === "Anwesend");
   const renderMemberButton = member => {
     const recorded = recordedNames.has(nameForStorage(member)) || recordedNames.has(nameForTile(member));
     const selected = !recorded && (multiMode ? chosenMemberIds.has(member.id) : member.id === chosenMemberId);
@@ -49,9 +50,11 @@ function updateSelection() {
   const isSpecial = sessionType === "Sonderprobe";
   const isTraining = sessionType === "Unterricht";
   const isCommittee = sessionType === "Ausschuss Sitzung";
+  const isOperation = sessionType === "Einsatz";
   const multiMode = (isStandard && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Organisation")) ||
     (isSpecial && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt" || chosenRole === "Betrifft nicht")) ||
-    ((isTraining || isCommittee) && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt"));
+    ((isTraining || isCommittee) && (chosenRole === "Anwesend" || chosenRole === "Entschuldigt")) ||
+    (sessionType === "Einsatz" && chosenRole === "Anwesend");
   const selectedMemberLabel=byId("selectedMember");
   if(selectedMemberLabel)selectedMemberLabel.textContent = multiMode
     ? (chosenMemberIds.size ? `${chosenMemberIds.size} Mitglieder ausgewählt` : "Noch keine Mitglieder gewählt")
@@ -69,7 +72,7 @@ function updateSelection() {
   if(byId("roleSaveButton"))byId("roleSaveButton").disabled = !(sessionType === "Allgemeine Probe" && selected && chosenRole);
   updateProbeWorkflow();
 }
-function todayEntries() { return entries.filter(entry => entry.date === today()); }
+function todayEntries() { return entries.filter(entry => entry.date === today() && (sessionType === "Einsatz" ? entry.operationId === currentOperationId : !entry.operationId)); }
 function renderEntries() {
   const current = todayEntries();
   byId("entries").innerHTML = current.map(entry => `
@@ -138,7 +141,8 @@ function chooseMember(id) {
   if(!clickedMember || !chosenRole) return;
   const allowed=(sessionType==="Allgemeine Probe" && ["Anwesend","Entschuldigt","Organisation"].includes(chosenRole)) ||
     (sessionType==="Sonderprobe" && ["Anwesend","Entschuldigt","Betrifft nicht"].includes(chosenRole)) ||
-    ((sessionType==="Unterricht" || sessionType==="Ausschuss Sitzung") && ["Anwesend","Entschuldigt"].includes(chosenRole));
+    ((sessionType==="Unterricht" || sessionType==="Ausschuss Sitzung") && ["Anwesend","Entschuldigt"].includes(chosenRole)) ||
+    (sessionType==="Einsatz" && chosenRole==="Anwesend");
   if(!allowed) return;
   if(chosenMemberIds.has(id)) chosenMemberIds.delete(id); else chosenMemberIds.add(id);
   chosenMemberId="";
@@ -155,13 +159,14 @@ function saveAttendance() {
   const isSpecial = sessionType === "Sonderprobe";
   const isTraining = sessionType === "Unterricht";
   const isCommittee = sessionType === "Ausschuss Sitzung";
+  const isOperation = sessionType === "Einsatz";
   const allowedStatuses = isStandard
     ? ["Anwesend", "Entschuldigt", "Organisation"]
     : isSpecial
       ? ["Anwesend", "Entschuldigt", "Betrifft nicht"]
       : (isTraining || isCommittee)
         ? ["Anwesend", "Entschuldigt"]
-        : [];
+        : isOperation ? ["Anwesend"] : [];
 
   // Robuster Abgleich: interne Auswahl und sichtbar markierte Karten zusammenführen.
   document.querySelectorAll('#members .choice-button.selected[data-member]').forEach(button => {
@@ -183,7 +188,8 @@ function saveAttendance() {
         ? "Organisation"
         : (isCommittee && chosenRole === "Anwesend" ? "Ausschuss Sitzung" : (isTraining && chosenRole === "Anwesend" ? "Unterricht" : "")),
       status: chosenRole === "Organisation" ? "Anwesend" : chosenRole,
-      sessionType
+      sessionType,
+      operationId: isOperation ? currentOperationId : ""
     }));
     saveEntries();
     const count = selectedMembers.length;
@@ -212,7 +218,7 @@ function saveAttendance() {
   }
 
   const selected = members.find(member => member.id === chosenMemberId);
-  if (isStandard || isSpecial || isTraining || isCommittee) {
+  if (isStandard || isSpecial || isTraining || isCommittee || isOperation) {
     return showToast(chosenRole
       ? "Bitte mindestens ein Mitglied auswählen."
       : "Bitte zuerst einen Status auswählen.", "error");
@@ -287,7 +293,7 @@ function setupUnifiedHomeWorkflow(){
   byId("backToMembersButton")?.remove();byId("changeStatusButton")?.remove();
 }
 function updateProbeWorkflow(){
-  const standard=sessionType==="Allgemeine Probe",special=sessionType==="Sonderprobe",training=sessionType==="Unterricht",committee=sessionType==="Ausschuss Sitzung";
+  const standard=sessionType==="Allgemeine Probe",special=sessionType==="Sonderprobe",training=sessionType==="Unterricht",committee=sessionType==="Ausschuss Sitzung",operation=sessionType==="Einsatz";
   const hasStatus=Boolean(chosenRole);
   const membersPanel=document.querySelector(".members-panel"),rolesPanel=byId("rolesPanel");
   if(membersPanel)membersPanel.hidden=false;if(rolesPanel)rolesPanel.hidden=false;
@@ -296,17 +302,17 @@ function updateProbeWorkflow(){
   if(byId("batchSelectionHint"))byId("batchSelectionHint").hidden=true;
   if(byId("participantOverview"))byId("participantOverview").hidden=chosenMemberIds.size===0;
   if(byId("roleSaveButton"))byId("roleSaveButton").hidden=true;
-  if(byId("memberStepTitle"))byId("memberStepTitle").textContent=committee?"Mitglieder des Ausschusses markieren":standard?"Personen markieren":training?"Teilnehmende markieren":"Personen markieren";
+  if(byId("memberStepTitle"))byId("memberStepTitle").textContent=committee?"Mitglieder des Ausschusses markieren":operation?"Anwesende Einsatzkräfte markieren":standard?"Personen markieren":training?"Teilnehmende markieren":"Personen markieren";
   if(byId("memberStepNumber"))byId("memberStepNumber").textContent="2";
   if(byId("roleStepNumber"))byId("roleStepNumber").textContent="1";
   if(byId("roleStepEyebrow"))byId("roleStepEyebrow").textContent="Status direkt auswählen";
-  if(byId("roleMemberName"))byId("roleMemberName").textContent=standard?"Anwesend, Entschuldigt oder Organisation":special?"Anwesend, Entschuldigt oder Betrifft nicht":committee?"Ausschuss Sitzung: Anwesend oder Entschuldigt":"Anwesend oder Entschuldigt";
+  if(byId("roleMemberName"))byId("roleMemberName").textContent=operation?"Einsatz: nur Anwesend":standard?"Anwesend, Entschuldigt oder Organisation":special?"Anwesend, Entschuldigt oder Betrifft nicht":committee?"Ausschuss Sitzung: Anwesend oder Entschuldigt":"Anwesend oder Entschuldigt";
   if(byId("roleSelectionHint"))byId("roleSelectionHint").textContent="Der ausgewählte Status bleibt aktiv. Zum Wechsel einfach einen anderen Status antippen.";
   updatePrimaryAction();
 }
 
 function renderRoles(){
-  const statuses=sessionType==="Allgemeine Probe"?["Anwesend","Entschuldigt","Organisation"]:sessionType==="Sonderprobe"?["Anwesend","Entschuldigt","Betrifft nicht"]:["Anwesend","Entschuldigt"];
+  const statuses=sessionType==="Einsatz"?["Anwesend"]:sessionType==="Allgemeine Probe"?["Anwesend","Entschuldigt","Organisation"]:sessionType==="Sonderprobe"?["Anwesend","Entschuldigt","Betrifft nicht"]:["Anwesend","Entschuldigt"];
   if(!statuses.includes(chosenRole)){chosenRole="Anwesend";chosenMemberIds.clear();}
   const workspace=byId("attendanceSelectionWorkspace"),sheet=document.querySelector(".organisation-sheet");
   const statusClass=chosenRole==="Entschuldigt"?"status-excused":chosenRole==="Betrifft nicht"?"status-not-applicable":chosenRole==="Organisation"?"status-organization":"status-present";
@@ -366,7 +372,8 @@ function setHomeFlowStage(stage){
   applyVisibility(workspace,stage===2,"grid");
   applyVisibility(byId("rfidCsvImport"),stage===2,"block");
   applyVisibility(byId("attendanceStatusToolbar"),stage===2,"flex");
-  applyVisibility(finish,stage===3&&sessionType!=="Allgemeine Probe","block");
+  applyVisibility(finish,stage===3&&sessionType!=="Allgemeine Probe"&&sessionType!=="Einsatz","block");
+  applyVisibility(byId("operationReportForm"),stage===3&&sessionType==="Einsatz","block");
   applyVisibility(tactics,stage===3&&sessionType==="Allgemeine Probe","block");
   document.querySelectorAll("#attendanceView .flow-stage-2-support").forEach(element=>applyVisibility(element,stage===2,""));
 
@@ -383,6 +390,7 @@ function setHomeFlowStage(stage){
     window.syncHeaderProbeSummary?.();
   }
 
+  if(stage===3&&sessionType==="Einsatz"){showOperationForm();}
   if(stage===3&&sessionType==="Allgemeine Probe"){
     tacticsClosingPending=true;renderTactics();byId("tacticsCloseActions").hidden=false;
   }
@@ -408,6 +416,7 @@ function continueToAttendance(){
   if(!type)return showToast("Bitte zuerst eine Terminart auswählen.","error");
   window.__sessionTypeTransitionRunning=true;
   sessionType=type;
+  if(sessionType==="Einsatz")startOperationSession();
   chosenMemberId="";chosenMemberIds.clear();chosenRole="Anwesend";
   tacticsClosingPending=false;currentTacticsAssignments=new Map();currentTacticsSlots=[];tacticsDragSource=null;
 
@@ -451,7 +460,7 @@ function ensureStep3ConfirmDialog(){
     dialog.close();
     const finishType=byId("homeStageFinishType");if(finishType)finishType.textContent=sessionType;
     setHomeFlowStage(3);
-    const target=sessionType==="Allgemeine Probe"?byId("tacticsView"):byId("homeStageFinish");
+    const target=sessionType==="Allgemeine Probe"?byId("tacticsView"):sessionType==="Einsatz"?byId("operationReportForm"):byId("homeStageFinish");
     requestAnimationFrame(()=>target?.scrollIntoView({behavior:"smooth",block:"start"}));
   });
   return dialog;

@@ -3,7 +3,7 @@ function availableStatisticsYears(){const years=new Set([String(new Date().getFu
 function renderStatisticsYearSelect(){const select=byId("statisticsYearSelect");if(!select)return;const years=availableStatisticsYears();if(!years.includes(selectedStatisticsYear))selectedStatisticsYear=years[0];select.innerHTML=years.map(year=>`<option value="${year}"${year===selectedStatisticsYear?" selected":""}>${year}</option>`).join("");}
 function parseCsvRows(content) { return CsvEngine.parse(content); }
 function statisticsArchiveData() {
-  return csvArchive.map(item => ({ item, rows: parseCsvRows(item.content) })).filter(data => data.rows.length);
+  return csvArchive.filter(item => item.sessionType !== "Einsatz").map(item => ({ item, rows: parseCsvRows(item.content) })).filter(data => data.rows.length);
 }
 function renderMetric(containerId, label, value, tone = "neutral") {
   return `<div class="metric-row metric-${tone}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;

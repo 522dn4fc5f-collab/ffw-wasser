@@ -1,13 +1,12 @@
 {
-  "name": "Feuerwehr Wasser Anwesenheit",
+  "name": "Feuerwehr Wasser",
   "short_name": "FFW Wasser",
+  "version": "2.14.9",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
   "background_color": "#ececec",
   "theme_color": "#c80000",
-  "lang": "de-DE",
-  "version": "2.13.0",
+  "lang": "de",
   "icons": [
     {
       "src": "icon-192.png",
