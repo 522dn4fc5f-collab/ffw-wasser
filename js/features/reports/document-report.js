@@ -9,6 +9,22 @@ function hasActiveAtue(){
 }
 function documentReportRequired(){return sessionType==="Ausschuss Sitzung"||hasActiveAtue();}
 function documentReportKind(){return sessionType==="Ausschuss Sitzung"?"Sitzungsbericht":"Bericht Atemschutzüberwachung";}
+function hideDocumentReportUi(){
+  const panel=byId("documentReportPanel");
+  if(panel){panel.hidden=true;panel.style.display="none";panel.setAttribute("aria-hidden","true");}
+  window.closeIpadDocumentEditor?.();
+  const cropDialog=byId("manualDocumentCropDialog");
+  if(cropDialog?.open){try{cropDialog.close();}catch{cropDialog.removeAttribute("open");}}
+}
+function syncDocumentReportVisibility(stage=homeFlowStage){
+  const panel=byId("documentReportPanel");
+  if(!panel)return;
+  const visible=stage===3 && documentReportRequired() && !documentReportReady;
+  panel.hidden=!visible;
+  panel.style.display=visible?"block":"none";
+  panel.setAttribute("aria-hidden",String(!visible));
+}
+
 function documentReportSubtitle(){return sessionType==="Ausschuss Sitzung"?"Formular fotografieren oder auswählen. Jede Seite wird automatisch zugeschnitten und als PDF gespeichert.":sessionType==="Einsatz"?`Einsatz-ATÜ: ${byId("opAtuePerson")?.value||"noch nicht ausgewählt"}. Formular fotografieren, prüfen und als zugeschnittenes PDF speichern.`:`ATÜ: ${currentAtueMember?nameForTile(currentAtueMember):"nicht besetzt"}. Formular fotografieren, prüfen und als zugeschnittenes PDF speichern.`;}
 function ensureDocumentReportPanel(){
  let panel=byId("documentReportPanel");if(panel)return panel;
@@ -28,7 +44,7 @@ function showDocumentReportPanel(){
    panel.hidden=true;
    return showToast("Foto der Atemschutzüberwachung ist erst möglich, wenn eine ATÜ-Person besetzt ist.","error");
  }
- panel.hidden=false;byId("documentReportTitle").textContent=documentReportKind();byId("documentReportSubtitle").textContent=documentReportSubtitle();renderDocumentReportPages();requestAnimationFrame(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}));
+ panel.hidden=false;panel.style.display="block";panel.removeAttribute("aria-hidden");byId("documentReportTitle").textContent=documentReportKind();byId("documentReportSubtitle").textContent=documentReportSubtitle();renderDocumentReportPages();requestAnimationFrame(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}));
 }
 function renderDocumentReportPages(){const box=byId("documentReportPages"),status=byId("documentReportStatus");if(!box||!status)return;status.textContent=documentReportPages.length?`${documentReportPages.length} Seite${documentReportPages.length===1?"":"n"} zugeschnitten. Reihenfolge bitte prüfen.`:"Noch keine Seite aufgenommen.";box.innerHTML=documentReportPages.map((page,index)=>`<article class="document-report-page"><img src="${page.url}" alt="Zugeschnittene Seite ${index+1}"><div><strong>Seite ${index+1}</strong><small>${page.width} × ${page.height} Pixel</small><span class="document-crop-badge">${page.manual?`manuell bearbeitet${page.rotation?` · ${page.rotation}°`:""}${page.straighten?` · ${page.straighten>0?"+":""}${page.straighten}° fein`:""}`:"automatisch zugeschnitten"}</span></div><div class="document-report-page-actions"><button type="button" data-page-action="up" data-page-id="${page.id}" ${index===0?"disabled":""}>Nach oben</button><button type="button" data-page-action="down" data-page-id="${page.id}" ${index===documentReportPages.length-1?"disabled":""}>Nach unten</button><button type="button" class="outline-button" data-page-action="crop" data-page-id="${page.id}">Manuell zuschneiden</button><button type="button" class="danger-button" data-page-action="delete" data-page-id="${page.id}">Löschen</button></div></article>`).join("");}
 function ensureManualDocumentCropDialog(){

@@ -13,6 +13,7 @@ function closeCompactMenu() {
 }
 function showView(viewId) {
   closeCompactMenu();
+  if(viewId!=="attendanceView")hideDocumentReportUi?.();
   document.querySelectorAll("main.app-shell .view").forEach(view => view.hidden = view.id !== viewId);
   byId("attendanceTab").classList.toggle("active", viewId === "attendanceView");
   if(byId("adminTab"))byId("adminTab").classList.remove("active");if(byId("archiveTab"))byId("archiveTab").classList.remove("active");if(byId("historyTab"))byId("historyTab").classList.remove("active");if(byId("settingsTab"))byId("settingsTab").classList.toggle("active", viewId === "settingsView" || viewId.startsWith("settings"));if(byId("helpTab"))byId("helpTab").classList.toggle("active", viewId === "helpView");

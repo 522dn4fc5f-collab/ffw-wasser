@@ -98,7 +98,7 @@ function assignmentReason(member, role) {
   if (progress.actual === 0) return "Funktion bisher noch nicht ausgeübt";
   return `Ausgleich: Funktion bisher ${progress.actual}-mal übernommen`;
 }
-function crewHtml(crew, vehicle) { return crew.map(item => `<div class="crew-position ${item.member?"crew-filled":"crew-open"}" data-drop-vehicle="${vehicle}" data-drop-role="${item.role}"><span>${escapeHtml(item.role)}</span><strong ${item.member?`draggable="true" data-drag-member="${escapeHtml(item.member.id)}"`:""}>${item.member?escapeHtml(nameForTile(item.member)):"nicht besetzt"}</strong><small>${escapeHtml(assignmentReason(item.member,item.role))}</small></div>`).join(""); }
+function crewHtml(crew, vehicle) { return crew.map(item => `<div class="crew-position ${item.member?"crew-filled crew-draggable":"crew-open"}" data-drop-vehicle="${vehicle}" data-drop-role="${item.role}" ${item.member?`draggable="true" data-drag-member="${escapeHtml(item.member.id)}"`:""}><span>${escapeHtml(item.role)}</span><strong>${item.member?escapeHtml(nameForTile(item.member)):"nicht besetzt"}</strong><small>${escapeHtml(assignmentReason(item.member,item.role))}</small></div>`).join(""); }
 function rebuildTacticsAssignmentsFromSlots() {
   currentTacticsAssignments = new Map(currentTacticsSlots.filter(slot => slot.member).map(slot => [nameForStorage(slot.member), { vehicle:slot.vehicle, role:slot.role }]));
 }
@@ -155,8 +155,19 @@ function updateTacticsRecommendationAfterManualChange() {
   const box=byId("tacticsRecommendation");
   if(box) box.innerHTML=`<strong>Empfehlung</strong><p>${escapeHtml(currentTacticsRecommendationText())}</p>`;
 }
-function renderAtueSlot(){const slot=byId("atueSlot");if(!slot)return;slot.classList.toggle("crew-filled",Boolean(currentAtueMember));slot.classList.toggle("crew-open",!currentAtueMember);slot.querySelector("strong").innerHTML=currentAtueMember?`<span draggable="true" data-drag-member="${escapeHtml(currentAtueMember.id)}">${escapeHtml(nameForTile(currentAtueMember))}</span>`:"nicht besetzt";slot.querySelector("small").textContent=currentAtueMember?"Atemschutzüberwachung":"Geeignete Person mit ATÜ-Zusatzfunktion hierher ziehen.";}
+function renderAtueSlot(){const slot=byId("atueSlot");if(!slot)return;slot.classList.toggle("crew-filled",Boolean(currentAtueMember));slot.classList.toggle("crew-open",!currentAtueMember);slot.classList.toggle("crew-draggable",Boolean(currentAtueMember));if(currentAtueMember){slot.draggable=true;slot.dataset.dragMember=currentAtueMember.id;}else{slot.draggable=false;delete slot.dataset.dragMember;}slot.querySelector("strong").textContent=currentAtueMember?nameForTile(currentAtueMember):"nicht besetzt";slot.querySelector("small").textContent=currentAtueMember?"Atemschutzüberwachung":"Geeignete Person mit ATÜ-Zusatzfunktion hierher ziehen.";}
+
+function ensureTacticsSideLayout(){
+  const vehicles=document.querySelector("#tacticsView .tactics-vehicles");
+  const reserve=document.querySelector("#tacticsView .tactics-reserve");
+  if(!vehicles||!reserve)return;
+  if(reserve.parentElement!==vehicles)vehicles.appendChild(reserve);
+  vehicles.classList.add("tactics-three-column-layout");
+  reserve.classList.add("tactics-reserve-side");
+}
+
 function refreshTacticsManualView() {
+  ensureTacticsSideLayout();
   const group=currentTacticsSlots.filter(slot=>slot.vehicle==="LF10"), staff=currentTacticsSlots.filter(slot=>slot.vehicle==="TSF");
   byId("groupCrew").innerHTML=crewHtml(group,"LF10"); byId("staffCrew").innerHTML=crewHtml(staff,"TSF");
   byId("groupFillBadge").textContent=unitStrengthLabel(group); byId("staffFillBadge").textContent=unitStrengthLabel(staff); byId("groupStrengthDetail").textContent=unitStrengthDetail(group,"1/8"); byId("staffStrengthDetail").textContent=unitStrengthDetail(staff,"1/5");
@@ -188,6 +199,7 @@ function manualMoveTacticsMember(memberId,targetVehicle,targetRole){
   updateTacticsRecommendationAfterManualChange();
 }
 function initializeTacticsDragDrop(){
+  ensureTacticsSideLayout();
   const view=byId("tacticsView");
   view.addEventListener("dragstart",e=>{const el=e.target.closest("[data-drag-member]");if(!el)return;tacticsDragSource=el.dataset.dragMember;el.classList.add("dragging");e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",tacticsDragSource);});
   view.addEventListener("dragend",e=>{e.target.closest("[data-drag-member]")?.classList.remove("dragging");view.querySelectorAll(".drag-over").forEach(el=>el.classList.remove("drag-over"));tacticsDragSource=null;});

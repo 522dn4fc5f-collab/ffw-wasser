@@ -5,63 +5,89 @@
   const distance=(a,b)=>Math.hypot(b.x-a.x,b.y-a.y);
   const angle=(a,b)=>Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
   const normalizeAngle=value=>{while(value>180)value-=360;while(value<-180)value+=360;return value;};
-  function pageSource(page,original=false){
-    // Die unbearbeitete Aufnahme bleibt dauerhaft erhalten. Dadurch können auch
-    // nach einer ersten Bearbeitung wieder alle äußeren Bildbereiche erreicht werden.
-    return page.originalFile||page.file||page.editedBlob||page.blob;
-  }
-  function ensureOriginal(page){if(!page.originalFile)page.originalFile=page.file;}
+  const currentSource=page=>page.editedBlob||page.blob||page.file||page.originalFile;
+  const originalSource=page=>page.originalFile||page.file||page.blob;
+  function ensureOriginal(page){if(!page.originalFile)page.originalFile=page.file||page.blob;}
   function editorDialog(){
     let dialog=byId("ipadDocumentEditor");if(dialog)return dialog;
     dialog=document.createElement("dialog");dialog.id="ipadDocumentEditor";dialog.className="ipad-document-editor";
-    dialog.innerHTML=`<div class="ipad-editor-shell"><header><div><small>Dokumentseite bearbeiten</small><h2>Auf DIN A4 ausrichten</h2></div><button type="button" class="outline-button" data-editor-cancel>Zurück</button></header><p class="ipad-editor-help"><b>Ein Finger:</b> frei verschieben · <b>Zwei Finger:</b> frei verkleinern, vergrößern und drehen · Der grüne Rahmen entspricht DIN A4 Hochformat; das ganze Foto kann sichtbar gemacht werden</p><div class="ipad-editor-stage" data-editor-stage><canvas data-editor-canvas></canvas><div class="ipad-editor-crop-frame" aria-hidden="true"><span>DIN A4</span></div></div><div class="ipad-editor-status" aria-live="polite"><span data-editor-scale>100 %</span><span data-editor-rotation>0°</span></div><div class="ipad-editor-tools"><button type="button" class="outline-button" data-rotate-left>↶ 90° links</button><button type="button" class="outline-button" data-rotate-right>90° rechts ↷</button><button type="button" class="outline-button" data-editor-fit>Ganzes Foto einpassen</button><button type="button" class="outline-button" data-editor-reset>Letzte Bearbeitung zurücksetzen</button><button type="button" class="outline-button" data-editor-original>Originalbild herstellen</button></div><footer><button type="button" class="outline-button" data-editor-cancel>Zurück ohne Änderung</button><button type="button" class="primary-button" data-editor-apply>Änderung übernehmen</button></footer></div>`;
+    dialog.innerHTML=`<div class="ipad-editor-shell"><header><div><small>Dokumentseite bearbeiten</small><h2>Auf DIN A4 ausrichten</h2></div><button type="button" class="outline-button" data-editor-cancel>Zurück</button></header><p class="ipad-editor-help"><b>Ein Finger:</b> verschieben · <b>Zwei Finger:</b> zoomen und drehen · Der grüne Rahmen ist der spätere PDF-Ausschnitt.</p><div class="ipad-editor-stage" data-editor-stage><canvas data-editor-canvas></canvas><div class="ipad-editor-crop-frame" aria-hidden="true"><span>DIN A4</span></div></div><div class="ipad-editor-status" aria-live="polite"><span data-editor-scale>100 %</span><span data-editor-rotation>0°</span></div><div class="ipad-editor-tools"><button type="button" class="outline-button" data-rotate-left>↶ 90° links</button><button type="button" class="outline-button" data-rotate-right>90° rechts ↷</button><button type="button" class="outline-button" data-editor-cover>Rahmen vollständig füllen</button><button type="button" class="outline-button" data-editor-fit>Ganzes Foto anzeigen</button><button type="button" class="outline-button" data-editor-reset>Änderungen verwerfen</button><button type="button" class="outline-button" data-editor-original>Originalfoto herstellen</button></div><footer><button type="button" class="outline-button" data-editor-cancel>Zurück ohne Änderung</button><button type="button" class="primary-button" data-editor-apply>Änderung übernehmen</button></footer></div>`;
     document.body.appendChild(dialog);
     const stage=dialog.querySelector("[data-editor-stage]");
     ["pointerdown","pointermove","pointerup","pointercancel"].forEach(type=>stage.addEventListener(type,handlePointer,{passive:false}));
-    dialog.querySelectorAll("[data-editor-cancel]").forEach(button=>button.onclick=()=>closeEditor(false));
-    dialog.querySelector("[data-rotate-left]").onclick=()=>{editor.rotation-=90;drawEditor();};
-    dialog.querySelector("[data-rotate-right]").onclick=()=>{editor.rotation+=90;drawEditor();};
+    dialog.querySelectorAll("[data-editor-cancel]").forEach(button=>button.onclick=()=>closeEditor());
+    dialog.querySelector("[data-rotate-left]").onclick=()=>rotateBy(-90);
+    dialog.querySelector("[data-rotate-right]").onclick=()=>rotateBy(90);
+    dialog.querySelector("[data-editor-cover]").onclick=coverEditor;
     dialog.querySelector("[data-editor-fit]").onclick=fitEditor;
     dialog.querySelector("[data-editor-reset]").onclick=()=>restoreSnapshot(editor.openSnapshot);
     dialog.querySelector("[data-editor-original]").onclick=restoreOriginal;
     dialog.querySelector("[data-editor-apply]").onclick=applyEditor;
-    dialog.oncancel=event=>{event.preventDefault();closeEditor(false);};
-    dialog.onclick=event=>{if(event.target===dialog)closeEditor(false);};
+    dialog.oncancel=event=>{event.preventDefault();closeEditor();};
+    dialog.onclick=event=>{if(event.target===dialog)closeEditor();};
     return dialog;
   }
   function stageMetrics(){
     const stage=editor.dialog.querySelector("[data-editor-stage]"),rect=stage.getBoundingClientRect();
-    const width=rect.width,height=rect.height,pad=Math.max(12,Math.min(width,height)*.035),a4=210/297;
+    const width=Math.max(1,rect.width),height=Math.max(1,rect.height),pad=Math.max(12,Math.min(width,height)*.035),a4=210/297;
     const availableWidth=Math.max(1,width-pad*2),availableHeight=Math.max(1,height-pad*2);
     let cropWidth=availableWidth,cropHeight=cropWidth/a4;
     if(cropHeight>availableHeight){cropHeight=availableHeight;cropWidth=cropHeight*a4;}
     const crop={x:(width-cropWidth)/2,y:(height-cropHeight)/2,width:cropWidth,height:cropHeight};
     const frame=editor.dialog.querySelector(".ipad-editor-crop-frame");
-    if(frame){frame.style.left=`${crop.x}px`;frame.style.top=`${crop.y}px`;frame.style.width=`${crop.width}px`;frame.style.height=`${crop.height}px`;frame.style.inset="auto";}
+    Object.assign(frame.style,{left:`${crop.x}px`,top:`${crop.y}px`,width:`${crop.width}px`,height:`${crop.height}px`,inset:"auto"});
     return {stage,rect,width,height,crop};
   }
-  function transformedBounds(){const rad=editor.rotation*Math.PI/180,c=Math.abs(Math.cos(rad)),s=Math.abs(Math.sin(rad));return {width:(editor.bitmap.width*c+editor.bitmap.height*s)*editor.scale,height:(editor.bitmap.width*s+editor.bitmap.height*c)*editor.scale};}
-  function keepFrameCovered(){
-    // Freier Zoom: Das Bild wird nicht mehr zwangsweise auf Rahmenfüllung vergrößert.
-    // So können alle vier Außenkanten und Ecken vollständig in den Rahmen gezogen werden.
-    const {crop}=stageMetrics(),next=transformedBounds();
-    editor.scale=clamp(editor.scale,.01,12);
-    const maxX=Math.max(crop.width,next.width)/2+crop.width*.5;
-    const maxY=Math.max(crop.height,next.height)/2+crop.height*.5;
-    editor.x=clamp(editor.x,-maxX,maxX);
-    editor.y=clamp(editor.y,-maxY,maxY);
+  function rotatedSize(){const rad=editor.rotation*Math.PI/180,c=Math.abs(Math.cos(rad)),s=Math.abs(Math.sin(rad));return {width:editor.bitmap.width*c+editor.bitmap.height*s,height:editor.bitmap.width*s+editor.bitmap.height*c};}
+  function drawEditor(){
+    if(!editor)return;const {width,height}=stageMetrics(),canvas=editor.canvas,dpr=Math.min(2,devicePixelRatio||1);
+    canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);canvas.style.width=`${width}px`;canvas.style.height=`${height}px`;
+    const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle="#d9dfe2";ctx.fillRect(0,0,width,height);
+    ctx.save();ctx.translate(width/2+editor.x,height/2+editor.y);ctx.rotate(editor.rotation*Math.PI/180);ctx.scale(editor.scale,editor.scale);ctx.drawImage(editor.bitmap,-editor.bitmap.width/2,-editor.bitmap.height/2);ctx.restore();
+    editor.dialog.querySelector("[data-editor-scale]").textContent=`${Math.round(editor.scale*100)} %`;editor.dialog.querySelector("[data-editor-rotation]").textContent=`${Math.round(normalizeAngle(editor.rotation))}°`;
   }
-  function drawEditor(){if(!editor)return;keepFrameCovered();const {width,height}=stageMetrics(),canvas=editor.canvas,dpr=Math.min(2,devicePixelRatio||1);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);canvas.style.width=`${width}px`;canvas.style.height=`${height}px`;const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle="#d9dfe2";ctx.fillRect(0,0,width,height);ctx.save();ctx.translate(width/2+editor.x,height/2+editor.y);ctx.rotate(editor.rotation*Math.PI/180);ctx.scale(editor.scale,editor.scale);ctx.drawImage(editor.bitmap,-editor.bitmap.width/2,-editor.bitmap.height/2);ctx.restore();editor.dialog.querySelector("[data-editor-scale]").textContent=`${Math.round(editor.scale*100)} %`;editor.dialog.querySelector("[data-editor-rotation]").textContent=`${Math.round(normalizeAngle(editor.rotation))}°`;}
-  function fitEditor(){const {crop}=stageMetrics(),rad=editor.rotation*Math.PI/180,c=Math.abs(Math.cos(rad)),s=Math.abs(Math.sin(rad)),rw=editor.bitmap.width*c+editor.bitmap.height*s,rh=editor.bitmap.width*s+editor.bitmap.height*c;editor.scale=Math.min(crop.width/rw,crop.height/rh);editor.x=0;editor.y=0;drawEditor();}
-  function snapshot(){return {x:editor.x,y:editor.y,scale:editor.scale,rotation:editor.rotation,sourceBlob:editor.sourceBlob};}
-  async function restoreSnapshot(data){if(!data)return;editor.x=data.x;editor.y=data.y;editor.scale=data.scale;editor.rotation=data.rotation;if(data.sourceBlob&&data.sourceBlob!==editor.sourceBlob){editor.bitmap.close?.();editor.sourceBlob=data.sourceBlob;editor.bitmap=await createImageBitmap(data.sourceBlob);}drawEditor();}
-  async function restoreOriginal(){const source=pageSource(editor.page,true);editor.bitmap.close?.();editor.sourceBlob=source;editor.bitmap=await createImageBitmap(source);editor.rotation=0;editor.x=0;editor.y=0;fitEditor();}
+  function fitEditor(){const {crop}=stageMetrics(),r=rotatedSize();editor.scale=Math.min(crop.width/r.width,crop.height/r.height);editor.x=0;editor.y=0;editor.mode="contain";drawEditor();}
+  function coverEditor(){const {crop}=stageMetrics(),r=rotatedSize();editor.scale=Math.max(crop.width/r.width,crop.height/r.height);editor.x=0;editor.y=0;editor.mode="cover";drawEditor();}
+  function rotateBy(degrees){editor.rotation=normalizeAngle(editor.rotation+degrees);editor.mode==="contain"?fitEditor():coverEditor();}
+  function snapshot(){return {x:editor.x,y:editor.y,scale:editor.scale,rotation:editor.rotation,source:editor.source,mode:editor.mode};}
+  async function replaceBitmap(source){editor.bitmap.close?.();editor.source=source;editor.bitmap=await createImageBitmap(source);}
+  async function restoreSnapshot(data){if(!data)return;if(data.source&&data.source!==editor.source)await replaceBitmap(data.source);editor.x=data.x;editor.y=data.y;editor.scale=data.scale;editor.rotation=data.rotation;editor.mode=data.mode||"cover";drawEditor();}
+  async function restoreOriginal(){await replaceBitmap(originalSource(editor.page));editor.rotation=0;editor.mode="cover";coverEditor();}
   function pointerPoint(event){const rect=editor.stage.getBoundingClientRect();return {x:event.clientX-rect.left,y:event.clientY-rect.top};}
-  function handlePointer(event){if(!editor)return;event.preventDefault();const map=editor.pointers;if(event.type==="pointerdown"){editor.stage.setPointerCapture?.(event.pointerId);map.set(event.pointerId,pointerPoint(event));if(map.size===1)editor.gesture={mode:"pan",start:[...map.values()][0],x:editor.x,y:editor.y};if(map.size===2){const pts=[...map.values()];editor.gesture={mode:"pinch",distance:distance(pts[0],pts[1]),angle:angle(pts[0],pts[1]),scale:editor.scale,rotation:editor.rotation,center:{x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2},x:editor.x,y:editor.y};}return;}if(event.type==="pointermove"&&map.has(event.pointerId)){map.set(event.pointerId,pointerPoint(event));if(map.size===1&&editor.gesture?.mode==="pan"){const p=[...map.values()][0];editor.x=editor.gesture.x+p.x-editor.gesture.start.x;editor.y=editor.gesture.y+p.y-editor.gesture.start.y;}else if(map.size===2){const pts=[...map.values()],g=editor.gesture;if(g?.mode==="pinch"){editor.scale=clamp(g.scale*distance(pts[0],pts[1])/Math.max(1,g.distance),.01,12);editor.rotation=g.rotation+normalizeAngle(angle(pts[0],pts[1])-g.angle);const center={x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2};editor.x=g.x+center.x-g.center.x;editor.y=g.y+center.y-g.center.y;}}drawEditor();return;}if(event.type==="pointerup"||event.type==="pointercancel"){map.delete(event.pointerId);if(map.size===1){const p=[...map.values()][0];editor.gesture={mode:"pan",start:p,x:editor.x,y:editor.y};}else if(!map.size)editor.gesture=null;}}
-  async function makeOutputBlob(){const {crop,width,height}=stageMetrics(),ratio=clamp(1800/crop.width,1,3),out=document.createElement("canvas");out.width=Math.round(crop.width*ratio);out.height=Math.round(crop.height*ratio);const ctx=out.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,out.width,out.height);ctx.scale(ratio,ratio);ctx.translate(width/2+editor.x-crop.x,height/2+editor.y-crop.y);ctx.rotate(editor.rotation*Math.PI/180);ctx.scale(editor.scale,editor.scale);ctx.drawImage(editor.bitmap,-editor.bitmap.width/2,-editor.bitmap.height/2);return new Promise((resolve,reject)=>out.toBlob(blob=>blob?resolve(blob):reject(new Error("Bild konnte nicht erzeugt werden")),"image/jpeg",.94));}
-  async function applyEditor(){const button=editor.dialog.querySelector("[data-editor-apply]");button.disabled=true;button.textContent="Wird übernommen …";try{const blob=await makeOutputBlob(),page=editor.page;URL.revokeObjectURL(page.url);page.editedBlob=blob;page.blob=blob;page.url=URL.createObjectURL(blob);page.width=await createImageBitmap(blob).then(bitmap=>{const width=bitmap.width;bitmap.close?.();return width;});page.height=await createImageBitmap(blob).then(bitmap=>{const height=bitmap.height;bitmap.close?.();return height;});page.manual=true;page.editTransform={x:editor.x,y:editor.y,scale:editor.scale,rotation:editor.rotation};closeEditor(true);renderDocumentReportPages();documentReportReady=false;showToast("Bildbearbeitung wurde übernommen.");}catch(error){console.error(error);showToast("Bildbearbeitung konnte nicht übernommen werden.","error");}finally{button.disabled=false;button.textContent="Änderung übernehmen";}}
+  function beginGesture(){const pts=[...editor.pointers.values()];if(pts.length===1)editor.gesture={mode:"pan",start:pts[0],x:editor.x,y:editor.y};else if(pts.length>=2){const a=pts[0],b=pts[1];editor.gesture={mode:"pinch",distance:Math.max(1,distance(a,b)),angle:angle(a,b),scale:editor.scale,rotation:editor.rotation,center:{x:(a.x+b.x)/2,y:(a.y+b.y)/2},x:editor.x,y:editor.y};}}
+  function handlePointer(event){
+    if(!editor)return;event.preventDefault();const points=editor.pointers;
+    if(event.type==="pointerdown"){editor.stage.setPointerCapture?.(event.pointerId);points.set(event.pointerId,pointerPoint(event));beginGesture();return;}
+    if(event.type==="pointermove"&&points.has(event.pointerId)){
+      points.set(event.pointerId,pointerPoint(event));const pts=[...points.values()],g=editor.gesture;
+      if(pts.length===1&&g?.mode==="pan"){editor.x=g.x+pts[0].x-g.start.x;editor.y=g.y+pts[0].y-g.start.y;}
+      else if(pts.length>=2&&g?.mode==="pinch"){
+        const a=pts[0],b=pts[1],center={x:(a.x+b.x)/2,y:(a.y+b.y)/2},newScale=clamp(g.scale*distance(a,b)/g.distance,.02,12),scaleRatio=newScale/g.scale;
+        editor.scale=newScale;editor.rotation=g.rotation+normalizeAngle(angle(a,b)-g.angle);
+        editor.x=center.x+(g.x-g.center.x)*scaleRatio;editor.y=center.y+(g.y-g.center.y)*scaleRatio;editor.mode="free";
+      }
+      drawEditor();return;
+    }
+    if(event.type==="pointerup"||event.type==="pointercancel"){points.delete(event.pointerId);beginGesture();}
+  }
+  async function makeOutputBlob(){
+    const {crop,width,height}=stageMetrics(),out=document.createElement("canvas");out.width=1800;out.height=Math.round(1800*297/210);
+    const rx=out.width/crop.width,ry=out.height/crop.height,ctx=out.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,out.width,out.height);ctx.save();ctx.scale(rx,ry);ctx.translate(width/2+editor.x-crop.x,height/2+editor.y-crop.y);ctx.rotate(editor.rotation*Math.PI/180);ctx.scale(editor.scale,editor.scale);ctx.drawImage(editor.bitmap,-editor.bitmap.width/2,-editor.bitmap.height/2);ctx.restore();
+    return new Promise((resolve,reject)=>out.toBlob(blob=>blob?resolve(blob):reject(new Error("Bild konnte nicht erzeugt werden")),"image/jpeg",.94));
+  }
+  async function applyEditor(){
+    const button=editor.dialog.querySelector("[data-editor-apply]");button.disabled=true;button.textContent="Wird übernommen …";
+    try{const blob=await makeOutputBlob(),page=editor.page,bitmap=await createImageBitmap(blob);URL.revokeObjectURL(page.url);page.editedBlob=blob;page.blob=blob;page.url=URL.createObjectURL(blob);page.width=bitmap.width;page.height=bitmap.height;bitmap.close?.();page.manual=true;page.crop={x:0,y:0,width:page.width,height:page.height};page.rotation=normalizeAngle(editor.rotation);page.editTransform={x:editor.x,y:editor.y,scale:editor.scale,rotation:editor.rotation,mode:editor.mode};closeEditor();renderDocumentReportPages();documentReportReady=false;showToast("Bildbearbeitung wurde übernommen.");}
+    catch(error){console.error(error);showToast("Bildbearbeitung konnte nicht übernommen werden.","error");}
+    finally{button.disabled=false;button.textContent="Änderung übernehmen";}
+  }
   function closeEditor(){if(!editor)return;editor.bitmap.close?.();const dialog=editor.dialog;editor=null;document.documentElement.classList.remove("document-editor-open");try{dialog.close();}catch{dialog.removeAttribute("open");}}
-  window.openIpadDocumentCrop=window.openManualDocumentCrop=async function(index){const page=documentReportPages[index];if(!page)return;ensureOriginal(page);const dialog=editorDialog(),source=pageSource(page,false),bitmap=await createImageBitmap(source);editor={index,page,dialog,stage:dialog.querySelector("[data-editor-stage]"),canvas:dialog.querySelector("[data-editor-canvas]"),sourceBlob:source,bitmap,x:0,y:0,scale:1,rotation:0,pointers:new Map(),gesture:null};dialog.showModal();document.documentElement.classList.add("document-editor-open");await new Promise(resolve=>requestAnimationFrame(resolve));fitEditor();editor.openSnapshot=snapshot();};
-  const style=document.createElement("style");style.textContent=`.document-editor-open{overflow:hidden}.ipad-document-editor{width:100vw;height:100vh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#111;color:#fff}.ipad-editor-shell{height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto auto}.ipad-editor-shell header,.ipad-editor-shell footer{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:12px 16px;background:#191919}.ipad-editor-shell h2{margin:2px 0 0}.ipad-editor-shell small{color:#ccc}.ipad-editor-help{margin:0;padding:9px 16px;background:#272727;text-align:center}.ipad-editor-stage{position:relative;min-height:0;overflow:hidden;touch-action:none;user-select:none;background:#d9dfe2}.ipad-editor-stage canvas{position:relative;z-index:1;display:block;width:100%;height:100%;opacity:1}.ipad-editor-crop-frame{position:absolute;z-index:5;border:5px solid #00c853;outline:2px solid #fff;box-shadow:0 0 0 100vmax rgba(25,35,40,.14),0 0 18px rgba(0,200,83,.75);pointer-events:none}.ipad-editor-crop-frame span{position:absolute;top:8px;left:8px;padding:5px 8px;border-radius:6px;background:#00a844;color:#fff;font-weight:900;font-size:.78rem}.ipad-editor-status{display:flex;justify-content:center;gap:24px;padding:7px;background:#222;font-weight:800}.ipad-editor-tools{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;padding:10px 16px;background:#191919}.ipad-editor-tools button,.ipad-editor-shell footer button,.ipad-editor-shell header button{min-height:48px}.ipad-editor-shell footer{justify-content:flex-end}@media(max-width:850px){.ipad-editor-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.ipad-editor-tools button:last-child{grid-column:1/-1}.ipad-editor-shell footer{display:grid;grid-template-columns:1fr 1fr}.ipad-editor-help{font-size:.9rem}}`;
+  window.closeIpadDocumentEditor=closeEditor;
+  window.openIpadDocumentCrop=window.openManualDocumentCrop=async function(index){
+    const page=documentReportPages[index];if(!page)return;ensureOriginal(page);const dialog=editorDialog(),source=currentSource(page),bitmap=await createImageBitmap(source);
+    editor={index,page,dialog,stage:dialog.querySelector("[data-editor-stage]"),canvas:dialog.querySelector("[data-editor-canvas]"),source,bitmap,x:0,y:0,scale:1,rotation:0,mode:"cover",pointers:new Map(),gesture:null};
+    dialog.showModal();document.documentElement.classList.add("document-editor-open");await new Promise(resolve=>requestAnimationFrame(resolve));coverEditor();editor.openSnapshot=snapshot();
+  };
+  const style=document.createElement("style");style.textContent=`.document-editor-open{overflow:hidden}.ipad-document-editor{width:100vw;height:100vh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#111;color:#fff}.ipad-editor-shell{height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto auto}.ipad-editor-shell header,.ipad-editor-shell footer{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:12px 16px;background:#191919}.ipad-editor-shell h2{margin:2px 0 0}.ipad-editor-shell small{color:#ccc}.ipad-editor-help{margin:0;padding:9px 16px;background:#272727;text-align:center}.ipad-editor-stage{position:relative;min-height:0;overflow:hidden;touch-action:none;user-select:none;background:#d9dfe2}.ipad-editor-stage canvas{position:relative;z-index:1;display:block;width:100%;height:100%;opacity:1}.ipad-editor-crop-frame{position:absolute;z-index:5;border:5px solid #00c853;outline:2px solid #fff;box-shadow:0 0 0 100vmax rgba(25,35,40,.18),0 0 18px rgba(0,200,83,.75);pointer-events:none}.ipad-editor-crop-frame span{position:absolute;top:8px;left:8px;padding:5px 8px;border-radius:6px;background:#00a844;color:#fff;font-weight:900;font-size:.78rem}.ipad-editor-status{display:flex;justify-content:center;gap:24px;padding:7px;background:#222;font-weight:800}.ipad-editor-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px 16px;background:#191919}.ipad-editor-tools button,.ipad-editor-shell footer button,.ipad-editor-shell header button{min-height:48px}.ipad-editor-shell footer{justify-content:flex-end}@media(max-width:850px){.ipad-editor-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.ipad-editor-shell footer{display:grid;grid-template-columns:1fr 1fr}.ipad-editor-help{font-size:.88rem}}`;
   document.head.appendChild(style);
 })();

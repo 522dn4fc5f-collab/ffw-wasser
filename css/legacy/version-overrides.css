@@ -1590,3 +1590,105 @@ html body .participant-command-header .compact-menu{
     min-height:0!important;
   }
 }
+
+
+/* FFW 2.20.1: Weitere Anwesende seitlich fuer kurze Drag-and-Drop-Wege */
+.tactics-vehicles.tactics-three-column-layout{
+  grid-template-columns:minmax(300px,1fr) minmax(280px,.92fr) minmax(250px,.72fr);
+  align-items:start;
+}
+.tactics-vehicles .tactics-reserve-side{
+  margin-top:0;
+  position:sticky;
+  top:86px;
+  max-height:calc(100vh - 110px);
+  min-height:280px;
+  overflow:hidden;
+}
+.tactics-reserve-side .reserve-list{
+  display:grid;
+  grid-template-columns:1fr;
+  align-content:start;
+  gap:8px;
+  max-height:calc(100vh - 235px);
+  min-height:170px;
+  padding:4px 5px 12px 2px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.tactics-reserve-side .reserve-list span{
+  display:block;
+  width:100%;
+  box-sizing:border-box;
+  padding:11px 12px;
+  border:1px solid #cbd5da;
+  border-radius:9px;
+  background:#edf2f4;
+  line-height:1.25;
+}
+.tactics-reserve-side .reserve-list span[draggable="true"]{
+  min-height:44px;
+}
+.tactics-vehicle .crew-position{
+  min-height:72px;
+  transition:border-color .15s,background-color .15s,box-shadow .15s,transform .15s;
+}
+.tactics-vehicle .crew-position.drag-over,
+.tactics-reserve-side .reserve-list.drag-over,
+.tactics-atue .atue-slot.drag-over{
+  outline:4px solid #f2c500;
+  outline-offset:2px;
+  background:#fff7cc;
+  box-shadow:0 0 0 5px rgba(242,197,0,.2);
+  transform:scale(1.012);
+}
+@media(max-width:1180px){
+  .tactics-vehicles.tactics-three-column-layout{
+    grid-template-columns:minmax(280px,1fr) minmax(260px,1fr) minmax(220px,.72fr);
+  }
+  .crew-grid{grid-template-columns:1fr;}
+}
+@media(max-width:850px){
+  .tactics-vehicles.tactics-three-column-layout{grid-template-columns:1fr;}
+  .tactics-vehicles .tactics-reserve-side{
+    position:static;
+    max-height:none;
+    min-height:0;
+    order:3;
+  }
+  .tactics-reserve-side .reserve-list{
+    display:flex;
+    flex-wrap:wrap;
+    max-height:42vh;
+    min-height:90px;
+  }
+  .tactics-reserve-side .reserve-list span{width:auto;flex:1 1 210px;}
+}
+@media(max-width:480px){
+  .tactics-reserve-side .reserve-list{display:grid;grid-template-columns:1fr;max-height:48vh;}
+  .tactics-reserve-side .reserve-list span{width:100%;}
+}
+
+/* FFW 2.20.2: ganze besetzte Karte als Drag-Griff */
+.crew-position.crew-draggable,
+.atue-slot.crew-draggable,
+.reserve-list [data-drag-member]{
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-touch-callout:none;
+}
+.crew-position.crew-draggable:active,
+.atue-slot.crew-draggable:active,
+.reserve-list [data-drag-member]:active{cursor:grabbing;}
+.crew-position.crew-draggable{
+  min-height:82px;
+  padding:14px 12px;
+}
+.crew-position.crew-draggable strong,
+.crew-position.crew-draggable span,
+.crew-position.crew-draggable small,
+.atue-slot.crew-draggable *{pointer-events:none;}
+.reserve-list [data-drag-member]{min-height:52px;padding:14px 12px!important;}

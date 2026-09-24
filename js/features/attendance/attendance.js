@@ -399,6 +399,11 @@ function setHomeFlowStage(stage){
   applyVisibility(byId("operationReportForm"),stage===3&&sessionType==="Einsatz","block");
   applyVisibility(tactics,stage===3&&sessionType==="Allgemeine Probe","block");
   document.querySelectorAll("#attendanceView .flow-stage-2-support").forEach(element=>applyVisibility(element,stage===2,""));
+  // Der Dokumentbereich ist Bestandteil von Schritt 3. Beim Wechsel zu Home,
+  // Schritt 1 oder Schritt 2 wird nur die Oberfläche geschlossen; bereits
+  // geladene Seiten bleiben für die Rückkehr zu Schritt 3 im Arbeitsspeicher.
+  if(stage!==3)hideDocumentReportUi?.();
+  else syncDocumentReportVisibility?.(stage);
 
   if(stage===1){
     if(!todayEntries().length)currentProbeDate=systemToday();
