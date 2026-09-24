@@ -88,7 +88,7 @@ async function operationPdfBlob(d){
 }
 async function showOperationPdfPreview(blob,fileName,onFinalUpload){
   // Keine zusätzliche Vorschau oder zweite Bestätigung mehr.
-  // Speichern/Upload direkt ausführen und danach den vorhandenen Home-Rücksprung nutzen.
+  document.querySelectorAll("#operationPdfPreviewDialog,.operation-pdf-preview-dialog").forEach(node=>{try{node.close?.();}catch(error){}node.remove();});
   return Boolean(await onFinalUpload());
 }
 function operationCsv(d){const header=["Datum","Alarmzeit","Einsatznummer","Einsatzart","Einsatzstelle","Name","Status","Fahrzeuge","Geräte","Einsatzleiter","Einsatzende"],rows=d.members.map(name=>[d.date,d.times.alarm,d.number,d.type,d.location,name,"Anwesend",[...d.vehicles,d.otherVehicles].filter(Boolean).join(", "),[...d.devices,d.otherDevices].filter(Boolean).join(", "),d.leader,d.times.ended]);return '\ufeff'+[header,...rows].map(r=>r.map(csvCell).join(';')).join('\r\n');}

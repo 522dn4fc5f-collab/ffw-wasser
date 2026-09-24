@@ -31,7 +31,7 @@ closeDay=async function(topic=currentClosingTopic){
   await addCsvToArchive(csvName,csv,exportType,topic);entries=entries.filter(e=>e.date!==today());chosenMemberId="";chosenMemberIds.clear();chosenRole="";currentClosingTopic="";resetDocumentReportState();currentProbeDate=systemToday();saveEntries();renderMembers();renderRoles();renderEntries();updateSelection();tacticsClosingPending=false;const actions=byId("tacticsCloseActions");if(actions)actions.hidden=true;setHomeFlowStage(1);showView("attendanceView");showToast("Probe abgeschlossen: Das ZIP-Terminpaket wurde gespeichert und der Tag zurückgesetzt.");
 };
 
-/* Einsatzabschluss: Vorschau bleibt PDF, final gespeichert wird ein ZIP-Paket. */
+/* Einsatzabschluss: direkt speichern, archivieren und anschließend zu Home zurückkehren. */
 finishOperation=async function(){
   const d=collectOperationData();
   if(d.atueUsed&&!documentReportReady){showDocumentReportPanel();showToast("Bitte zuerst den Bericht der Atemschutzüberwachung fotografieren oder auswählen.","error");return;}
