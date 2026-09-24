@@ -37,25 +37,9 @@ function renderStatistics() {
   const breathingStates=members.filter(member=>!member.ageDepartment).map(member=>({member,state:breathingClearanceState(member,systemToday())}));
   const bcCounts=Object.fromEntries(["valid","soon","expired","none"].map(state=>[state,breathingStates.filter(item=>item.state===state).length]));
   byId("breathingValidCount").textContent=bcCounts.valid;byId("breathingSoonCount").textContent=bcCounts.soon;byId("breathingExpiredCount").textContent=bcCounts.expired;byId("breathingNoneCount").textContent=bcCounts.none;
-  const clearanceTone={valid:"green",soon:"gold",expired:"red",none:"gray"};
-  const clearanceLabel={valid:"Gültig",soon:"Läuft bald ab",expired:"Abgelaufen",none:"Nicht hinterlegt"};
-  byId("breathingClearanceList").innerHTML=breathingStates.sort((a,b)=>({expired:0,soon:1,none:2,valid:3}[a.state]-{expired:0,soon:1,none:2,valid:3}[b.state])||nameForTile(a.member).localeCompare(nameForTile(b.member),"de")).map(item=>renderMetric("",nameForTile(item.member),item.state==="none"?clearanceLabel[item.state]:`${clearanceLabel[item.state]} · ${item.member.breathingClearanceUntil}`,clearanceTone[item.state])).join("");
-  const activeQualificationMembers=members.filter(member=>!member.ageDepartment);
-  const atueMembers=activeQualificationMembers.filter(member=>member.atueQualified);
-  const committeeMembers=activeQualificationMembers.filter(member=>member.committeeMember);
-  const attackMembers=activeQualificationMembers.filter(member=>(member.roles||[]).some(role=>role==="ATF"||role==="ATM"));
-  const waterMembers=activeQualificationMembers.filter(member=>(member.roles||[]).some(role=>role==="WTF"||role==="WTM"));
-  byId("atueQualifiedCount").textContent=atueMembers.length;
-  byId("committeeMemberCount").textContent=committeeMembers.length;
-  byId("attackRoleCount").textContent=attackMembers.length;
-  byId("waterRoleCount").textContent=waterMembers.length;
-  const qualificationRows=[
-    ["ATÜ",atueMembers],
-    ["Ausschuss Sitzung",committeeMembers],
-    ["Angriffstrupp",attackMembers],
-    ["Wassertrupp",waterMembers]
-  ];
-  byId("qualificationStatisticsList").innerHTML=qualificationRows.map(([label,list])=>renderMetric("",label,list.length?list.map(nameForTile).sort((a,b)=>a.localeCompare(b,"de")).join(", "):"Keine Mitglieder","neutral")).join("");
+  const clearanceLabel={valid:"Gültig bis",soon:"Fällig bis",expired:"Überfällig seit",none:"Nicht dokumentiert"};
+  const clearanceTone={valid:"green",soon:"gold",expired:"red",none:"gray"},clearanceOrder={expired:0,none:1,soon:2,valid:3};
+  byId("breathingClearanceList").innerHTML=breathingStates.sort((a,b)=>clearanceOrder[a.state]-clearanceOrder[b.state]||nameForTile(a.member).localeCompare(nameForTile(b.member),"de")).map(item=>renderMetric("",nameForTile(item.member),item.state==="none"?clearanceLabel[item.state]:`${clearanceLabel[item.state]} ${item.member.breathingClearanceUntil}`,clearanceTone[item.state])).join("");
   const rows = yearData.flatMap(data => data.rows);
   const eligibleRows = rows.filter(row => row.status !== "Betrifft nicht" && activeMembers.some(member => nameForStorage(member) === row.name || nameForTile(member) === row.name));
   const presentRows = eligibleRows.filter(row => row.status === "Anwesend");
