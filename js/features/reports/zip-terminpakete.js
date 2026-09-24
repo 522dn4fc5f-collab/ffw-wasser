@@ -8,10 +8,15 @@ async function buildTerminPackage({baseName,csvName,csvContent,pdfName,pdfBlob,d
   zip.file("paket-info.json",JSON.stringify({format:"FFW-Wasser-Terminpaket",version:"1.0",createdAt:new Date().toISOString(),files:Object.keys(zip.files)},null,2));
   return zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6},mimeType:"application/zip"});
 }
-async function saveTerminPackage(fileName,blob){
+async function saveTerminPackage(fileName,blob){document.querySelectorAll("#operationPdfPreviewDialog,.operation-pdf-preview-dialog").forEach(node=>node.remove());
   const handle=effectiveCsvDirectoryHandle?.()||effectivePdfDirectoryHandle?.()||null;
   if(handle){try{if(!(await ensureDirectoryWritePermission(handle)))return "failed";const fh=await handle.getFileHandle(fileName,{create:true}),w=await fh.createWritable();await w.write(blob);await w.close();return "saved";}catch(error){console.error(error);return "failed";}}
   try{if(typeof File==="function"&&navigator.share&&navigator.canShare){const file=new File([blob],fileName,{type:"application/zip"});if(navigator.canShare({files:[file]})){await navigator.share({files:[file]});return "shared";}}}catch(error){if(error?.name==="AbortError")return "cancelled";}
+  const isiPad=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
+  if(isiPad){
+    showToast("Auf dem iPad bitte einen Speicherordner wählen oder den Teilen-Dialog verwenden. Eine leere Browser-Vorschau wird nicht mehr geöffnet.","error");
+    return "failed";
+  }
   try{downloadBlob(fileName,blob);return "downloaded";}catch(error){return "failed";}
 }
 async function packageFilesFromZip(file){const zip=await JSZip.loadAsync(file),files=[];for(const entry of Object.values(zip.files)){if(entry.dir||!/\.(csv|pdf)$/i.test(entry.name))continue;const blob=await entry.async("blob"),name=entry.name.split("/").pop();files.push(new File([blob],name,{type:/\.csv$/i.test(name)?"text/csv":"application/pdf",lastModified:file.lastModified||Date.now()}));}return files;}

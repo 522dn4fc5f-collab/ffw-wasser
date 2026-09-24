@@ -1,4 +1,4 @@
-const CACHE="ffw-v2-19-2-dina4-ohne-vorschau";
+const CACHE="ffw-v2-19-4-atue-nur-bei-besetzung";
 const PRECACHE=["./js/features/statistics/statistics-engine.js","./js/features/reports/ipad-document-editor.js","./js/features/operations/operations.js","./js/features/reports/zip-terminpakete.js","./assets/einsatzbericht-vorlage-seite1.jpg","./assets/einsatzbericht-vorlage-seite2.jpg"];
 self.addEventListener("install",event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(PRECACHE)));});
 self.addEventListener("activate",event=>event.waitUntil(Promise.all([self.clients.claim(),caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))])));

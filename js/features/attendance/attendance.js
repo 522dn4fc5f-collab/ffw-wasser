@@ -422,6 +422,12 @@ function continueToAttendance(){
   if(!type)return showToast("Bitte zuerst eine Terminart auswählen.","error");
   window.__sessionTypeTransitionRunning=true;
   sessionType=type;
+  // Schritt 1 startet ausdrücklich einen neuen Termin. Alte, nicht abgeschlossene
+  // Anmeldungen dieses Datums dürfen nicht in den neuen Termin übernommen werden.
+  entries=entries.filter(entry=>entry.date!==today());
+  saveEntries();
+  resetDocumentReportState?.();
+  currentClosingTopic="";
   if(sessionType==="Einsatz")startOperationSession();
   chosenMemberId="";chosenMemberIds.clear();chosenRole="Anwesend";
   tacticsClosingPending=false;currentTacticsAssignments=new Map();currentTacticsSlots=[];tacticsDragSource=null;

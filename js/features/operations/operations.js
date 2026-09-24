@@ -28,10 +28,15 @@ function ensureOperationForm(){
  byId("operationBack").onclick=()=>setHomeFlowStage(2);
  byId("operationFinish").onclick=finishOperation;
  byId("opAtueUsed").addEventListener("change",event=>{
-   if(event.target.checked){documentReportReady=false;showDocumentReportPanel();}
-   else{const panel=byId("documentReportPanel");if(panel)panel.hidden=true;documentReportReady=false;}
+   const person=String(byId("opAtuePerson")?.value||"").trim();
+   if(event.target.checked&&person){documentReportReady=false;showDocumentReportPanel();}
+   else resetDocumentReportState();
  });
- byId("opAtuePerson").addEventListener("change",()=>{if(byId("opAtueUsed")?.checked&&!documentReportReady)showDocumentReportPanel();});
+ byId("opAtuePerson").addEventListener("change",event=>{
+   const active=Boolean(byId("opAtueUsed")?.checked&&String(event.target.value||"").trim());
+   if(active&&!documentReportReady)showDocumentReportPanel();
+   else if(!active)resetDocumentReportState();
+ });
  return section;
 }
 function operationValue(id){return String(byId(id)?.value||"").trim();}
