@@ -31,7 +31,9 @@ async function sharePendingTerminPackage(){
     const file=new File([pending.blob],pending.fileName,{type:"application/zip",lastModified:Date.now()});
     if(!(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})))throw new Error("Dateifreigabe wird von diesem Browser nicht unterstützt.");
     // Direkter Aufruf aus dem Button-Klick: notwendige Benutzeraktivierung bleibt erhalten.
-    await navigator.share({files:[file],title:"Feuerwehr Wasser Terminpaket"});
+    // Nur die ZIP-Datei an den iOS-Teilen-Dialog übergeben. Ein zusätzlicher
+    // title-Wert wurde von "In Dateien sichern" teilweise als Text.txt gespeichert.
+    await navigator.share({files:[file]});
     finishIpadTerminPackageSave("shared");
   }catch(error){
     if(error?.name==="AbortError"){finishIpadTerminPackageSave("cancelled");return;}
