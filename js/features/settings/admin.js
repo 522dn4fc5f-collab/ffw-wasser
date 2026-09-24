@@ -12,7 +12,24 @@ function resetAdminTimeout() {
 }
 async function requestCloseProbe() {
   if (!todayEntries().length) return showToast("Es muss mindestens eine Teilnahme erfasst sein.", "error");
-  if(!(await prepareDocumentReportBeforeClose()))return;
+
+  // Ohne generische Zwischenkarte direkt in den terminartspezifischen Schritt 3.
+  setHomeFlowStage(3);
+
+  if (sessionType === "Allgemeine Probe") {
+    // Taktik und Besetzung werden durch setHomeFlowStage(3) direkt angezeigt.
+    return;
+  }
+  if (sessionType === "Einsatz") {
+    // Das Einsatzformular wird durch setHomeFlowStage(3) direkt angezeigt.
+    return;
+  }
+  if (sessionType === "Ausschuss Sitzung") {
+    if (!documentReportReady) showDocumentReportPanel();
+    else openProbeTopicDialog();
+    return;
+  }
+  // Sonderprobe und Unterricht benötigen keinen Dokumentbericht.
   openProbeTopicDialog();
 }
 function ensureProbeTopicDialog() {
