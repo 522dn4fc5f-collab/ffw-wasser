@@ -189,7 +189,7 @@ function updateTacticsRecommendationAfterManualChange() {
   const box=byId("tacticsRecommendation");
   if(box) box.innerHTML=`<strong>Empfehlung</strong><p>${escapeHtml(currentTacticsRecommendationText())}</p>`;
 }
-function renderAtueSlot(){const slot=byId("atueSlot");if(!slot)return;slot.classList.toggle("crew-filled",Boolean(currentAtueMember));slot.classList.toggle("crew-open",!currentAtueMember);slot.classList.toggle("crew-draggable",Boolean(currentAtueMember));if(currentAtueMember){slot.draggable=true;slot.dataset.dragMember=currentAtueMember.id;}else{slot.draggable=false;delete slot.dataset.dragMember;}slot.querySelector("strong").textContent=currentAtueMember?nameForTile(currentAtueMember):"nicht besetzt";slot.querySelector("small").textContent=currentAtueMember?"Atemschutzüberwachung":"Geeignete Person mit ATÜ-Zusatzfunktion hierher ziehen.";}
+function renderAtueSlot(){const slot=byId("atueSlot");if(!slot)return;const card=slot.closest("#tacticsAtue");if(card)card.hidden=!breathingProtectionPlanned;if(!breathingProtectionPlanned)currentAtueMember=null;slot.classList.toggle("crew-filled",Boolean(currentAtueMember));slot.classList.toggle("crew-open",!currentAtueMember);slot.classList.toggle("crew-draggable",Boolean(currentAtueMember));if(currentAtueMember){slot.draggable=true;slot.dataset.dragMember=currentAtueMember.id;}else{slot.draggable=false;delete slot.dataset.dragMember;}slot.querySelector("strong").textContent=currentAtueMember?nameForTile(currentAtueMember):"nicht besetzt";slot.querySelector("small").textContent=currentAtueMember?"Atemschutzüberwachung":"Geeignete Person mit ATÜ-Zusatzfunktion hierher ziehen.";}
 
 function ensureTacticsSideLayout(){
   const vehicles=document.querySelector("#tacticsView .tactics-vehicles");
@@ -322,7 +322,8 @@ function renderTactics() {
   } else recommendation="Keine kleinste Einheit 1/3 möglich. Unterricht oder angepasste Ausbildung durchführen.";
   if(!group.length)group=GROUP_ROLES.map(role=>({role,member:null}));
   if(!staff.length)staff=STAFF_ROLES.map(role=>({role,member:null}));
-  if(!currentAtueMember){currentAtueMember=people.find(p=>!p.assigned&&p.member.atueQualified&&getMemberRoles(p.member).includes("Melder"))?.member||people.find(p=>!p.assigned&&p.member.atueQualified)?.member||null;}
+  if(!breathingProtectionPlanned)currentAtueMember=null;
+  else if(!currentAtueMember){currentAtueMember=people.find(p=>!p.assigned&&p.member.atueQualified&&getMemberRoles(p.member).includes("Melder"))?.member||people.find(p=>!p.assigned&&p.member.atueQualified)?.member||null;}
   currentTacticsSlots=protectCriticalVehicleSlots([...group.map(item=>({vehicle:"LF10",role:item.role,member:item.member})),...staff.map(item=>({vehicle:"TSF",role:item.role,member:item.member}))]);
   refreshTacticsManualView();
   byId("tacticsSummary").textContent=`${present.length} anwesende Einsatzkräfte · ${sessionType}`;
@@ -359,7 +360,7 @@ function applyCalculatedTacticsFunctions() {
   entries = entries.map(entry => {
     if (entry.sessionId !== ensureCurrentSessionId() || entry.status !== "Anwesend") return entry;
     if (entry.role === "Organisation") return entry;
-    if(currentAtueMember && (entry.storedName===nameForStorage(currentAtueMember)||entry.displayName===nameForTile(currentAtueMember)))return {...entry,role:"ATÜ"};
+    if(breathingProtectionPlanned&&currentAtueMember && (entry.storedName===nameForStorage(currentAtueMember)||entry.displayName===nameForTile(currentAtueMember)))return {...entry,role:"ATÜ"};
     const assignment = currentTacticsAssignments.get(entry.storedName);
     return assignment ? { ...entry, role:assignment.role||"Reserve", vehicle:assignment.vehicle, tacticsRoleLabel:assignment.roleLabel, secondVehicle:assignment.secondVehicle, secondRole:assignment.secondRole } : { ...entry, role:"Reserve" };
   });
@@ -381,5 +382,5 @@ async function finalizeProbeFromTactics(){
   await closeDay(currentClosingTopic);
 }
 
-byId("breathingProtectionPlanned")?.addEventListener("change",event=>{breathingProtectionPlanned=event.target.checked;currentTacticsSlots=[];tacticsChangeSlots=[];currentTacticsAssignments=new Map();renderTactics();});
+byId("breathingProtectionPlanned")?.addEventListener("change",event=>{breathingProtectionPlanned=event.target.checked;if(!breathingProtectionPlanned)currentAtueMember=null;currentTacticsSlots=[];tacticsChangeSlots=[];currentTacticsAssignments=new Map();renderTactics();});
 initializeTacticsDragDrop();
