@@ -42,13 +42,15 @@ async function closeDay(topic = currentClosingTopic) {
     return [entry.date, entry.time, storedName, exportSessionType, "Anwesend", csvRoleForEntry(entry, member)];
   });
 
-  const rowsWithTopic = rows.map(row => [...row, topic]);
-  const lines = ["Datum;Uhrzeit;Name;Terminart;Status;Funktion / Status;Thema", ...rowsWithTopic.map(row => row.map(csvCell).join(";"))];
+  const includeFunction = exportSessionType === "Allgemeine Probe" || exportSessionType === "Einsatz";
+  const rowsWithTopic = rows.map(row => includeFunction ? [...row, topic] : [...row.slice(0,5), topic]);
+  const header = includeFunction ? "Datum;Uhrzeit;Name;Terminart;Status;Funktion / Status;Thema" : "Datum;Uhrzeit;Name;Terminart;Status;Thema";
+  const lines = [header, ...rowsWithTopic.map(row => row.map(csvCell).join(";"))];
   const safeType = exportSessionType.replace(/ /g, "-");
   const fileName = `FFW-Wasser_${today()}_${safeType}.csv`;
   const csvContent = "\ufeff" + lines.join("\r\n");
   const pdfFileName = `FFW-Wasser_${today()}_${safeType}.pdf`;
-  const pdfRows = rows.map(row => ({ time:row[1], name:row[2], status:row[4], role:row[5] }));
+  const pdfRows = rows.map(row => ({ time:row[1], name:row[2], status:row[4], role:includeFunction ? row[5] : "" }));
   const pdfNotApplicable = rows.filter(row => row[4] === "Betrifft nicht").length;
   const pdfBlob = probePdfBlob(pdfRows, exportSessionType, {present:present+organizers,excused,missing,notApplicable:pdfNotApplicable}, topic);
   let exportResult = "failed";

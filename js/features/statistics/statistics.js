@@ -34,7 +34,10 @@ function renderStatistics() {
   if(audit)audit.innerHTML=`<div class="panel-heading"><span class="step blue">F</span><div><h3>Funktionsauswertung</h3><small>Teilnahmen werden einmal, ausgeübte Funktionen je Füllung gezählt.</small></div></div><div class="statistics-assignment-metrics"><div><strong>${presentYearRows.length}</strong><span>Anwesenheitszeilen</span></div><div><strong>${assignmentTotal}</strong><span>gezählte Funktionen</span></div><div><strong>${changedRows.length}</strong><span>Personen mit zweiter Füllung</span></div></div>`;
   const activeMembers = members.filter(member => !member.ageDepartment);
   const ageMembers = members.filter(member => member.ageDepartment);
-  const breathingStates=members.filter(member=>!member.ageDepartment).map(member=>({member,state:breathingClearanceState(member,systemToday())}));
+  // In der AS-Statistik nur Personen anzeigen, bei denen Atemschutz
+  // tatsächlich hinterlegt beziehungsweise vorgesehen ist. Nicht eingesetzte
+  // Personen ohne Atemschutzbezug werden nicht als "nicht dokumentiert" geführt.
+  const breathingStates=members.filter(member=>!member.ageDepartment&&(member.breathingClearanceUntil||member.breathingActive||member.breathingQualified)).map(member=>({member,state:breathingClearanceState(member,systemToday())}));
   const bcCounts=Object.fromEntries(["valid","soon","expired","none"].map(state=>[state,breathingStates.filter(item=>item.state===state).length]));
   byId("breathingValidCount").textContent=bcCounts.valid;byId("breathingSoonCount").textContent=bcCounts.soon;byId("breathingExpiredCount").textContent=bcCounts.expired;byId("breathingNoneCount").textContent=bcCounts.none;
   const clearanceLabel={valid:"Gültig bis",soon:"Fällig bis",expired:"Überfällig seit",none:"Nicht dokumentiert"};
