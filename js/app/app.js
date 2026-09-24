@@ -372,7 +372,10 @@ function renderSafetyInfoHub(){
 }
 function showBreathingClearanceWarnings(){renderSafetyInfoHub();}
 function showDriverLicenseControlWarnings(){renderSafetyInfoHub();}
-function warnOldIosStandaloneInstallation(){const standalone=window.matchMedia?.("(display-mode: standalone)")?.matches||navigator.standalone===true;if(!standalone)return;const notice=document.createElement("div");notice.className="ios-standalone-migration-notice";notice.setAttribute("role","alert");notice.innerHTML='<strong>iPad-Tastaturhinweis</strong><p>Dieses alte Home-Symbol startet noch im fehlerhaften App-Modus. Bitte dieses Symbol löschen, die Webseite einmal in Safari öffnen und erneut „Zum Home-Bildschirm“ wählen. Das neue Symbol öffnet die Seite im Safari-Modus.</p><button type="button" class="primary-button">Verstanden</button>';document.body.appendChild(notice);notice.querySelector("button").onclick=()=>notice.remove();}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",warnOldIosStandaloneInstallation,{once:true});else warnOldIosStandaloneInstallation();
+
+function cleanupTemporaryBlobUiOnStartup(){
+  document.querySelectorAll("#operationPdfPreviewDialog,.operation-pdf-preview-dialog,[data-blob-preview]").forEach(node=>{try{node.close?.();}catch(error){}node.remove();});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",cleanupTemporaryBlobUiOnStartup,{once:true});else cleanupTemporaryBlobUiOnStartup();
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initCloudSync,{once:true});else initCloudSync();

@@ -356,11 +356,18 @@ function renderHistory(){
 async function openHistoryPdf(id){
   const item=csvArchive.find(x=>x.id===id);if(!item)return;
   const imported=item.hasImportedPdf?await loadImportedReportPdf?.(id):null;
-  if(imported){const url=URL.createObjectURL(imported),opened=window.open(url,"_blank","noopener");if(!opened)downloadBlob(item.pdfFileName||item.fileName.replace(/\.csv$/i,".pdf"),imported);setTimeout(()=>URL.revokeObjectURL(url),60000);return;}
+  if(imported){
+    const fileName=item.pdfFileName||item.fileName.replace(/\.csv$/i,".pdf");
+    const isiPad=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
+    if(isiPad&&navigator.share&&navigator.canShare){const file=new File([imported],fileName,{type:"application/pdf"});if(navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:fileName});}catch(error){}return;}}
+    const url=URL.createObjectURL(imported),opened=window.open(url,"_blank","noopener");if(!opened)downloadBlob(fileName,imported);setTimeout(()=>URL.revokeObjectURL(url),60000);return;
+  }
   const data=historyCountsForItem(item), topic=item.topic||data.rows[0]?.topic||"";
   const pdfRows=data.rows.map(x=>({time:x.time,name:x.name,status:x.status,role:x.role}));
   const blob=probePdfBlob(pdfRows,item.sessionType||data.rows[0]?.sessionType||"Probe",{present:data.present,excused:data.excused,missing:data.missing,notApplicable:data.notApplicable},topic,data.rows[0]?.date||historyDateFromItem(item));
+  const fileName=item.fileName.replace(/\.csv$/i,".pdf"),isiPad=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
+  if(isiPad&&navigator.share&&navigator.canShare){const file=new File([blob],fileName,{type:"application/pdf"});if(navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:fileName});}catch(error){}return;}}
   const url=URL.createObjectURL(blob),opened=window.open(url,"_blank","noopener");
-  if(!opened)downloadBlob(item.fileName.replace(/\.csv$/i,".pdf"),blob);
+  if(!opened)downloadBlob(fileName,blob);
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
