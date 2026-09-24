@@ -453,6 +453,10 @@ function continueToAttendance(){
   tacticsClosingPending=false;currentTacticsAssignments=new Map();currentTacticsSlots=[];tacticsDragSource=null;currentAtueMember=null;breathingProtectionPlanned=false;
 
   setHomeFlowStage(2);
+  // Schritt 2 beginnt immer am oberen Rand der Ansicht, unabhängig von der
+  // vorherigen Scrollposition in Schritt 1.
+  window.scrollTo({top:0,left:0,behavior:"instant"});
+  requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"instant"}));
 
   const renderErrors=[];
   const safeRender=(name,fn)=>{

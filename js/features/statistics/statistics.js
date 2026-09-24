@@ -2,6 +2,20 @@ let selectedStatisticsYear=String(new Date().getFullYear());
 function availableStatisticsYears(){const years=new Set([String(new Date().getFullYear())]);statisticsArchiveData().forEach(data=>{const year=String(data.rows[0]?.date||data.item.createdAt||"").slice(0,4);if(/^\d{4}$/.test(year))years.add(year);});return [...years].sort((a,b)=>b.localeCompare(a));}
 function renderStatisticsYearSelect(){const select=byId("statisticsYearSelect");if(!select)return;const years=availableStatisticsYears();if(!years.includes(selectedStatisticsYear))selectedStatisticsYear=years[0];select.innerHTML=years.map(year=>`<option value="${year}"${year===selectedStatisticsYear?" selected":""}>${year}</option>`).join("");}
 function parseCsvRows(content) { return CsvEngine.parse(content); }
+function statisticsRolesFromValue(value){
+  const text=String(value||"").trim();if(!text)return [];
+  const parts=/\b[12]\. Füllung:/.test(text)?text.split(/\s*\|\s*/):[text];
+  const roles=[];
+  parts.forEach(part=>{
+    let role=part.replace(/^\s*[12]\. Füllung:\s*/i,"").replace(/^(?:LF10|TSF)\s+/i,"").trim();
+    if(!role||role==="Reserve")return;
+    role=normalizeStatisticsRole(role);
+    if(AVAILABLE_ROLES.includes(role)&&!roles.includes(role))roles.push(role);
+  });
+  return roles;
+}
+function statisticsAssignmentCount(rows){return rows.filter(row=>row.status==="Anwesend").reduce((sum,row)=>sum+statisticsRolesFromValue(row.role).length,0);}
+
 function statisticsArchiveData() {
   return csvArchive.filter(item => item.sessionType !== "Einsatz").map(item => ({ item, rows: parseCsvRows(item.content) })).filter(data => data.rows.length);
 }
@@ -14,6 +28,10 @@ function renderStatistics() {
   const year = selectedStatisticsYear || String(new Date().getFullYear());
   const all = statisticsArchiveData();
   const yearData = all.filter(data => String(data.rows[0]?.date || data.item.createdAt || "").startsWith(year));
+  const allYearRows=yearData.flatMap(data=>data.rows),presentYearRows=allYearRows.filter(row=>row.status==="Anwesend"),assignmentTotal=statisticsAssignmentCount(presentYearRows),changedRows=presentYearRows.filter(row=>/2\. Füllung:/.test(row.role||""));
+  let audit=byId("statisticsAssignmentAudit");
+  if(!audit){audit=document.createElement("section");audit.id="statisticsAssignmentAudit";audit.className="panel statistics-assignment-audit";const target=byId("statisticsView")?.querySelector(".statistics-grid")||byId("statisticsView");target?.prepend(audit);}
+  if(audit)audit.innerHTML=`<div class="panel-heading"><span class="step blue">F</span><div><h3>Funktionsauswertung</h3><small>Teilnahmen werden einmal, ausgeübte Funktionen je Füllung gezählt.</small></div></div><div class="statistics-assignment-metrics"><div><strong>${presentYearRows.length}</strong><span>Anwesenheitszeilen</span></div><div><strong>${assignmentTotal}</strong><span>gezählte Funktionen</span></div><div><strong>${changedRows.length}</strong><span>Personen mit zweiter Füllung</span></div></div>`;
   const activeMembers = members.filter(member => !member.ageDepartment);
   const ageMembers = members.filter(member => member.ageDepartment);
   const breathingStates=members.filter(member=>!member.ageDepartment).map(member=>({member,state:breathingClearanceState(member,systemToday())}));
@@ -88,14 +106,11 @@ function renderStatistics() {
   byId("topVisitorsEmpty").hidden = ranked.length > 0;
 
   const targets = getRoleTargets();
-  const normalizedRole = role => role.startsWith("Maschinist") ? "Maschinist" : role;
   const actualCounts = new Map();
-  presentRows.forEach(row => {
-    const role = normalizedRole(row.role || "");
-    if (!AVAILABLE_ROLES.includes(role)) return;
+  presentRows.forEach(row => statisticsRolesFromValue(row.role).forEach(role => {
     const key = `${row.name}|||${role}`;
     actualCounts.set(key, (actualCounts.get(key) || 0) + 1);
-  });
+  }));
   const targetRows = [];
   activeMembers.forEach(member => {
     const name = nameForStorage(member);
@@ -212,7 +227,7 @@ function renderIndividualStatistics(memberId) {
   byId("individualMissingCount").textContent = missing.length;
 
   const usage = new Map();
-  present.forEach(row => { const role = normalizeStatisticsRole(row.role); if (AVAILABLE_ROLES.includes(role)) usage.set(role, (usage.get(role) || 0) + 1); });
+  present.forEach(row => statisticsRolesFromValue(row.role).forEach(role => usage.set(role,(usage.get(role)||0)+1)));
   const usageRows = [...usage.entries()].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0],"de"));
   byId("individualRoleUsage").innerHTML = usageRows.map(([role,count]) => renderMetric("",role,count,"blue")).join("");
   byId("individualRoleUsageEmpty").hidden = usageRows.length > 0;
