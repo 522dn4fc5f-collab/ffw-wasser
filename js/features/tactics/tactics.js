@@ -24,8 +24,15 @@ function roleProgress(member, role, counts, targets) {
   const target=targets[role]||0, actual=counts.get(`${nameForStorage(member)}|||${role}`)||0;
   return {target,actual,remaining:Math.max(0,target-actual)};
 }
+function assignableRolesForTactics(member){
+  const roles=getMemberRoles(member);
+  // Ohne geplanten Atemschutzeinsatz sind AT und WT normale taktische
+  // Funktionen. Deshalb dürfen alle anwesenden Einsatzkräfte dort eingesetzt
+  // werden, auch ohne aktive Atemschutzfreigabe.
+  return breathingProtectionPlanned?roles:[...new Set([...roles,"ATF","ATM","WTF","WTM"])];
+}
 function personRoleOptions(member, counts, targets) {
-  return getMemberRoles(member).map(role => {
+  return assignableRolesForTactics(member).map(role => {
     const progress=roleProgress(member,role,counts,targets);
     const vehicleFit=role!=="Maschinist" || canDriveVehicle(member,"LF10") || canDriveVehicle(member,"TSF");
     return {role,...progress,vehicleFit,score:(progress.remaining*1000)+(progress.target>0?100:0)-progress.actual};
@@ -133,9 +140,9 @@ function memberMayFillSlot(member, vehicle, role) {
   if(!member||!vehicle||!role)return false;
   if(role==="Maschinist")return canDriveVehicle(member,vehicle);
   if(role==="ATÜ")return Boolean(member.atueQualified);
-  if(!getMemberRoles(member).includes(role))return false;
-  // AT/WT dürfen ohne Atemschutz eingesetzt werden. Nur bei aktiv geplanter
-  // Atemschutzverwendung wird die gültige Atemschutzfreigabe verlangt.
+  if(!assignableRolesForTactics(member).includes(role))return false;
+  // Nur bei aktiviertem Kästchen wird für AT/WT eine gültige
+  // Atemschutzfreigabe verlangt.
   return breathingRoleAllowed(member,role);
 }
 function deniedTacticsSlotMessage(member, vehicle, role) {
