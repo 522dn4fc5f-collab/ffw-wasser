@@ -2,7 +2,11 @@ function renderMembers() {
   members = sortMembers(members);
   const current = todayEntries();
   const recordedNames = new Set(current.flatMap(entry => [entry.storedName, entry.displayName].filter(Boolean)));
-  const eligibleMembers = sessionType === "Ausschuss Sitzung" ? members.filter(member => member.committeeMember) : members;
+  const eligibleMembers = sessionType === "Ausschuss Sitzung"
+    ? members.filter(member => member.committeeMember)
+    : sessionType === "Einsatz"
+      ? members.filter(member => !member.ageDepartment)
+      : members;
   const availableMembers = eligibleMembers.filter(member => !recordedNames.has(nameForStorage(member)) && !recordedNames.has(nameForTile(member)));
   if (!availableMembers.some(member => member.id === chosenMemberId)) chosenMemberId = "";
   chosenMemberIds = new Set([...chosenMemberIds].filter(id => availableMembers.some(member => member.id === id)));
@@ -17,7 +21,7 @@ function renderMembers() {
     return `<button type="button" class="choice-button ${member.ageDepartment ? "age-member-button" : ""} ${selected ? "selected" : ""} ${organizationSelected ? "organization-selected" : ""} ${recorded ? "recorded" : ""}" data-member="${escapeHtml(member.id)}" aria-pressed="${selected}" ${recorded ? 'disabled aria-disabled="true"' : ""}>${escapeHtml(nameForTile(member))}</button>`;
   };
   const activeMembers = (sessionType === "Ausschuss Sitzung" ? members.filter(member => member.committeeMember) : members).filter(member => !member.ageDepartment);
-  const ageMembers = sessionType === "Ausschuss Sitzung" ? [] : members.filter(member => member.ageDepartment);
+  const ageMembers = (sessionType === "Ausschuss Sitzung" || sessionType === "Einsatz") ? [] : members.filter(member => member.ageDepartment);
   const sections = [
     `<section class="member-section member-section-active"><div class="member-section-heading"><h4>Einsatzabteilung</h4><span>${activeMembers.length}</span></div><div class="member-subgrid">${activeMembers.map(renderMemberButton).join("")}</div></section>`,
     ageMembers.length ? `<section class="member-section member-section-age"><div class="member-section-heading"><h4>Alterskameraden</h4><span>${ageMembers.length}</span></div><p>Nur anwesende Mitglieder auswählen. Nicht ausgewählte Mitglieder werden als „Betrifft nicht“ gewertet.</p><div class="member-subgrid">${ageMembers.map(renderMemberButton).join("")}</div></section>` : ""

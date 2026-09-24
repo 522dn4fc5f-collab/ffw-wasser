@@ -2,7 +2,7 @@
   "name": "Feuerwehr Wasser",
   "short_name": "FFW Wasser",
   "start_url": "./",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#182329",
   "theme_color": "#c80000",
   "icons": [
@@ -17,5 +17,5 @@
       "type": "image/png"
     }
   ],
-  "version": "2.16.7"
+  "version": "2.16.9"
 }
