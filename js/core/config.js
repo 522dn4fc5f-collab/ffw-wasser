@@ -20,7 +20,7 @@ const DEFAULT_MEMBERS = [
   ["Zäh", "Markus"], ["Zurzevic", "Sasa"]
 ].map(([lastName, firstName], index) => ({ id: `standard-${index}`, lastName, firstName, roles: [...AVAILABLE_ROLES], ageDepartment: false, machinistVehicles: [] }));
 
-const KEYS = { members: "fw_v5_members", entries: "fw_v5_entries", pin: "fw_v5_pin", archive: "fw_v35_csv_archive", functionEntry: "fw_v1_function_entry_enabled", roleTargets: "fw_v1_annual_role_targets" };
+const KEYS = { members: "fw_v5_members", entries: "fw_v5_entries", pin: "fw_v5_pin", password: "fw_v6_password", archive: "fw_v35_csv_archive", functionEntry: "fw_v1_function_entry_enabled", roleTargets: "fw_v1_annual_role_targets" };
 const byId = id => document.getElementById(id);
 const systemToday = () => new Date().toLocaleDateString("sv-SE");
 let currentProbeDate = systemToday();

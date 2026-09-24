@@ -9,7 +9,8 @@ function loadArray(key, fallback) {
 function saveMembers() { safeStorage.setItem(KEYS.members, JSON.stringify(members)); }
 function saveEntries() { safeStorage.setItem(KEYS.entries, JSON.stringify(entries)); }
 function saveArchive() { safeStorage.setItem(KEYS.archive, JSON.stringify(csvArchive)); }
-function adminPin() { return safeStorage.getItem(KEYS.pin) || "112"; }
+function adminPassword() { return safeStorage.getItem(KEYS.password) || safeStorage.getItem(KEYS.pin) || "112"; }
+function adminPin(){return adminPassword();}
 function escapeHtml(value) {
   return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }

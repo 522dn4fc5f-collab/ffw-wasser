@@ -320,7 +320,7 @@ else removeStandaloneAttendanceVersion();
   if(!gate||!form||!input){return;}
   form.addEventListener("submit",event=>{
     event.preventDefault();
-    if(input.value!==adminPin()){
+    if(input.value!==adminPassword()){
       if(error)error.hidden=false;
       input.select();
       return;
@@ -334,7 +334,7 @@ else removeStandaloneAttendanceVersion();
     try{input.focus({preventScroll:true});}catch(focusError){input.focus();}
     try{input.setSelectionRange(input.value.length,input.value.length);}catch(selectionError){}
   };
-  input.addEventListener("input",()=>{input.value=input.value.replace(/\D/g,"").slice(0,12);if(error)error.hidden=true;});
+  input.addEventListener("input",()=>{input.value=input.value.slice(0,64);if(error)error.hidden=true;});
   input.addEventListener("pointerdown",focusPinInput,{passive:true});
   input.addEventListener("touchend",focusPinInput,{passive:true});
   input.addEventListener("click",focusPinInput);
@@ -350,28 +350,32 @@ else removeStandaloneAttendanceVersion();
 const originalRenderStatistics=renderStatistics;renderStatistics=function(){originalRenderStatistics();ensureOperationStatisticsPanel();renderOperationStatistics();};
 function enforceFooterVersion(){
   const footer=document.querySelector(".app-footer");
-  if(footer)footer.textContent="© 2026 Markus Bürklin · Feuerwehr Wasser 2.14.0 · Einsätze";
+  if(footer)footer.textContent="© 2026 Markus Bürklin · Feuerwehr Wasser 2.16.7 · Einsätze";
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",enforceFooterVersion,{once:true});
 else enforceFooterVersion();
 
-function showBreathingClearanceWarnings(){
- const affected=members.filter(member=>!member.ageDepartment&&["expired","soon"].includes(breathingClearanceState(member,systemToday())));
- const existing=byId("breathingClearanceStartupNotice");
- if(!affected.length){existing?.remove();return;}
- const expiredMembers=affected.filter(member=>breathingClearanceState(member,systemToday())==="expired");
- const soonMembers=affected.filter(member=>breathingClearanceState(member,systemToday())==="soon");
- let notice=existing;
- if(!notice){
-  notice=document.createElement("aside");notice.id="breathingClearanceStartupNotice";notice.className="breathing-clearance-startup-notice";notice.setAttribute("role","alertdialog");notice.setAttribute("aria-modal","false");notice.setAttribute("aria-labelledby","breathingNoticeTitle");document.body.appendChild(notice);
- }
- const rows=[...expiredMembers.map(member=>`<li class="breathing-notice-expired"><strong>${escapeHtml(nameForTile(member))}</strong><span>abgelaufen am ${escapeHtml(member.breathingClearanceUntil||"nicht hinterlegt")}</span></li>`),...soonMembers.map(member=>`<li class="breathing-notice-soon"><strong>${escapeHtml(nameForTile(member))}</strong><span>gültig bis ${escapeHtml(member.breathingClearanceUntil||"nicht hinterlegt")}</span></li>`)];
- notice.innerHTML=`<div class="breathing-notice-head"><div><span class="breathing-notice-kicker">Atemschutz-Status</span><h2 id="breathingNoticeTitle">Freigaben prüfen</h2></div><button type="button" class="breathing-notice-close" aria-label="Atemschutz-Hinweis schließen">×</button></div><p><strong>${expiredMembers.length}</strong> abgelaufen · <strong>${soonMembers.length}</strong> laufen innerhalb von 60 Tagen ab.</p><ul>${rows.join("")}</ul><div class="breathing-notice-actions"><button type="button" class="outline-button" data-breathing-statistics>Details in der Statistik</button><button type="button" class="primary-button" data-breathing-dismiss>Hinweis schließen</button></div>`;
- const close=()=>notice.remove();notice.querySelector(".breathing-notice-close").onclick=close;notice.querySelector("[data-breathing-dismiss]").onclick=close;notice.querySelector("[data-breathing-statistics]").onclick=()=>{close();renderStatistics();showView("settingsStatisticsView");};
- requestAnimationFrame(()=>notice.querySelector("[data-breathing-dismiss]")?.focus({preventScroll:true}));
+function ensureSafetyInfoHub(){
+ let button=byId("safetyInfoButton"),dialog=byId("safetyInfoDialog");
+ if(!button){button=document.createElement("button");button.id="safetyInfoButton";button.type="button";button.className="safety-info-button";button.setAttribute("aria-label","Hinweise zu Atemschutz und Führerscheinkontrolle öffnen");button.innerHTML='<span aria-hidden="true">i</span><b id="safetyInfoCount">0</b>';document.body.appendChild(button);}
+ if(!dialog){dialog=document.createElement("dialog");dialog.id="safetyInfoDialog";dialog.className="safety-info-dialog";dialog.innerHTML='<form method="dialog"><header><div><small>Sicherheitsinformationen</small><h2>Offene Hinweise</h2></div><button value="cancel" aria-label="Hinweise schließen">×</button></header><div id="safetyInfoContent"></div><footer><button value="cancel" class="primary-button">Schließen</button></footer></form>';document.body.appendChild(dialog);button.onclick=()=>dialog.showModal?.();}
+ return {button,dialog};
 }
-
-function showDriverLicenseControlWarnings(){
- const affected=members.filter(member=>["missing","overdue","soon"].includes(driverLicenseControlDue(member,systemToday())));const existing=byId("driverLicenseStartupNotice");if(!affected.length){existing?.remove();return;}
- const missing=affected.filter(member=>driverLicenseControlDue(member,systemToday())==="missing"),overdue=affected.filter(member=>driverLicenseControlDue(member,systemToday())==="overdue"),soon=affected.filter(member=>driverLicenseControlDue(member,systemToday())==="soon");let notice=existing;if(!notice){notice=document.createElement("aside");notice.id="driverLicenseStartupNotice";notice.className="driver-license-startup-notice";notice.setAttribute("role","alertdialog");notice.setAttribute("aria-labelledby","driverLicenseNoticeTitle");document.body.appendChild(notice);}
- const row=(member,status)=>`<li class="driver-license-${status}"><strong>${escapeHtml(nameForTile(member))}</strong><span>${status==="missing"?"Kontrolle fehlt":status==="overdue"?`fällig seit ${escapeHtml(driverLicenseDueDate(member))}`:`fällig bis ${escapeHtml(driverLicenseDueDate(member))}`}</span></li>`;notice.innerHTML=`<div class="breathing-notice-head"><div><span class="driver-license-kicker">Maschinisten</span><h2 id="driverLicenseNoticeTitle">Jährliche Führerscheinkontrolle</h2></div><button type="button" class="driver-license-close" aria-label="Führerschein-Hinweis schließen">×</button></div><p><strong>${missing.length}</strong> nicht dokumentiert · <strong>${overdue.length}</strong> überfällig · <strong>${soon.length}</strong> bald fällig.</p><ul>${[...missing.map(m=>row(m,"missing")),...overdue.map(m=>row(m,"overdue")),...soon.map(m=>row(m,"soon"))].join("")}</ul><div class="breathing-notice-actions"><button type="button" class="outline-button" data-driver-members>Mitglieder verwalten</button><button type="button" class="primary-button" data-driver-dismiss>Hinweis schließen</button></div>`;const close=()=>notice.remove();notice.querySelector(".driver-license-close").onclick=close;notice.querySelector("[data-driver-dismiss]").onclick=close;notice.querySelector("[data-driver-members]").onclick=()=>{close();showView("settingsMembersView");};}
+function renderSafetyInfoHub(){
+ const breathing=members.filter(member=>!member.ageDepartment&&["expired","soon"].includes(breathingClearanceState(member,systemToday()))),drivers=members.filter(member=>["missing","overdue","soon"].includes(driverLicenseControlDue(member,systemToday()))),hub=ensureSafetyInfoHub(),count=breathing.length+drivers.length;
+ hub.button.hidden=count===0;byId("safetyInfoCount").textContent=String(count);hub.button.classList.toggle("has-critical",breathing.some(m=>breathingClearanceState(m,systemToday())==="expired")||drivers.some(m=>["missing","overdue"].includes(driverLicenseControlDue(m,systemToday()))));
+ const row=(name,text,state)=>`<li class="safety-${state}"><strong>${escapeHtml(name)}</strong><span>${escapeHtml(text)}</span></li>`;
+ const breathingRows=breathing.map(m=>row(nameForTile(m),breathingClearanceState(m,systemToday())==="expired"?`abgelaufen am ${m.breathingClearanceUntil||"nicht hinterlegt"}`:`gültig bis ${m.breathingClearanceUntil||"nicht hinterlegt"}`,breathingClearanceState(m,systemToday()))).join("");
+ const driverRows=drivers.map(m=>{const state=driverLicenseControlDue(m,systemToday());return row(nameForTile(m),state==="missing"?"Kontrolle fehlt":state==="overdue"?`fällig seit ${driverLicenseDueDate(m)}`:`fällig bis ${driverLicenseDueDate(m)}`,state);}).join("");
+ byId("safetyInfoContent").innerHTML=`<section><h3>Atemschutz</h3>${breathingRows?`<ul>${breathingRows}</ul>`:"<p>Keine offenen Hinweise.</p>"}<button type="button" class="outline-button" data-safety-statistics>Details in der Statistik</button></section><section><h3>Führerscheinkontrolle</h3>${driverRows?`<ul>${driverRows}</ul>`:"<p>Keine offenen Hinweise.</p>"}<button type="button" class="outline-button" data-safety-members>Mitglieder verwalten</button></section>`;
+ byId("safetyInfoContent").querySelector("[data-safety-statistics]").onclick=()=>{hub.dialog.close();renderStatistics();showView("settingsStatisticsView");};byId("safetyInfoContent").querySelector("[data-safety-members]").onclick=()=>{hub.dialog.close();showView("settingsMembersView");};
+}
+function showBreathingClearanceWarnings(){renderSafetyInfoHub();}
+function showDriverLicenseControlWarnings(){renderSafetyInfoHub();}
+function installIosStandaloneKeyboardSupport(){
+ const standalone=window.matchMedia?.("(display-mode: standalone)")?.matches||navigator.standalone===true;if(!standalone)return;document.documentElement.classList.add("ios-standalone-app");
+ const editable='input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="button"]),textarea,select,[contenteditable="true"]';
+ document.addEventListener("touchend",event=>{const target=event.target.closest?.(editable);if(!target||target.disabled||target.readOnly)return;setTimeout(()=>{try{target.focus({preventScroll:true});}catch(error){target.focus();}setTimeout(()=>target.scrollIntoView({block:"center",inline:"nearest",behavior:"smooth"}),120);},0);},{passive:true,capture:true});
+ if(window.visualViewport)visualViewport.addEventListener("resize",()=>{const active=document.activeElement;if(active?.matches?.(editable))active.scrollIntoView({block:"center",inline:"nearest"});});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",installIosStandaloneKeyboardSupport,{once:true});else installIosStandaloneKeyboardSupport();

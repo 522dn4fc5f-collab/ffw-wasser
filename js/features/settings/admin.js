@@ -164,10 +164,10 @@ function deleteMember(id) {
 function changePin() {
   const first = byId("newPin").value.trim();
   const repeated = byId("repeatPin").value.trim();
-  if (first.length < 3) return showToast("Die PIN muss mindestens 3 Zeichen enthalten.", "error");
-  if (first !== repeated) return showToast("Die PIN-Eingaben stimmen nicht überein.", "error");
-  safeStorage.setItem(KEYS.pin, first);
+  if (first.length < 6) return showToast("Das Passwort muss mindestens 6 Zeichen enthalten.", "error");
+  if (first !== repeated) return showToast("Die Passwörter stimmen nicht überein.", "error");
+  safeStorage.setItem(KEYS.password, first);
   byId("newPin").value = "";
   byId("repeatPin").value = "";
-  showToast("Admin-PIN wurde geändert.");
+  showToast("Admin-Passwort wurde geändert.");
 }

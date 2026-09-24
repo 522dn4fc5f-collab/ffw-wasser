@@ -116,7 +116,7 @@ function saveCompleteBackupData(data) {
     safeStorage.setItem(KEYS.archive,serialized.archive);
     safeStorage.setItem(KEYS.functionEntry,data.functionEntryEnabled===false?"false":"true");
     safeStorage.setItem(KEYS.roleTargets,serialized.targets);
-    if(/^\d{3,12}$/.test(data.adminPin))safeStorage.setItem(KEYS.pin,data.adminPin);
+    if(typeof data.adminPin==="string"&&data.adminPin.length>=3)safeStorage.setItem(KEYS.password,data.adminPin);
   }catch(error){
     if(error?.name==="QuotaExceededError")throw new Error("storage");
     throw new Error("save");
