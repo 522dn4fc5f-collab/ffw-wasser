@@ -89,19 +89,36 @@ async function operationPdfBlob(d){
 function showOperationPdfPreview(blob,fileName,onFinalUpload){
  return new Promise(resolve=>{
   let dialog=byId("operationPdfPreviewDialog");
-  if(!dialog){
-   dialog=document.createElement("dialog");dialog.id="operationPdfPreviewDialog";dialog.className="operation-pdf-preview-dialog";
-   dialog.innerHTML='<div class="operation-preview-head"><div><strong>PDF-Vorschau Einsatzbericht</strong><small>Bitte den Bericht prüfen und danach final hochladen.</small></div><button type="button" class="outline-button" data-preview-close>Abbrechen</button></div><iframe title="PDF-Vorschau Einsatzbericht"></iframe><div class="operation-preview-actions"><button type="button" class="primary-button" data-preview-final>PDF final hochladen</button></div>';
-   document.body.appendChild(dialog);
-  }
-  const old=dialog.dataset.url;if(old)URL.revokeObjectURL(old);const url=URL.createObjectURL(blob);dialog.dataset.url=url;dialog.querySelector("iframe").src=url;
-  const finalButton=dialog.querySelector("[data-preview-final]"),closeButton=dialog.querySelector("[data-preview-close]");
+  if(dialog)dialog.remove();
+  dialog=document.createElement("dialog");
+  dialog.id="operationPdfPreviewDialog";dialog.className="operation-pdf-preview-dialog operation-pdf-preview-safe";
+  const sizeKb=Math.max(1,Math.round(blob.size/1024));
+  dialog.innerHTML=`<div class="operation-preview-head"><div><strong>Einsatzbericht ist bereit</strong><small>Die PDF-Datei wurde erzeugt. Auf dem iPad wird keine leere eingebettete Vorschau mehr geöffnet.</small></div><button type="button" class="outline-button" data-preview-close>Schließen</button></div><div class="operation-preview-safe-body"><div class="operation-preview-file"><span>PDF</span><div><strong>${escapeHtml(fileName)}</strong><small>${sizeKb} KB</small></div></div><p>Zum Prüfen kann die PDF über Teilen oder Download geöffnet werden. Danach bleibt diese Ansicht bedienbar.</p><div class="operation-preview-safe-actions"><button type="button" class="outline-button" data-preview-open>PDF prüfen / sichern</button><button type="button" class="primary-button" data-preview-final>Bericht final übernehmen</button><button type="button" class="secondary-button" data-preview-close>Zurück zum Formular</button></div><p data-preview-status aria-live="polite"></p></div>`;
+  document.body.appendChild(dialog);
   let settled=false;
-  const finish=value=>{if(settled)return;settled=true;dialog.close();resolve(value);};
-  closeButton.onclick=()=>finish(false);
-  finalButton.onclick=async()=>{finalButton.disabled=true;finalButton.textContent="PDF wird final hochgeladen …";try{const ok=await onFinalUpload();if(ok)finish(true);}finally{finalButton.disabled=false;finalButton.textContent="PDF final hochladen";}};
+  const closeDialog=()=>{try{dialog.close();}catch(error){dialog.removeAttribute("open");}dialog.remove();};
+  const finish=value=>{if(settled)return;settled=true;closeDialog();resolve(value);};
+  dialog.querySelectorAll("[data-preview-close]").forEach(button=>button.onclick=()=>finish(false));
+  dialog.querySelector("[data-preview-open]").onclick=async()=>{
+    const status=dialog.querySelector("[data-preview-status]");
+    try{
+      const file=new File([blob],fileName,{type:"application/pdf"});
+      if(navigator.share&&navigator.canShare?.({files:[file]})){
+        await navigator.share({files:[file],title:fileName});
+        status.textContent="PDF wurde an den Teilen-Dialog übergeben.";
+      }else{
+        downloadBlob(fileName,blob);
+        status.textContent="PDF wurde zum Öffnen beziehungsweise Speichern heruntergeladen.";
+      }
+    }catch(error){
+      status.textContent=error?.name==="AbortError"?"Prüfen wurde abgebrochen. Die Ansicht kann weiterhin geschlossen werden.":"Die PDF konnte nicht geöffnet werden. Der Bericht kann trotzdem final übernommen oder die Ansicht geschlossen werden.";
+    }
+  };
+  const finalButton=dialog.querySelector("[data-preview-final]");
+  finalButton.onclick=async()=>{finalButton.disabled=true;finalButton.textContent="Bericht wird übernommen …";try{const ok=await onFinalUpload();if(ok)finish(true);}catch(error){console.error(error);dialog.querySelector("[data-preview-status]").textContent="Der Bericht konnte nicht übernommen werden. Bitte erneut versuchen oder zurück zum Formular gehen.";}finally{if(!settled){finalButton.disabled=false;finalButton.textContent="Bericht final übernehmen";}}};
   dialog.oncancel=event=>{event.preventDefault();finish(false);};
-  dialog.showModal();
+  dialog.addEventListener("click",event=>{if(event.target===dialog)finish(false);});
+  if(typeof dialog.showModal==="function")dialog.showModal();else dialog.setAttribute("open","");
  });
 }
 function operationCsv(d){const header=["Datum","Alarmzeit","Einsatznummer","Einsatzart","Einsatzstelle","Name","Status","Fahrzeuge","Geräte","Einsatzleiter","Einsatzende"],rows=d.members.map(name=>[d.date,d.times.alarm,d.number,d.type,d.location,name,"Anwesend",[...d.vehicles,d.otherVehicles].filter(Boolean).join(", "),[...d.devices,d.otherDevices].filter(Boolean).join(", "),d.leader,d.times.ended]);return '\ufeff'+[header,...rows].map(r=>r.map(csvCell).join(';')).join('\r\n');}

@@ -860,3 +860,13 @@
 :where(button,a,input,select,textarea,summary):focus-visible{outline:3px solid #f2c500!important;outline-offset:3px!important;}
 .delete-entry,.manual-crop-close,.cloud-sync-close,.safety-info-dialog header button{min-width:44px!important;min-height:44px!important;}
 .driver-license-statistics-panel{grid-column:1/-1;}
+
+/* 2.19.0: iPad-sichere Einsatzbericht-Vorschau ohne leeres PDF-iframe. */
+.operation-pdf-preview-safe{width:min(680px,calc(100vw - 20px));max-height:calc(100dvh - 20px);padding:0;border:0;border-radius:18px;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.48)}
+.operation-pdf-preview-safe::backdrop{background:rgba(10,20,26,.7)}
+.operation-preview-safe-body{display:grid;gap:16px;padding:20px;background:#fff;color:#1f2a30}
+.operation-preview-file{display:flex;align-items:center;gap:14px;padding:16px;border:2px solid #b9c5cb;border-radius:12px;background:#f3f7f8}
+.operation-preview-file>span{display:grid;place-items:center;width:58px;height:68px;border-radius:8px;color:#fff;background:#c80000;font-weight:900}
+.operation-preview-file div{display:grid;gap:5px;min-width:0}.operation-preview-file strong{overflow-wrap:anywhere}.operation-preview-file small{color:#65737b}
+.operation-preview-safe-actions{display:grid;gap:10px}.operation-preview-safe-actions button{width:100%;min-height:54px}
+.operation-preview-safe-body [data-preview-status]{min-height:22px;margin:0;color:#7f1212;font-weight:800}
