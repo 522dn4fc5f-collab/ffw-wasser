@@ -24,9 +24,21 @@ async function saveTerminPackage(fileName,blob){
     }catch(error){console.error(error);return "failed";}
   }
   const isiPad=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
-  if(isiPad){
-    showToast("Bitte zuerst einen Speicherordner wählen. Nur so kann das Terminpaket ohne Dateivorschau direkt gespeichert oder ersetzt werden.","error");
-    return "failed";
+  // iPadOS/Safari bietet keine dauerhafte Web-Berechtigung auf einen frei
+  // gewählten OneDrive-Ordner. Deshalb wird das fertige ZIP als einzelne Datei
+  // an den nativen Teilen-Dialog übergeben. Dort kann „In Dateien sichern“ und
+  // anschließend der gewünschte OneDrive-Ordner gewählt werden.
+  if(isiPad&&typeof File==="function"&&navigator.share&&navigator.canShare){
+    try{
+      const file=new File([blob],fileName,{type:"application/zip",lastModified:Date.now()});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:"Feuerwehr Wasser Terminpaket"});
+        return "shared";
+      }
+    }catch(error){
+      if(error?.name==="AbortError")return "cancelled";
+      console.error("Terminpaket konnte nicht geteilt werden",error);
+    }
   }
   try{downloadBlob(fileName,blob);return "downloaded";}catch(error){return "failed";}
 }

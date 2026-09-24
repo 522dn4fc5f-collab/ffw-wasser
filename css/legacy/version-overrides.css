@@ -1692,3 +1692,19 @@ html body .participant-command-header .compact-menu{
 .crew-position.crew-draggable small,
 .atue-slot.crew-draggable *{pointer-events:none;}
 .reserve-list [data-drag-member]{min-height:52px;padding:14px 12px!important;}
+
+
+/* FFW 2.20.5: PDF aus der Historie innerhalb der App anzeigen */
+.history-pdf-preview-dialog{
+  width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;
+  margin:0!important;padding:0!important;border:0!important;background:#1d2529!important;
+}
+.history-pdf-preview-dialog::backdrop{background:#111;}
+.history-pdf-preview-shell{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:#1d2529;}
+.history-pdf-preview-shell header,.history-pdf-preview-shell footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:#fff;}
+.history-pdf-preview-shell header h2{margin:2px 0 0;font-size:1.05rem;overflow-wrap:anywhere;}
+.history-pdf-preview-shell header small{color:#62717a;}
+.history-pdf-preview-body{min-height:0;padding:0;background:#555;overflow:hidden;}
+.history-pdf-preview-body iframe{display:block;width:100%;height:100%;border:0;background:#fff;}
+.history-pdf-preview-shell footer{justify-content:flex-end;border-top:1px solid #cfd7db;}
+@media(max-width:650px){.history-pdf-preview-shell header,.history-pdf-preview-shell footer{padding:8px;}.history-pdf-preview-shell footer{display:grid;grid-template-columns:1fr 1fr}.history-pdf-preview-shell footer button{min-height:46px}.history-pdf-preview-shell header h2{font-size:.92rem;}}

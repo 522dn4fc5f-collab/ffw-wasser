@@ -352,21 +352,56 @@ function renderHistory(){
     return `<details class="history-year"${yearOpen}><summary class="history-year-heading"><h3>${escapeHtml(year)}</h3><span>${yearCount} Bericht${yearCount===1?"":"e"}</span><i aria-hidden="true"></i></summary><div class="history-months">${monthHtml}</div></details>`;
   }).join("");
 }
+let historyPdfPreviewUrl="";
+let historyPdfPreviewBlob=null;
+let historyPdfPreviewName="";
+function ensureHistoryPdfPreview(){
+  let dialog=byId("historyPdfPreviewDialog");
+  if(dialog)return dialog;
+  dialog=document.createElement("dialog");
+  dialog.id="historyPdfPreviewDialog";
+  dialog.className="history-pdf-preview-dialog";
+  dialog.innerHTML=`<div class="history-pdf-preview-shell"><header><div><small>Historie</small><h2 id="historyPdfPreviewTitle">PDF-Bericht</h2></div><button type="button" class="outline-button" data-history-pdf-close>Schließen</button></header><div class="history-pdf-preview-body"><iframe id="historyPdfPreviewFrame" title="PDF-Vorschau"></iframe></div><footer><button type="button" class="outline-button" id="historyPdfShareButton">Teilen / speichern</button><button type="button" class="primary-button" data-history-pdf-close>Vorschau schließen</button></footer></div>`;
+  document.body.appendChild(dialog);
+  const close=()=>{
+    try{dialog.close();}catch{dialog.removeAttribute("open");}
+    byId("historyPdfPreviewFrame")?.removeAttribute("src");
+    if(historyPdfPreviewUrl){URL.revokeObjectURL(historyPdfPreviewUrl);historyPdfPreviewUrl="";}
+    historyPdfPreviewBlob=null;historyPdfPreviewName="";
+  };
+  dialog.querySelectorAll("[data-history-pdf-close]").forEach(button=>button.onclick=close);
+  dialog.oncancel=event=>{event.preventDefault();close();};
+  byId("historyPdfShareButton").onclick=async()=>{
+    if(!historyPdfPreviewBlob)return;
+    const isiPad=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
+    if(isiPad&&typeof File==="function"&&navigator.share&&navigator.canShare){
+      const file=new File([historyPdfPreviewBlob],historyPdfPreviewName,{type:"application/pdf",lastModified:Date.now()});
+      if(navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:historyPdfPreviewName});}catch(error){if(error?.name!=="AbortError")showToast("PDF konnte nicht geteilt werden.","error");}return;}
+    }
+    downloadBlob(historyPdfPreviewName,historyPdfPreviewBlob);
+  };
+  return dialog;
+}
+function showHistoryPdfPreview(blob,fileName){
+  const dialog=ensureHistoryPdfPreview();
+  if(historyPdfPreviewUrl)URL.revokeObjectURL(historyPdfPreviewUrl);
+  historyPdfPreviewBlob=blob;historyPdfPreviewName=fileName;
+  historyPdfPreviewUrl=URL.createObjectURL(blob instanceof Blob&&blob.type==="application/pdf"?blob:new Blob([blob],{type:"application/pdf"}));
+  byId("historyPdfPreviewTitle").textContent=fileName;
+  byId("historyPdfPreviewFrame").src=historyPdfPreviewUrl+"#toolbar=1&navpanes=0&view=FitH";
+  dialog.showModal();
+}
 async function openHistoryPdf(id){
   const item=csvArchive.find(x=>x.id===id);if(!item)return;
   const imported=item.hasImportedPdf?await loadImportedReportPdf?.(id):null;
   if(imported){
     const fileName=item.pdfFileName||item.fileName.replace(/\.csv$/i,".pdf");
-    const isiPad=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
-    if(isiPad&&navigator.share&&navigator.canShare){const file=new File([imported],fileName,{type:"application/pdf"});if(navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:fileName});}catch(error){}return;}}
-    const url=URL.createObjectURL(imported),opened=window.open(url,"_blank","noopener");if(!opened)downloadBlob(fileName,imported);setTimeout(()=>URL.revokeObjectURL(url),60000);return;
+    showHistoryPdfPreview(imported,fileName);
+    return;
   }
-  const data=historyCountsForItem(item), topic=item.topic||data.rows[0]?.topic||"";
+  const data=historyCountsForItem(item),topic=item.topic||data.rows[0]?.topic||"";
   const pdfRows=data.rows.map(x=>({time:x.time,name:x.name,status:x.status,role:x.role}));
   const blob=probePdfBlob(pdfRows,item.sessionType||data.rows[0]?.sessionType||"Probe",{present:data.present,excused:data.excused,missing:data.missing,notApplicable:data.notApplicable},topic,data.rows[0]?.date||historyDateFromItem(item));
-  const fileName=item.fileName.replace(/\.csv$/i,".pdf"),isiPad=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
-  if(isiPad&&navigator.share&&navigator.canShare){const file=new File([blob],fileName,{type:"application/pdf"});if(navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:fileName});}catch(error){}return;}}
-  const url=URL.createObjectURL(blob),opened=window.open(url,"_blank","noopener");
-  if(!opened)downloadBlob(fileName,blob);
-  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  const fileName=item.fileName.replace(/\.csv$/i,".pdf");
+  showHistoryPdfPreview(blob,fileName);
 }

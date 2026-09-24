@@ -73,16 +73,16 @@ function supportsPersistentDirectoryPicker() {
 }
 function setIpadStorageCardState(kind) {
   const map={
-    csv:{name:"csvFolderName",choose:"chooseCsvFolderButton",clear:"clearCsvFolderButton",hint:"csvSupportHint",label:"CSV-Dateien werden beim Probeabschluss über Teilen / In Dateien sichern ausgegeben."},
-    pdf:{name:"pdfFolderName",choose:"choosePdfFolderButton",clear:"clearPdfFolderButton",hint:"pdfSupportHint",label:"PDF-Berichte werden beim Probeabschluss gemeinsam mit der CSV über Teilen / In Dateien sichern ausgegeben."},
-    backup:{name:"backupFolderName",choose:"chooseBackupFolderButton",clear:"clearBackupFolderButton",hint:"backupSupportHint",label:"Backups werden über Teilen / In Dateien sichern ausgegeben."}
+    csv:{name:"csvFolderName",choose:"chooseCsvFolderButton",clear:"clearCsvFolderButton",hint:"csvSupportHint",label:"Terminpakete werden beim Abschluss über den iPad-Teilen-Dialog ausgegeben. Dort „In Dateien sichern“ und OneDrive wählen."},
+    pdf:{name:"pdfFolderName",choose:"choosePdfFolderButton",clear:"clearPdfFolderButton",hint:"pdfSupportHint",label:"PDF und CSV befinden sich im Terminpaket. Im iPad-Teilen-Dialog „In Dateien sichern“ und OneDrive wählen."},
+    backup:{name:"backupFolderName",choose:"chooseBackupFolderButton",clear:"clearBackupFolderButton",hint:"backupSupportHint",label:"Backups werden über den iPad-Teilen-Dialog ausgegeben. Dort „In Dateien sichern“ und OneDrive wählen."}
   };
   const item=map[kind];if(!item)return;
   const name=byId(item.name),choose=byId(item.choose),clear=byId(item.clear),hint=byId(item.hint);
   if(name){name.textContent="Auswahl beim Speichern";name.title="OneDrive-Ordner im iPad-Dialog auswählen";}
   if(choose){choose.hidden=true;choose.disabled=true;choose.setAttribute("aria-hidden","true");}
   if(clear){clear.hidden=true;clear.disabled=true;clear.setAttribute("aria-hidden","true");}
-  if(hint)hint.textContent=item.label+" Im iPad-Dialog anschließend „In Dateien sichern“ und den gewünschten OneDrive-Ordner wählen.";
+  if(hint)hint.textContent=item.label+" Ein fester OneDrive-Ordner kann in iPad/Safari nicht dauerhaft an die Webseite gebunden werden. Im Teilen-Dialog bitte „In Dateien sichern“ und anschließend den gewünschten OneDrive-Ordner wählen.";
   name?.closest("article")?.classList.add("storage-card-ipad-mode");
 }
 
