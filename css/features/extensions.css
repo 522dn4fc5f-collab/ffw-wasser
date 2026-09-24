@@ -870,3 +870,6 @@
 .operation-preview-file div{display:grid;gap:5px;min-width:0}.operation-preview-file strong{overflow-wrap:anywhere}.operation-preview-file small{color:#65737b}
 .operation-preview-safe-actions{display:grid;gap:10px}.operation-preview-safe-actions button{width:100%;min-height:54px}
 .operation-preview-safe-body [data-preview-status]{min-height:22px;margin:0;color:#7f1212;font-weight:800}
+
+/* 2.19.1: Abschlussvorschau entfernt. */
+.operation-pdf-preview-dialog{display:none!important}
