@@ -8,37 +8,52 @@ async function buildTerminPackage({baseName,csvName,csvContent,pdfName,pdfBlob,d
   zip.file("paket-info.json",JSON.stringify({format:"FFW-Wasser-Terminpaket",version:"2.0",type:packageType,createdAt:new Date().toISOString(),baseName,csvName,pdfName,operationData:operationData||undefined,files:Object.keys(zip.files)},null,2));
   return zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6},mimeType:"application/zip"});
 }
+let pendingTerminPackageSave=null;
+function ensureIpadTerminPackageDialog(){
+  let dialog=byId("ipadTerminPackageDialog");if(dialog)return dialog;
+  dialog=document.createElement("dialog");dialog.id="ipadTerminPackageDialog";dialog.className="ipad-termin-package-dialog";
+  dialog.innerHTML=`<div class="ipad-package-shell"><header><div><small>Terminabschluss</small><h2>Terminpaket ist fertig</h2></div></header><div class="ipad-package-body"><p>Das ZIP-Terminpaket wurde erstellt. Bitte jetzt auf <b>Teilen und speichern</b> tippen und anschließend <b>In Dateien sichern</b> sowie den gewünschten OneDrive-Ordner auswählen.</p><p class="ipad-package-name" id="ipadTerminPackageName"></p><p class="ipad-package-error" id="ipadTerminPackageError" hidden></p></div><footer><button type="button" class="outline-button" id="ipadTerminPackageCancel">Abbrechen</button><button type="button" class="primary-button" id="ipadTerminPackageShare">Teilen und speichern</button></footer></div>`;
+  document.body.appendChild(dialog);
+  byId("ipadTerminPackageCancel").onclick=()=>finishIpadTerminPackageSave("cancelled");
+  byId("ipadTerminPackageShare").onclick=sharePendingTerminPackage;
+  dialog.oncancel=event=>{event.preventDefault();finishIpadTerminPackageSave("cancelled");};
+  return dialog;
+}
+function finishIpadTerminPackageSave(result){
+  const pending=pendingTerminPackageSave;if(!pending)return;
+  pendingTerminPackageSave=null;try{pending.dialog.close();}catch{pending.dialog.removeAttribute("open");}
+  pending.resolve(result);
+}
+async function sharePendingTerminPackage(){
+  const pending=pendingTerminPackageSave;if(!pending)return;
+  const button=byId("ipadTerminPackageShare"),errorBox=byId("ipadTerminPackageError");button.disabled=true;errorBox.hidden=true;
+  try{
+    const file=new File([pending.blob],pending.fileName,{type:"application/zip",lastModified:Date.now()});
+    if(!(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})))throw new Error("Dateifreigabe wird von diesem Browser nicht unterstützt.");
+    // Direkter Aufruf aus dem Button-Klick: notwendige Benutzeraktivierung bleibt erhalten.
+    await navigator.share({files:[file],title:"Feuerwehr Wasser Terminpaket"});
+    finishIpadTerminPackageSave("shared");
+  }catch(error){
+    if(error?.name==="AbortError"){finishIpadTerminPackageSave("cancelled");return;}
+    console.error("Terminpaket konnte nicht geteilt werden",error);
+    errorBox.textContent=`Teilen war nicht möglich: ${error?.message||"unbekannter Fehler"}. Bitte erneut versuchen.`;errorBox.hidden=false;button.disabled=false;
+  }
+}
+function promptIpadTerminPackageSave(fileName,blob){
+  if(pendingTerminPackageSave)return Promise.resolve("failed");
+  const dialog=ensureIpadTerminPackageDialog();byId("ipadTerminPackageName").textContent=fileName;byId("ipadTerminPackageError").hidden=true;byId("ipadTerminPackageShare").disabled=false;
+  return new Promise(resolve=>{pendingTerminPackageSave={fileName,blob,resolve,dialog};dialog.showModal();});
+}
 async function saveTerminPackage(fileName,blob){
   document.querySelectorAll("#operationPdfPreviewDialog,.operation-pdf-preview-dialog").forEach(node=>node.remove());
+  const isiPad=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
+  // Auf iPad niemals zuerst einen eventuell alten Verzeichnis-Handle benutzen.
+  // Der explizite zweite Tipp öffnet zuverlässig den nativen Teilen-Dialog.
+  if(isiPad)return promptIpadTerminPackageSave(fileName,blob);
   const handle=effectiveCsvDirectoryHandle?.()||effectivePdfDirectoryHandle?.()||null;
   if(handle){
-    try{
-      if(!(await ensureDirectoryWritePermission(handle)))return "failed";
-      // getFileHandle(create:true) liefert auch die bestehende Datei. createWritable()
-      // ersetzt deren Inhalt direkt, ohne Safari-Vorschau oder blob:-Seite.
-      const fileHandle=await handle.getFileHandle(fileName,{create:true});
-      const writable=await fileHandle.createWritable({keepExistingData:false});
-      await writable.write(blob);
-      await writable.close();
-      return "saved";
-    }catch(error){console.error(error);return "failed";}
-  }
-  const isiPad=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
-  // iPadOS/Safari bietet keine dauerhafte Web-Berechtigung auf einen frei
-  // gewählten OneDrive-Ordner. Deshalb wird das fertige ZIP als einzelne Datei
-  // an den nativen Teilen-Dialog übergeben. Dort kann „In Dateien sichern“ und
-  // anschließend der gewünschte OneDrive-Ordner gewählt werden.
-  if(isiPad&&typeof File==="function"&&navigator.share&&navigator.canShare){
-    try{
-      const file=new File([blob],fileName,{type:"application/zip",lastModified:Date.now()});
-      if(navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:"Feuerwehr Wasser Terminpaket"});
-        return "shared";
-      }
-    }catch(error){
-      if(error?.name==="AbortError")return "cancelled";
-      console.error("Terminpaket konnte nicht geteilt werden",error);
-    }
+    try{if(!(await ensureDirectoryWritePermission(handle)))return "failed";const fileHandle=await handle.getFileHandle(fileName,{create:true});const writable=await fileHandle.createWritable({keepExistingData:false});await writable.write(blob);await writable.close();return "saved";}
+    catch(error){console.error(error);return "failed";}
   }
   try{downloadBlob(fileName,blob);return "downloaded";}catch(error){return "failed";}
 }

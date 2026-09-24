@@ -1708,3 +1708,10 @@ html body .participant-command-header .compact-menu{
 .history-pdf-preview-body iframe{display:block;width:100%;height:100%;border:0;background:#fff;}
 .history-pdf-preview-shell footer{justify-content:flex-end;border-top:1px solid #cfd7db;}
 @media(max-width:650px){.history-pdf-preview-shell header,.history-pdf-preview-shell footer{padding:8px;}.history-pdf-preview-shell footer{display:grid;grid-template-columns:1fr 1fr}.history-pdf-preview-shell footer button{min-height:46px}.history-pdf-preview-shell header h2{font-size:.92rem;}}
+
+
+/* FFW 2.20.6: expliziter iPad-Speicherschritt */
+.ipad-termin-package-dialog{width:min(620px,calc(100vw - 24px));padding:0;border:0;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.ipad-termin-package-dialog::backdrop{background:rgba(0,0,0,.72)}
+.ipad-package-shell{display:grid;background:#fff;color:#1f2a30}.ipad-package-shell header{padding:18px 20px;background:#182329;color:#fff}.ipad-package-shell h2{margin:3px 0 0}.ipad-package-shell small{color:#cdd7dc}.ipad-package-body{padding:20px;font-size:1.03rem;line-height:1.55}.ipad-package-name{padding:12px;border-radius:9px;background:#edf2f4;font-weight:850;overflow-wrap:anywhere}.ipad-package-error{padding:12px;border-radius:9px;background:#ffe6e6;color:#861616;font-weight:750}.ipad-package-shell footer{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;padding:14px 20px;border-top:1px solid #d6dde1}.ipad-package-shell footer button{min-height:54px}
+.ipad-editor-stage{isolation:isolate}.ipad-editor-stage canvas{z-index:10!important}.ipad-editor-help::after{content:" Grün/gelb markiert den PDF-Ausschnitt.";font-weight:850;color:#78ff9d}
