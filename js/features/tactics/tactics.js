@@ -103,9 +103,13 @@ function rebuildTacticsAssignmentsFromSlots() {
   currentTacticsAssignments = new Map(currentTacticsSlots.filter(slot => slot.member).map(slot => [nameForStorage(slot.member), { vehicle:slot.vehicle, role:slot.role }]));
 }
 function memberMayFillSlot(member, vehicle, role) {
-  // Manuelle Verschiebung ist bewusst frei: Jede anwesende Person darf auf
-  // jede Position gesetzt werden. Die automatische Empfehlung bleibt unverändert.
-  return Boolean(member && vehicle && role);
+  if(!member||!vehicle||!role)return false;
+  if(role==="Maschinist")return canDriveVehicle(member,vehicle);
+  if(role==="ATÜ")return Boolean(member.atueQualified);
+  if(!getMemberRoles(member).includes(role))return false;
+  // AT/WT dürfen ohne Atemschutz eingesetzt werden. Nur bei aktiv geplanter
+  // Atemschutzverwendung wird die gültige Atemschutzfreigabe verlangt.
+  return breathingRoleAllowed(member,role);
 }
 function deniedTacticsSlotMessage(member, vehicle, role) {
   return "Diese Position konnte nicht übernommen werden.";
@@ -287,12 +291,12 @@ function lfWaterTeamComplete() {
 }
 function convertCurrentProbeToSpecial() {
   sessionType="Sonderprobe";
-  entries=entries.map(entry=>entry.date!==today()?entry:{...entry,sessionType:"Sonderprobe",role:entry.role==="Organisation"?"Organisation":"",status:entry.status==="Anwesend"?"Anwesend":entry.status});
+  entries=entries.map(entry=>entry.sessionId!==ensureCurrentSessionId()?entry:{...entry,sessionType:"Sonderprobe",role:entry.role==="Organisation"?"Organisation":"",status:entry.status==="Anwesend"?"Anwesend":entry.status});
   saveEntries(); renderSessionType();
 }
 function convertCurrentProbeToTraining(){
   sessionType="Unterricht";
-  entries=entries.map(entry=>entry.date!==today()?entry:{...entry,sessionType:"Unterricht",role:entry.role==="Organisation"?"Organisation":entry.status==="Anwesend"?"Unterricht":""});
+  entries=entries.map(entry=>entry.sessionId!==ensureCurrentSessionId()?entry:{...entry,sessionType:"Unterricht",role:entry.role==="Organisation"?"Organisation":entry.status==="Anwesend"?"Unterricht":""});
   saveEntries();renderSessionType();renderEntries();updatePrimaryAction();window.syncHeaderProbeSummary?.();
 }
 async function finishTacticsAlternative(type){
@@ -307,8 +311,9 @@ async function finishTacticsAlternative(type){
 }
 function applyCalculatedTacticsFunctions() {
   entries = entries.map(entry => {
-    if (entry.date !== today() || entry.status !== "Anwesend") return entry;
+    if (entry.sessionId !== ensureCurrentSessionId() || entry.status !== "Anwesend") return entry;
     if (entry.role === "Organisation") return entry;
+    if(currentAtueMember && (entry.storedName===nameForStorage(currentAtueMember)||entry.displayName===nameForTile(currentAtueMember)))return {...entry,role:"ATÜ"};
     const assignment = currentTacticsAssignments.get(entry.storedName);
     return { ...entry, role: assignment ? assignment.role : "Reserve" };
   });

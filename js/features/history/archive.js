@@ -60,7 +60,7 @@ function completeBackupPayload() {
   return BackupEngine.create({
     members: members.map(member=>({...member,roles:getMemberRoles(member)})),
     entries, csvArchive, roleTargets:getRoleTargets(),
-    functionEntryEnabled:isFunctionEntryEnabled(), adminPin:adminPin()
+    functionEntryEnabled:isFunctionEntryEnabled()
   });
 }
 async function exportCompleteBackup() {
@@ -103,8 +103,7 @@ function normalizeCompleteBackupData(data) {
     entries:Array.isArray(data.entries)?data.entries.filter(entry=>entry&&entry.id&&entry.date&&entry.storedName):[],
     csvArchive:Array.isArray(data.csvArchive)?data.csvArchive.filter(item=>item&&item.id&&item.fileName&&typeof item.content==="string"):[],
     functionEntryEnabled:data.functionEntryEnabled,
-    roleTargets:data.roleTargets&&typeof data.roleTargets==="object"?data.roleTargets:{},
-    adminPin:typeof data.adminPin==="string"?data.adminPin:""
+    roleTargets:data.roleTargets&&typeof data.roleTargets==="object"?data.roleTargets:{}
   };
 }
 function saveCompleteBackupData(data) {
@@ -120,7 +119,7 @@ function saveCompleteBackupData(data) {
     safeStorage.setItem(KEYS.archive,serialized.archive);
     safeStorage.setItem(KEYS.functionEntry,data.functionEntryEnabled===false?"false":"true");
     safeStorage.setItem(KEYS.roleTargets,serialized.targets);
-    if(typeof data.adminPin==="string"&&data.adminPin.length>=3)safeStorage.setItem(KEYS.password,data.adminPin);
+    // Das lokale Passwort wird bei einer Wiederherstellung bewusst nicht ersetzt.
   }catch(error){
     if(error?.name==="QuotaExceededError")throw new Error("storage");
     throw new Error("save");

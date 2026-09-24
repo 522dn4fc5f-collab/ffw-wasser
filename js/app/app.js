@@ -350,7 +350,7 @@ else removeStandaloneAttendanceVersion();
 const originalRenderStatistics=renderStatistics;renderStatistics=function(){originalRenderStatistics();ensureOperationStatisticsPanel();renderOperationStatistics();};
 function enforceFooterVersion(){
   const footer=document.querySelector(".app-footer");
-  if(footer)footer.textContent="© 2026 Markus Bürklin · Feuerwehr Wasser 2.18.0 · Konsolidierte Daten- und Funktionsprüfung";
+  if(footer)footer.textContent="© 2026 Markus Bürklin · Feuerwehr Wasser 2.20.0 · Sitzungs-ID, Statistik- und Terminpaketprüfung";
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",enforceFooterVersion,{once:true});
 else enforceFooterVersion();

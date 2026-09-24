@@ -1,11 +1,11 @@
 "use strict";
-async function buildTerminPackage({baseName,csvName,csvContent,pdfName,pdfBlob,documentReport=null}){
+async function buildTerminPackage({baseName,csvName,csvContent,pdfName,pdfBlob,documentReport=null,packageType="Probe",operationData=null}){
   if(typeof JSZip!=="function")throw new Error("ZIP-Funktion ist nicht geladen");
   const zip=new JSZip();
   zip.file(csvName,csvContent);
   zip.file(pdfName,pdfBlob);
   if(documentReport?.pdf)zip.file(documentReport.pdfName||`${baseName}_Zusatzbericht.pdf`,documentReport.pdf);
-  zip.file("paket-info.json",JSON.stringify({format:"FFW-Wasser-Terminpaket",version:"1.0",createdAt:new Date().toISOString(),files:Object.keys(zip.files)},null,2));
+  zip.file("paket-info.json",JSON.stringify({format:"FFW-Wasser-Terminpaket",version:"2.0",type:packageType,createdAt:new Date().toISOString(),baseName,csvName,pdfName,operationData:operationData||undefined,files:Object.keys(zip.files)},null,2));
   return zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6},mimeType:"application/zip"});
 }
 async function saveTerminPackage(fileName,blob){
@@ -42,9 +42,9 @@ closeDay=async function(topic=currentClosingTopic){
   const exportType=current[0]?.sessionType||sessionType,entryByName=new Map(current.map(e=>[e.storedName||e.displayName,e]));
   const rows=members.map(member=>{const name=nameForStorage(member),entry=entryByName.get(name)||entryByName.get(nameForTile(member));if(!entry&&member.ageDepartment)return[today(),"",name,exportType,"Betrifft nicht",""];if(!entry)return[today(),"",name,exportType,"Fehlt",""];if(entry.status==="Entschuldigt")return[entry.date,entry.time,name,exportType,"Entschuldigt",""];if(entry.status==="Betrifft nicht")return[entry.date,entry.time,name,exportType,"Betrifft nicht",""];if(entry.role==="Organisation")return[entry.date,entry.time,name,exportType,"Anwesend","Organisation"];if(exportType==="Sonderprobe")return[entry.date,entry.time,name,exportType,"Anwesend","Anwesend"];if(exportType==="Unterricht")return[entry.date,entry.time,name,exportType,"Anwesend","Unterricht"];if(exportType==="Ausschuss Sitzung")return[entry.date,entry.time,name,exportType,"Anwesend","Ausschuss Sitzung"];return[entry.date,entry.time,name,exportType,"Anwesend",csvRoleForEntry(entry,member)];});
   const csv="\ufeff"+["Datum;Uhrzeit;Name;Terminart;Status;Funktion / Status;Thema",...rows.map(row=>[...row,topic].map(csvCell).join(";"))].join("\r\n"),safeType=exportType.replace(/ /g,"-"),base=`FFW-Wasser_${today()}_${safeType}`,csvName=`${base}.csv`,pdfName=`${base}.pdf`,pdfRows=rows.map(r=>({time:r[1],name:r[2],status:r[4],role:r[5]})),notApplicable=rows.filter(r=>r[4]==="Betrifft nicht").length,pdf=probePdfBlob(pdfRows,exportType,{present:present+organizers,excused,missing,notApplicable},topic);
-  const zip=await buildTerminPackage({baseName:base,csvName,csvContent:csv,pdfName,pdfBlob:pdf,documentReport:typeof pendingDocumentReport!=="undefined"?pendingDocumentReport:null}),result=await saveTerminPackage(`${base}.zip`,zip);
+  const zip=await buildTerminPackage({baseName:base,csvName,csvContent:csv,pdfName,pdfBlob:pdf,documentReport:typeof pendingDocumentReport!=="undefined"?pendingDocumentReport:null,packageType:"Probe"}),result=await saveTerminPackage(`${base}.zip`,zip);
   if(result==="failed"||result==="cancelled")return showToast("Das Terminpaket konnte nicht gespeichert werden. Die Tagesdaten bleiben erhalten.","error");
-  await addCsvToArchive(csvName,csv,exportType,topic);entries=entries.filter(e=>e.date!==today());chosenMemberId="";chosenMemberIds.clear();chosenRole="";currentClosingTopic="";resetDocumentReportState();currentProbeDate=systemToday();saveEntries();renderMembers();renderRoles();renderEntries();updateSelection();tacticsClosingPending=false;const actions=byId("tacticsCloseActions");if(actions)actions.hidden=true;setHomeFlowStage(1);showView("attendanceView");showToast("Probe abgeschlossen: Das ZIP-Terminpaket wurde gespeichert und der Tag zurückgesetzt.");
+  await addCsvToArchive(csvName,csv,exportType,topic);const completedSessionId=ensureCurrentSessionId();entries=entries.filter(e=>e.sessionId!==completedSessionId);currentSessionId="";safeStorage.setItem("fw_v1_current_session_id","");chosenMemberId="";chosenMemberIds.clear();chosenRole="";currentClosingTopic="";resetDocumentReportState();currentProbeDate=systemToday();saveEntries();renderMembers();renderRoles();renderEntries();updateSelection();tacticsClosingPending=false;const actions=byId("tacticsCloseActions");if(actions)actions.hidden=true;setHomeFlowStage(1);showView("attendanceView");showToast("Probe abgeschlossen: Das ZIP-Terminpaket wurde gespeichert und der Tag zurückgesetzt.");
 };
 
 /* Einsatzabschluss: direkt speichern, archivieren und anschließend zu Home zurückkehren. */
@@ -58,7 +58,7 @@ finishOperation=async function(){
   try{
     const stamp=(d.times.alarm||new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})).replace(":","-"),base=`FFW-Wasser_${d.date}_${stamp}_Einsatz`,csvName=`${base}.csv`,pdfName=`${base}.pdf`,csv=operationCsv(d),pdf=await operationPdfBlob(d);
     const completed=await showOperationPdfPreview(pdf,pdfName,async()=>{
-      const zip=await buildTerminPackage({baseName:base,csvName,csvContent:csv,pdfName,pdfBlob:pdf,documentReport:typeof pendingDocumentReport!=="undefined"?pendingDocumentReport:null}),result=await saveTerminPackage(`${base}.zip`,zip);
+      const zip=await buildTerminPackage({baseName:base,csvName,csvContent:csv,pdfName,pdfBlob:pdf,documentReport:typeof pendingDocumentReport!=="undefined"?pendingDocumentReport:null,packageType:"Einsatz",operationData:d}),result=await saveTerminPackage(`${base}.zip`,zip);
       if(result==="failed"||result==="cancelled"){showToast("Das Einsatz-Terminpaket konnte nicht gespeichert werden. Daten bleiben erhalten.","error");return false;}
       const previous=editingOperationArchiveId?csvArchive.find(entry=>entry.id===editingOperationArchiveId):null,item={id:previous?.id||makeId(),fileName:csvName,pdfFileName:pdfName,content:csv,sessionType:"Einsatz",topic:`${d.type} · ${d.location}`,createdAt:previous?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),presentCount:d.members.length,excusedCount:0,missingCount:0,operationData:d,hasImportedPdf:true,revisions:[...(previous?.revisions||[]),...(previous?[{correctedAt:new Date().toISOString(),reason:"Einsatzbericht korrigiert",previousOperationData:previous.operationData}]:[])]};
       await saveImportedReportPdf(item.id,new File([pdf],pdfName,{type:"application/pdf"}));await commitPendingDocumentReport?.(item.id);csvArchive=previous?csvArchive.map(entry=>entry.id===item.id?item:entry):[item,...csvArchive];saveArchive();entries=entries.filter(e=>e.operationId!==currentOperationId);saveEntries();resetDocumentReportState();resetOperationState();renderEntries();renderMembers();renderStatistics();renderHistory();setHomeFlowStage(1);showToast(previous?"Korrigiertes Einsatz-Terminpaket wurde gespeichert und archiviert.":"Einsatz-Terminpaket wurde gespeichert und archiviert.");return true;
@@ -69,8 +69,23 @@ finishOperation=async function(){
 };
 
 /* ZIP-Auswahl in der Historie automatisch entpacken. */
-document.addEventListener("change",async event=>{const input=event.target;if(input?.id!=="historyReportsFileInput"||![...(input.files||[])].some(f=>/\.zip$/i.test(f.name)))return;event.stopImmediatePropagation();try{const expanded=[];for(const file of [...input.files])expanded.push(...(/\.zip$/i.test(file.name)?await packageFilesFromZip(file):[file]));await window.FFWReportImport.importHistoryFiles(expanded);}catch(error){console.error(error);showToast(error.message||"Terminpaket konnte nicht eingelesen werden.","error");}finally{input.value="";}},true);
-
+async function importTerminPackageFile(file){
+  const zip=await JSZip.loadAsync(file),infoEntry=zip.file("paket-info.json");
+  const info=infoEntry?JSON.parse(await infoEntry.async("string")):null;
+  if(info?.format==="FFW-Wasser-Terminpaket"&&info.type==="Einsatz"&&info.operationData){
+    const csvEntry=zip.file(info.csvName)||Object.values(zip.files).find(entry=>!entry.dir&&/\.csv$/i.test(entry.name));
+    const pdfEntry=zip.file(info.pdfName)||Object.values(zip.files).find(entry=>!entry.dir&&/\.pdf$/i.test(entry.name));
+    if(!csvEntry||!pdfEntry)throw new Error("Im Einsatz-Terminpaket fehlen CSV oder PDF.");
+    const csv=await csvEntry.async("string"),pdf=await pdfEntry.async("blob"),d=info.operationData;
+    const existing=csvArchive.find(item=>item.sessionType==="Einsatz"&&item.operationData?.id===d.id);
+    const item={id:existing?.id||makeId(),fileName:info.csvName||csvEntry.name,pdfFileName:info.pdfName||pdfEntry.name,content:csv,sessionType:"Einsatz",topic:`${d.type||"Einsatz"} · ${d.location||""}`.trim(),createdAt:info.createdAt||new Date(file.lastModified||Date.now()).toISOString(),presentCount:(d.members||[]).length,excusedCount:0,missingCount:0,operationData:d,hasImportedPdf:true};
+    await saveImportedReportPdf(item.id,new File([pdf],item.pdfFileName,{type:"application/pdf"}));
+    csvArchive=existing?csvArchive.map(entry=>entry.id===item.id?item:entry):[item,...csvArchive];
+    saveArchive();renderHistory();renderStatistics();showToast("Einsatz-Terminpaket wurde vollständig importiert.");return;
+  }
+  const files=await packageFilesFromZip(file);await window.FFWReportImport.importHistoryFiles(files);
+}
+document.addEventListener("change",async event=>{const input=event.target;if(input?.id!=="historyReportsFileInput"||![...(input.files||[])].some(f=>/\.zip$/i.test(f.name)))return;event.stopImmediatePropagation();try{for(const file of [...input.files]){if(/\.zip$/i.test(file.name))await importTerminPackageFile(file);else await window.FFWReportImport.importHistoryFiles([file]);}}catch(error){console.error(error);showToast(error.message||"Terminpaket konnte nicht eingelesen werden.","error");}finally{input.value="";}},true);
 function moveReportImportToSettings(){
   const oldPanel=byId("historyImportPanel"),input=byId("historyReportsFileInput"),settings=byId("settingsFilesView")||byId("archiveView");
   if(!oldPanel||!input||!settings||byId("reportImportSettingsCard"))return;

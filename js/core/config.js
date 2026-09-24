@@ -24,6 +24,7 @@ const KEYS = { members: "fw_v5_members", entries: "fw_v5_entries", pin: "fw_v5_p
 const byId = id => document.getElementById(id);
 const systemToday = () => new Date().toLocaleDateString("sv-SE");
 let currentProbeDate = systemToday();
+let currentSessionId = "";
 let breathingProtectionPlanned = false;
 const BREATHING_ROLES = new Set(["ATF","ATM","WTF","WTM"]);
 function hasValidBreathingClearance(member,date=today()){return Boolean(member?.breathingClearance && member?.breathingClearanceUntil && member.breathingClearanceUntil>=date);}

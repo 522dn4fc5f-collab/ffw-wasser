@@ -76,7 +76,22 @@ function updateSelection() {
   if(byId("roleSaveButton"))byId("roleSaveButton").disabled = !(sessionType === "Allgemeine Probe" && selected && chosenRole);
   updateProbeWorkflow();
 }
-function todayEntries() { return entries.filter(entry => entry.date === today() && (sessionType === "Einsatz" ? entry.operationId === currentOperationId : !entry.operationId)); }
+function ensureCurrentSessionId(){
+  if(sessionType==="Einsatz")return currentOperationId||"";
+  if(!currentSessionId){currentSessionId=safeStorage.getItem("fw_v1_current_session_id")||"";}
+  return currentSessionId;
+}
+function startAttendanceSession(){
+  currentSessionId=`session-${today()}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  safeStorage.setItem("fw_v1_current_session_id",currentSessionId);
+  return currentSessionId;
+}
+function todayEntries() {
+  if(sessionType==="Einsatz")return entries.filter(entry=>entry.operationId===currentOperationId);
+  const id=ensureCurrentSessionId();
+  if(id)return entries.filter(entry=>entry.sessionId===id);
+  return entries.filter(entry=>entry.date===today()&&!entry.operationId&&!entry.sessionId);
+}
 function renderEntries() {
   const current = todayEntries();
   byId("entries").innerHTML = current.map(entry => `
@@ -121,7 +136,7 @@ function saveAgeDepartmentAttendance(member) {
   entries.unshift({
     id: makeId(), date: today(), time,
     displayName: nameForTile(member), storedName: nameForStorage(member),
-    role: "", status: "Anwesend", sessionType
+    role: "", status: "Anwesend", sessionType, sessionId:ensureCurrentSessionId()
   });
   saveEntries();
   chosenMemberId = "";
@@ -134,7 +149,7 @@ function saveAgeDepartmentAttendance(member) {
 function saveDirectGeneralAttendance(member, status = "Anwesend") {
   if (!member || member.ageDepartment) return false;
   const time = new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-  entries.unshift({ id: makeId(), date: today(), time, displayName: nameForTile(member), storedName: nameForStorage(member), role: "", status, sessionType });
+  entries.unshift({ id: makeId(), date: today(), time, displayName: nameForTile(member), storedName: nameForStorage(member), role: "", status, sessionType, sessionId:ensureCurrentSessionId() });
   saveEntries(); chosenMemberId = ""; chosenMemberIds.clear(); chosenRole = "";
   renderMembers(); renderRoles(); renderEntries(); renderAdmin(); updateSelection(); updateProbeWorkflow();
   showToast(`${nameForTile(member)} wurde als ${status.toLowerCase()} gespeichert. Die Funktion wird beim Start der Probe berechnet.`);
@@ -193,6 +208,7 @@ function saveAttendance() {
         : (isCommittee && chosenRole === "Anwesend" ? "Ausschuss Sitzung" : (isTraining && chosenRole === "Anwesend" ? "Unterricht" : "")),
       status: chosenRole === "Organisation" ? "Anwesend" : chosenRole,
       sessionType,
+      sessionId: isOperation ? "" : ensureCurrentSessionId(),
       operationId: isOperation ? currentOperationId : ""
     }));
     saveEntries();
@@ -234,7 +250,7 @@ function saveAttendance() {
     displayName: nameForTile(selected), storedName: nameForStorage(selected),
     role: isExcused ? "" : chosenRole,
     status: isExcused ? "Entschuldigt" : "Anwesend",
-    sessionType
+    sessionType, sessionId:ensureCurrentSessionId()
   });
   saveEntries();
   chosenMemberId = "";
@@ -269,9 +285,10 @@ function deleteEntry(id) {
 function clearToday() {
   if (!todayEntries().length) return showToast("Für heute sind keine Anmeldungen vorhanden.", "error");
   if (!confirm("Alle heutigen Anmeldungen zurücksetzen? Mitglieder, Einstellungen und Archiv bleiben erhalten.")) return;
+  const sessionId=ensureCurrentSessionId();
   entries = sessionType === "Einsatz"
     ? entries.filter(entry => entry.operationId !== currentOperationId)
-    : entries.filter(entry => entry.date !== today() || Boolean(entry.operationId));
+    : entries.filter(entry => entry.sessionId !== sessionId);
   chosenMemberId = "";
   chosenMemberIds.clear();
   chosenRole = "";
@@ -422,15 +439,13 @@ function continueToAttendance(){
   if(!type)return showToast("Bitte zuerst eine Terminart auswählen.","error");
   window.__sessionTypeTransitionRunning=true;
   sessionType=type;
-  // Schritt 1 startet ausdrücklich einen neuen Termin. Alte, nicht abgeschlossene
-  // Anmeldungen dieses Datums dürfen nicht in den neuen Termin übernommen werden.
-  entries=entries.filter(entry=>entry.date!==today());
-  saveEntries();
+  // Jeder Termin erhält eine eigene ID. Andere Termine desselben Tages bleiben erhalten.
+  if(sessionType!=="Einsatz")startAttendanceSession();
   resetDocumentReportState?.();
   currentClosingTopic="";
   if(sessionType==="Einsatz")startOperationSession();
   chosenMemberId="";chosenMemberIds.clear();chosenRole="Anwesend";
-  tacticsClosingPending=false;currentTacticsAssignments=new Map();currentTacticsSlots=[];tacticsDragSource=null;
+  tacticsClosingPending=false;currentTacticsAssignments=new Map();currentTacticsSlots=[];tacticsDragSource=null;currentAtueMember=null;breathingProtectionPlanned=false;
 
   setHomeFlowStage(2);
 
@@ -551,7 +566,7 @@ function ensureRfidCsvImport(){
 }
 function applyRfidCsvImport(){
   const ready=pendingRfidImport.filter(x=>x.state==="ready"&&x.member);if(!ready.length)return;
-  ready.forEach(item=>entries.unshift({id:makeId(),date:today(),time:/^\d{1,2}:\d{2}/.test(item.time)?item.time.slice(0,5):new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),displayName:nameForTile(item.member),storedName:nameForStorage(item.member),role:"",status:"Anwesend",sessionType,source:"RFID-CSV"}));
+  ready.forEach(item=>entries.unshift({id:makeId(),date:today(),time:/^\d{1,2}:\d{2}/.test(item.time)?item.time.slice(0,5):new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),displayName:nameForTile(item.member),storedName:nameForStorage(item.member),role:"",status:"Anwesend",sessionType,sessionId:ensureCurrentSessionId(),source:"RFID-CSV"}));
   saveEntries();renderEntries();renderMembers();updateSelection();updateProbeWorkflow();
   const preview=byId("rfidCsvPreview");if(preview){preview.hidden=true;preview.innerHTML="";}pendingRfidImport=[];showToast(`${ready.length} RFID-Anwesenheit${ready.length===1?"":"en"} übernommen.`);
 }

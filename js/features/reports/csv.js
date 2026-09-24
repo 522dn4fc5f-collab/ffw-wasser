@@ -101,7 +101,9 @@ async function closeDay(topic = currentClosingTopic) {
   }
 
   await addCsvToArchive(fileName, csvContent, exportSessionType, topic);
-  entries = entries.filter(entry => entry.date !== today());
+  const completedSessionId=ensureCurrentSessionId();
+  entries = entries.filter(entry => entry.sessionId !== completedSessionId);
+  currentSessionId=""; safeStorage.setItem("fw_v1_current_session_id","");
   chosenMemberId = "";
   chosenMemberIds.clear();
   chosenRole = "";

@@ -39,7 +39,7 @@ function renderStatistics() {
   ];
   byId("qualificationStatisticsList").innerHTML=qualificationRows.map(([label,list])=>renderMetric("",label,list.length?list.map(nameForTile).sort((a,b)=>a.localeCompare(b,"de")).join(", "):"Keine Mitglieder","neutral")).join("");
   const rows = yearData.flatMap(data => data.rows);
-  const eligibleRows = rows.filter(row => activeMembers.some(member => nameForStorage(member) === row.name || nameForTile(member) === row.name));
+  const eligibleRows = rows.filter(row => row.status !== "Betrifft nicht" && activeMembers.some(member => nameForStorage(member) === row.name || nameForTile(member) === row.name));
   const presentRows = eligibleRows.filter(row => row.status === "Anwesend");
   const excusedRows = eligibleRows.filter(row => row.status === "Entschuldigt");
   const missingRows = eligibleRows.filter(row => row.status === "Fehlt");
@@ -53,7 +53,7 @@ function renderStatistics() {
   const average = yearData.length ? presentRows.length / yearData.length : null;
   byId("averageAttendance").textContent = average === null ? "–" : average.toFixed(1).replace(".", ",");
   byId("averageAttendanceDetail").textContent = `anwesende Einsatzkräfte je Probe`;
-  const ageRows = rows.filter(row => ageMembers.some(member => nameForStorage(member) === row.name || nameForTile(member) === row.name));
+  const ageRows = rows.filter(row => row.status !== "Betrifft nicht" && ageMembers.some(member => nameForStorage(member) === row.name || nameForTile(member) === row.name));
   const agePresentRows = ageRows.filter(row => row.status === "Anwesend");
   const ageExcusedRows = ageRows.filter(row => row.status === "Entschuldigt");
   const ageMissingRows = ageRows.filter(row => row.status === "Fehlt");
@@ -246,7 +246,7 @@ function exportIndividualStatisticsPdf() {
   if (!member) return;
   renderIndividualStatistics(memberId);
   const originalTitle = document.title;
-  document.title = `Feuerwehr-Wasser_${nameForTile(member).replace(/[^a-zA-Z0-9ÄÖÜäöüß]+/g,"-")}_Statistik_${new Date().getFullYear()}`;
+  document.title = `Feuerwehr-Wasser_${nameForTile(member).replace(/[^a-zA-Z0-9ÄÖÜäöüß]+/g,"-")}_Statistik_${selectedStatisticsYear}`;
   document.body.classList.add("printing-individual-statistics");
   const cleanup = () => { document.body.classList.remove("printing-individual-statistics"); document.title = originalTitle; window.removeEventListener("afterprint", cleanup); };
   window.addEventListener("afterprint", cleanup);

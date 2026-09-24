@@ -181,7 +181,7 @@ function deleteMember(id) {
 function changePin() {
   const first = byId("newPin").value.trim();
   const repeated = byId("repeatPin").value.trim();
-  if (first.length < 6) return showToast("Das Passwort muss mindestens 6 Zeichen enthalten.", "error");
+  if (first.length < 3) return showToast("Das Passwort muss mindestens 3 Zeichen enthalten. Ein einfaches Passwort wie 112 ist erlaubt.", "error");
   if (first !== repeated) return showToast("Die Passwörter stimmen nicht überein.", "error");
   safeStorage.setItem(KEYS.password, first);
   byId("newPin").value = "";
