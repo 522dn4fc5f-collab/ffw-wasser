@@ -11,7 +11,7 @@ function renderMetric(containerId, label, value, tone = "neutral") {
 function renderStatistics() {
   renderStatisticsYearSelect();
   populateIndividualMemberSelect();
-  const year = String(new Date().getFullYear());
+  const year = selectedStatisticsYear || String(new Date().getFullYear());
   const all = statisticsArchiveData();
   const yearData = all.filter(data => String(data.rows[0]?.date || data.item.createdAt || "").startsWith(year));
   const activeMembers = members.filter(member => !member.ageDepartment);
@@ -133,6 +133,32 @@ function renderStatistics() {
   byId("probeTopicsEmpty").hidden = topics.size > 0;
   byId("statusOverview").innerHTML = [renderMetric("","Anwesend",presentRows.length,"green"),renderMetric("","Entschuldigt",excusedRows.length,"gold"),renderMetric("","Fehlt",missingRows.length,"gray")].join("");
   byId("statusOverviewEmpty").hidden = eligibleRows.length > 0;
+  renderDriverLicenseStatistics();
+}
+
+
+function ensureDriverLicenseStatisticsPanel(){
+  let panel=byId("driverLicenseStatisticsPanel");
+  if(panel)return panel;
+  const breathing=byId("breathingClearanceList")?.closest("article,.panel");
+  if(!breathing)return null;
+  panel=document.createElement("article");
+  panel.id="driverLicenseStatisticsPanel";
+  panel.className="panel statistics-panel driver-license-statistics-panel";
+  panel.innerHTML=`<div class="panel-heading"><span class="step yellow">FS</span><h3>Führerscheinkontrollen</h3></div><div class="statistics-kpis"><div><span>Gültig</span><strong data-driver-valid>0</strong></div><div><span>Bald fällig</span><strong data-driver-soon>0</strong></div><div><span>Überfällig</span><strong data-driver-overdue>0</strong></div><div><span>Nicht dokumentiert</span><strong data-driver-missing>0</strong></div></div><div class="metric-list" data-driver-list></div>`;
+  breathing.insertAdjacentElement("afterend",panel);
+  return panel;
+}
+function renderDriverLicenseStatistics(){
+  const panel=ensureDriverLicenseStatisticsPanel();if(!panel)return;
+  const items=members.filter(member=>!member.ageDepartment&&Array.isArray(member.machinistVehicles)&&member.machinistVehicles.length).map(member=>({member,state:driverLicenseControlDue(member,systemToday())}));
+  const count=state=>items.filter(item=>item.state===state).length;
+  panel.querySelector("[data-driver-valid]").textContent=count("valid");
+  panel.querySelector("[data-driver-soon]").textContent=count("soon");
+  panel.querySelector("[data-driver-overdue]").textContent=count("overdue");
+  panel.querySelector("[data-driver-missing]").textContent=count("missing");
+  const order={overdue:0,missing:1,soon:2,valid:3},tone={overdue:"red",missing:"gray",soon:"gold",valid:"green"};
+  panel.querySelector("[data-driver-list]").innerHTML=items.sort((a,b)=>order[a.state]-order[b.state]||nameForTile(a.member).localeCompare(nameForTile(b.member),"de")).map(item=>{const date=driverLicenseDueDate(item.member);const label=item.state==="missing"?"Nicht dokumentiert":item.state==="overdue"?`Überfällig seit ${date}`:item.state==="soon"?`Fällig bis ${date}`:`Gültig bis ${date}`;return renderMetric("",nameForTile(item.member),label,tone[item.state]);}).join("");
 }
 
 function exportStatisticsPdf() {
@@ -168,7 +194,7 @@ function renderIndividualStatistics(memberId) {
   const button = byId("individualStatisticsPdfButton");
   const member = members.find(item => item.id === memberId && !item.ageDepartment);
   if (!member) { preview.hidden = true; button.disabled = true; return; }
-  const year = String(new Date().getFullYear());
+  const year = selectedStatisticsYear || String(new Date().getFullYear());
   const yearData = statisticsArchiveData().filter(data => String(data.rows[0]?.date || data.item.createdAt || "").startsWith(year));
   const names = new Set([nameForStorage(member), nameForTile(member)]);
   const rows = yearData.flatMap(data => data.rows).filter(row => names.has(row.name));

@@ -269,7 +269,9 @@ function deleteEntry(id) {
 function clearToday() {
   if (!todayEntries().length) return showToast("Für heute sind keine Anmeldungen vorhanden.", "error");
   if (!confirm("Alle heutigen Anmeldungen zurücksetzen? Mitglieder, Einstellungen und Archiv bleiben erhalten.")) return;
-  entries = entries.filter(entry => entry.date !== today());
+  entries = sessionType === "Einsatz"
+    ? entries.filter(entry => entry.operationId !== currentOperationId)
+    : entries.filter(entry => entry.date !== today() || Boolean(entry.operationId));
   chosenMemberId = "";
   chosenMemberIds.clear();
   chosenRole = "";

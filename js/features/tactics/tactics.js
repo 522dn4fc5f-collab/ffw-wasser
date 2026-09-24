@@ -10,7 +10,7 @@ function tacticsPresentMembers() {
   return members.filter(member => !member.ageDepartment && (names.has(nameForStorage(member)) || names.has(nameForTile(member))));
 }
 function tacticsYearRoleCounts() {
-  const year=String(new Date().getFullYear()), counts=new Map();
+  const year=String(today()).slice(0,4), counts=new Map();
   statisticsArchiveData().filter(data => String(data.rows[0]?.date || data.item.createdAt || "").startsWith(year)).flatMap(data => data.rows).filter(row => row.status === "Anwesend").forEach(row => {
     const role=normalizeStatisticsRole(row.role); if (!AVAILABLE_ROLES.includes(role)) return;
     const key=`${row.name}|||${role}`; counts.set(key,(counts.get(key)||0)+1);
@@ -94,9 +94,9 @@ function protectCriticalVehicleSlots(slots) {
 function assignmentReason(member, role) {
   if (!member) return "Position noch offen";
   const progress = roleProgress(member, role, tacticsYearRoleCounts(), getRoleTargets());
-  if (progress.remaining > 0) return `Jahresziel: noch ${progress.remaining} Einsatz${progress.remaining===1?"":"e"} offen`;
+  if (progress.remaining > 0) return `Jahresziel: Funktion noch ${progress.remaining}-mal offen`;
   if (progress.actual === 0) return "Funktion bisher noch nicht ausgeübt";
-  return `Ausgleich: bisher ${progress.actual} Einsatz${progress.actual===1?"":"e"}`;
+  return `Ausgleich: Funktion bisher ${progress.actual}-mal übernommen`;
 }
 function crewHtml(crew, vehicle) { return crew.map(item => `<div class="crew-position ${item.member?"crew-filled":"crew-open"}" data-drop-vehicle="${vehicle}" data-drop-role="${item.role}"><span>${escapeHtml(item.role)}</span><strong ${item.member?`draggable="true" data-drag-member="${escapeHtml(item.member.id)}"`:""}>${item.member?escapeHtml(nameForTile(item.member)):"nicht besetzt"}</strong><small>${escapeHtml(assignmentReason(item.member,item.role))}</small></div>`).join(""); }
 function rebuildTacticsAssignmentsFromSlots() {
@@ -167,21 +167,21 @@ function refreshTacticsManualView() {
   rebuildTacticsAssignmentsFromSlots();
   renderAtueSlot();
 }
-function findTacticsMember(id){return members.find(member=>member.id===id)||null;  updateTacticsRecommendationAfterManualChange();
-}
+function findTacticsMember(id){return members.find(member=>member.id===id)||null;}
 function manualMoveTacticsMember(memberId,targetVehicle,targetRole){
   const member=findTacticsMember(memberId); if(!member)return;
-  if(targetVehicle==="ATUE"){if(!member.atueQualified)return showToast("Diese Person ist nicht für die Atemschutzüberwachung freigeschaltet.","error");const source=currentTacticsSlots.find(slot=>slot.member?.id===memberId);if(source)source.member=null;const displaced=currentAtueMember;currentAtueMember=member;if(displaced&&source)source.member=displaced;refreshTacticsManualView();return;}
+  if(targetVehicle==="ATUE"){if(!member.atueQualified)return showToast("Diese Person ist nicht für die Atemschutzüberwachung freigeschaltet.","error");const source=currentTacticsSlots.find(slot=>slot.member?.id===memberId);if(source)source.member=null;const displaced=currentAtueMember;currentAtueMember=member;if(displaced&&source)source.member=displaced;refreshTacticsManualView();updateTacticsRecommendationAfterManualChange();return;}
   if(BREATHING_ROLES.has(targetRole)&&breathingProtectionPlanned&&!hasValidBreathingClearance(member,today())){const state=breathingClearanceState(member,today()),label=state==="expired"?`am ${member.breathingClearanceUntil} abgelaufen`:"nicht gültig hinterlegt";if(!confirm(`Warnung: Die Atemschutzfreigabe von ${nameForTile(member)} ist ${label}. Trotzdem manuell auf ${targetRole} setzen?`))return;}
   if(currentAtueMember?.id===memberId)currentAtueMember=null;
   if(targetVehicle!=="RESERVE"&&!memberMayFillSlot(member,targetVehicle,targetRole))return showToast(deniedTacticsSlotMessage(member,targetVehicle,targetRole),"error");
   const source=currentTacticsSlots.find(slot=>slot.member?.id===memberId)||null;
-  if(targetVehicle==="RESERVE"){if(source)source.member=null;refreshTacticsManualView();return;}
+  if(targetVehicle==="RESERVE"){if(source)source.member=null;refreshTacticsManualView();updateTacticsRecommendationAfterManualChange();return;}
   const target=currentTacticsSlots.find(slot=>slot.vehicle===targetVehicle&&slot.role===targetRole); if(!target)return;
   const displaced=target.member;
   if(source&&displaced&&!memberMayFillSlot(displaced,source.vehicle,source.role))return showToast(deniedTacticsSlotMessage(displaced,source.vehicle,source.role),"error");
   target.member=member; if(source)source.member=displaced||null;
   refreshTacticsManualView();
+  updateTacticsRecommendationAfterManualChange();
 }
 function initializeTacticsDragDrop(){
   const view=byId("tacticsView");
@@ -206,7 +206,7 @@ function fillOpenSlotsWithoutReordering(people) {
     assignmentPriority(slots.map(slot=>slot.role)).forEach(role=>{
       const slot=slots.find(item=>item.role===role);
       if(!slot || slot.member) return;
-      const candidates=people.filter(person=>!person.assigned && person.options.some(option=>option.role===role) && (role!=="Maschinist"||canDriveVehicle(person.member,vehicle)));
+      const candidates=people.filter(person=>!person.assigned && person.options.some(option=>option.role===role) && breathingRoleAllowed(person.member,role) && (role!=="Maschinist"||canDriveVehicle(person.member,vehicle)));
       candidates.sort((a,b)=>{
         const ao=a.options.find(option=>option.role===role),bo=b.options.find(option=>option.role===role);
         return bo.score-ao.score || nameForTile(a.member).localeCompare(nameForTile(b.member),"de");

@@ -1,10 +1,12 @@
-function addCsvToArchive(fileName, content, sessionLabel, topic="") {
+async function addCsvToArchive(fileName, content, sessionLabel, topic="") {
   const closedEntries = [...todayEntries()];
   const presentCount = closedEntries.filter(entry => entry.status === "Anwesend").length;
   const excusedCount = closedEntries.filter(entry => entry.status === "Entschuldigt").length;
   const recordedNames = new Set(closedEntries.flatMap(entry => [entry.storedName, entry.displayName].filter(Boolean)));
   const missingCount = members.filter(member => !member.ageDepartment && !recordedNames.has(nameForStorage(member)) && !recordedNames.has(nameForTile(member))).length;
-  csvArchive = [{ id: makeId(), fileName, content, sessionType: sessionLabel, createdAt: new Date().toISOString(), presentCount, excusedCount, missingCount, topic }, ...csvArchive];
+  const archiveItem={ id: makeId(), fileName, content, sessionType: sessionLabel, createdAt: new Date().toISOString(), presentCount, excusedCount, missingCount, topic };
+  csvArchive = [archiveItem, ...csvArchive];
+  await commitPendingDocumentReport?.(archiveItem.id);
   saveArchive(); renderArchive();
 }
 function archiveDateLabel(value) { const d = new Date(value); return Number.isNaN(d.getTime()) ? "" : d.toLocaleString("de-DE", { dateStyle:"medium", timeStyle:"short" }); }
@@ -13,7 +15,7 @@ function renderArchive() {
   renderHistory?.();
 }
 async function exportArchiveItem(id) { const item=csvArchive.find(x=>x.id===id); if(!item)return; const result=await exportCsvFile(item.fileName,item.content,true); showToast(result==="failed"?"CSV konnte nicht ausgegeben werden.":result==="cancelled"?"Ausgabe wurde abgebrochen.":"CSV wurde erneut ausgegeben.",result==="failed"||result==="cancelled"?"error":"success"); }
-async function deleteArchiveItem(id) { const item=csvArchive.find(x=>x.id===id); if(!item||!confirm(`Archivdatei „${item.fileName}“ löschen?`))return; csvArchive=csvArchive.filter(x=>x.id!==id); await deleteImportedReportPdf?.(id); saveArchive(); renderArchive(); showToast("Archivdatei gelöscht."); }
+async function deleteArchiveItem(id) { const item=csvArchive.find(x=>x.id===id); if(!item||!confirm(`Archivdatei „${item.fileName}“ löschen?`))return; csvArchive=csvArchive.filter(x=>x.id!==id); await deleteImportedReportPdf?.(id); await deleteDocumentReportsForArchive?.(id); saveArchive(); renderArchive(); showToast("Archivdatei gelöscht."); }
 async function exportArchiveBackup() {
   const name = `FFW-Wasser_Archiv-Backup_${today()}.json`;
   await shareOrDownloadJson(name, { version:"1.0", createdAt:new Date().toISOString(), items:csvArchive }, "Archiv-Backup wurde ausgegeben.");
@@ -65,7 +67,8 @@ async function exportCompleteBackup() {
   const fileName = `FFW-Wasser_Komplett-Backup_${today()}.json`;
   const payload=completeBackupPayload();
   payload.data.importedPdfs=await exportImportedReportPdfs();
-  payload.data.backupInfo={pdfCount:payload.data.importedPdfs.length,includesImportedPdfs:true};
+  payload.data.documentReports=await exportDocumentReports?.()||[];
+  payload.data.backupInfo={pdfCount:payload.data.importedPdfs.length,documentReportCount:payload.data.documentReports.length,includesImportedPdfs:true,includesDocumentReports:true};
   await shareOrDownloadJson(fileName, payload, `Komplett-Backup wurde mit ${payload.data.importedPdfs.length} importierten PDF-Datei(en) ausgegeben.`);
 }
 function validBackupMember(member) {
@@ -91,7 +94,8 @@ function normalizeCompleteBackupData(data) {
     machinistVehicles:Array.isArray(member.machinistVehicles)?member.machinistVehicles.filter(value=>value==="LF"||value==="TSF"):[],
     rfidId:String(member.rfidId||"").trim(),
     committeeMember:Boolean(member.committeeMember),
-    atueQualified:Boolean(member.atueQualified),breathingClearance:Boolean(member.breathingClearance),breathingClearanceUntil:String(member.breathingClearanceUntil||"")
+    atueQualified:Boolean(member.atueQualified),breathingClearance:Boolean(member.breathingClearance),breathingClearanceUntil:String(member.breathingClearanceUntil||""),
+    driverLicenseCheckedOn:String(member.driverLicenseCheckedOn||"")
   })).filter(member=>member.lastName&&member.firstName);
   if(!importedMembers.length)throw new Error("members");
   return {
@@ -152,6 +156,7 @@ async function importCompleteBackup(file) {
     saveCompleteBackupData(normalized);
     csvArchive=normalized.csvArchive;
     const restoredPdfs=await restoreImportedReportPdfs(backup.data.importedPdfs);
+    const restoredDocuments=await restoreDocumentReports?.(backup.data.documentReports)||0;
     chosenMemberId="";
     chosenMemberIds.clear();
     chosenRole="";

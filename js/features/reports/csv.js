@@ -95,7 +95,7 @@ async function closeDay(topic = currentClosingTopic) {
     return;
   }
 
-  addCsvToArchive(fileName, csvContent, exportSessionType, topic);
+  await addCsvToArchive(fileName, csvContent, exportSessionType, topic);
   entries = entries.filter(entry => entry.date !== today());
   chosenMemberId = "";
   chosenMemberIds.clear();

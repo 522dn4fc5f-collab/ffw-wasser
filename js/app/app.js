@@ -100,9 +100,9 @@ function restructureMainViews(){
   if(dataSection){
     dataSection.querySelectorAll("article").forEach(article=>{if(!article.querySelector("#newPin")&&!article.querySelector("#repeatPin")&&!article.querySelector("#changePinButton"))article.remove();});
     const heading=dataSection.querySelector("header h3");if(heading)heading.textContent="Sicherheit";
-    const description=dataSection.querySelector("header p");if(description)description.textContent="Admin-PIN verwalten.";
+    const description=dataSection.querySelector("header p");if(description)description.textContent="Admin-Passwort verwalten.";
   }
-  const nav=admin?.querySelector(".admin-section-nav");if(nav)nav.innerHTML=`<a href="#admin-settings">1 · Funktionsziele</a><a href="#changePinButton">2 · PIN ändern</a><a href="#admin-members">3 · Mitglieder</a>`;
+  const nav=admin?.querySelector(".admin-section-nav");if(nav)nav.innerHTML=`<a href="#admin-settings">1 · Funktionsziele</a><a href="#changePinButton">2 · Passwort ändern</a><a href="#admin-members">3 · Mitglieder</a>`;
   const intro=admin?.querySelector(".screen-heading h2");if(intro)intro.textContent="Administration";
   if(admin){
     const settingsSection=byId("admin-settings"),pinArticle=byId("changePinButton")?.closest("article");
@@ -129,7 +129,7 @@ function buildSettingsSubpages(){
   if(pinArticle)pinArticle.remove();
   const membersPage=makePage("settingsMembersView","Mitglieder","Mitglieder, Funktionen und Berechtigungen verwalten.",members);
   const goalsPage=makePage("settingsGoalsView","Funktionsziele","Jährliche Mindestziele getrennt bearbeiten.",goals);
-  makePage("settingsSecurityView","Sicherheit","Admin-PIN für geschützte Bereiche ändern.",pinArticle);
+  makePage("settingsSecurityView","Sicherheit","Admin-Passwort für geschützte Bereiche ändern.",pinArticle);
   // Nummern aus der früheren Admin-Sammelansicht haben auf eigenständigen
   // Unterseiten keine Bedeutung mehr.
   [[membersPage,"4"],[goalsPage,"2"]].forEach(([page,legacyNumber])=>{
@@ -159,7 +159,7 @@ function updateHelpForCurrentFeatures(){
   const completion=sections.find(section=>section.querySelector("h3")?.textContent.includes("Abschluss mit CSV und PDF"));
   if(completion) completion.innerHTML=`<h3>Probe in drei Schritten durchführen</h3><p><strong>Schritt 1:</strong> Terminart auswählen und „Weiter zu Schritt 2“ anklicken. <strong>Schritt 2:</strong> Über die Aktenreiter Anwesend, Entschuldigt und bei Sonderproben Betrifft nicht auswählen, Mitglieder markieren und speichern. „Anwesend“ ist voreingestellt. Mit „Weiter zu Schritt 3“ geht es weiter. <strong>Schritt 3:</strong> Bei einer Allgemeinen Probe erscheint die Taktik, bei Sonderprobe und Unterricht direkt der Abschluss. Beim Wechsel des Terminart werden Taktik und aktuelle Auswahl zurückgesetzt.</p><p>Der Kopfbereich zeigt nur während einer laufenden Probe die Terminart sowie die Anzahl anwesender und entschuldigter Personen. CSV, PDF und Archiv werden beim vollständigen Abschluss erzeugt beziehungsweise aktualisiert.</p>`;
   const archive=sections.find(section=>section.querySelector("h3")?.textContent.includes("Archiv und Backups"));
-  if(archive) archive.innerHTML=`<h3>Archiv, Historie und Backups</h3><p>Der Menüpunkt „Historie“ zeigt abgeschlossene Probenberichte nach Kalenderjahr und Monat. Das aktuelle Jahr und der aktuelle Monat sind beim Öffnen aufgeklappt. Andere Jahres- und Monatsrubriken sind zunächst geschlossen und können über ihre Überschrift geöffnet werden. Innerhalb eines Monats stehen die Berichte nach Datum sortiert bereit. „PDF ansehen“ öffnet den jeweiligen Probenbericht. Im Bereich „Archiv & Backups“ ändert „Eintrag korrigieren“ Status oder Funktion einer Person in einer abgeschlossenen Probe. Dazu wird die Person aus einer Liste ausgewählt. Danach können Status und gegebenenfalls die Funktion angepasst werden. Die Änderung wird als neue Version dokumentiert und CSV sowie PDF werden erneut ausgegeben. Unter „Archiv & Backups“ werden die Speicherorte für CSV-Auswertungen, PDF-Berichte und Backups gemeinsam verwaltet. Jeder Dateityp kann einen eigenen Zielordner verwenden. Der neue Menüpunkt „Einstellungen“ dient als zentrale Übersicht und führt direkt zur Mitgliederverwaltung, zu den Funktionszielen, zur PIN und zu den Speicherorten. Die eigentliche Administration enthält nur Mitglieder, jährliche Funktionsziele und die PIN. Der aktuelle Probenstatus erscheint während einer laufenden Probe kompakt im Kopfbereich.</p>`;
+  if(archive) archive.innerHTML=`<h3>Archiv, Historie und Backups</h3><p>Der Menüpunkt „Historie“ zeigt abgeschlossene Probenberichte nach Kalenderjahr und Monat. Das aktuelle Jahr und der aktuelle Monat sind beim Öffnen aufgeklappt. Andere Jahres- und Monatsrubriken sind zunächst geschlossen und können über ihre Überschrift geöffnet werden. Innerhalb eines Monats stehen die Berichte nach Datum sortiert bereit. „PDF ansehen“ öffnet den jeweiligen Probenbericht. Im Bereich „Archiv & Backups“ ändert „Eintrag korrigieren“ Status oder Funktion einer Person in einer abgeschlossenen Probe. Dazu wird die Person aus einer Liste ausgewählt. Danach können Status und gegebenenfalls die Funktion angepasst werden. Die Änderung wird als neue Version dokumentiert und CSV sowie PDF werden erneut ausgegeben. Unter „Archiv & Backups“ werden die Speicherorte für CSV-Auswertungen, PDF-Berichte und Backups gemeinsam verwaltet. Jeder Dateityp kann einen eigenen Zielordner verwenden. Der neue Menüpunkt „Einstellungen“ dient als zentrale Übersicht und führt direkt zur Mitgliederverwaltung, zu den Funktionszielen, zum Passwort und zu den Speicherorten. Die eigentliche Administration enthält nur Mitglieder, jährliche Funktionsziele und das Passwort. Der aktuelle Probenstatus erscheint während einer laufenden Probe kompakt im Kopfbereich.</p>`;
   const statistics=sections.find(section=>section.querySelector("h3")?.textContent.includes("Statistik und Offline-Nutzung"));
   if(statistics) statistics.innerHTML=`<h3>Statistik, Kalenderjahr und Offline-Nutzung</h3><p>Die Statistik wertet automatisch nur das aktuelle Kalenderjahr aus. Mit dem Wechsel auf ein neues Jahr beginnt die Jahresstatistik neu. Berichte aus vergangenen Jahren bleiben in der Historie erhalten. Die getrennte Auswertung von Einsatzabteilung und Altersmannschaft bleibt bestehen. Nach einem Update die Web-App vollständig neu laden, damit der neue Offline-Cache aktiv wird.</p>`;
 }
@@ -350,7 +350,7 @@ else removeStandaloneAttendanceVersion();
 const originalRenderStatistics=renderStatistics;renderStatistics=function(){originalRenderStatistics();ensureOperationStatisticsPanel();renderOperationStatistics();};
 function enforceFooterVersion(){
   const footer=document.querySelector(".app-footer");
-  if(footer)footer.textContent="© 2026 Markus Bürklin · Feuerwehr Wasser 2.17.0 · Einsätze";
+  if(footer)footer.textContent="© 2026 Markus Bürklin · Feuerwehr Wasser 2.18.0 · Konsolidierte Daten- und Funktionsprüfung";
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",enforceFooterVersion,{once:true});
 else enforceFooterVersion();
