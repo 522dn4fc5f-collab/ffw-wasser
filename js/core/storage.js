@@ -6,9 +6,9 @@ function loadArray(key, fallback) {
     return fallback;
   }
 }
-function saveMembers() { safeStorage.setItem(KEYS.members, JSON.stringify(members)); }
-function saveEntries() { safeStorage.setItem(KEYS.entries, JSON.stringify(entries)); }
-function saveArchive() { safeStorage.setItem(KEYS.archive, JSON.stringify(csvArchive)); }
+function saveMembers() { safeStorage.setItem(KEYS.members, JSON.stringify(members)); scheduleCloudSync?.(); }
+function saveEntries() { safeStorage.setItem(KEYS.entries, JSON.stringify(entries)); scheduleCloudSync?.(); }
+function saveArchive() { safeStorage.setItem(KEYS.archive, JSON.stringify(csvArchive)); scheduleCloudSync?.(); }
 function adminPassword() { return safeStorage.getItem(KEYS.password) || safeStorage.getItem(KEYS.pin) || "112"; }
 function adminPin(){return adminPassword();}
 function escapeHtml(value) {

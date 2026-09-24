@@ -350,7 +350,7 @@ else removeStandaloneAttendanceVersion();
 const originalRenderStatistics=renderStatistics;renderStatistics=function(){originalRenderStatistics();ensureOperationStatisticsPanel();renderOperationStatistics();};
 function enforceFooterVersion(){
   const footer=document.querySelector(".app-footer");
-  if(footer)footer.textContent="© 2026 Markus Bürklin · Feuerwehr Wasser 2.16.9 · Einsätze";
+  if(footer)footer.textContent="© 2026 Markus Bürklin · Feuerwehr Wasser 2.17.0 · Einsätze";
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",enforceFooterVersion,{once:true});
 else enforceFooterVersion();
@@ -374,3 +374,5 @@ function showBreathingClearanceWarnings(){renderSafetyInfoHub();}
 function showDriverLicenseControlWarnings(){renderSafetyInfoHub();}
 function warnOldIosStandaloneInstallation(){const standalone=window.matchMedia?.("(display-mode: standalone)")?.matches||navigator.standalone===true;if(!standalone)return;const notice=document.createElement("div");notice.className="ios-standalone-migration-notice";notice.setAttribute("role","alert");notice.innerHTML='<strong>iPad-Tastaturhinweis</strong><p>Dieses alte Home-Symbol startet noch im fehlerhaften App-Modus. Bitte dieses Symbol löschen, die Webseite einmal in Safari öffnen und erneut „Zum Home-Bildschirm“ wählen. Das neue Symbol öffnet die Seite im Safari-Modus.</p><button type="button" class="primary-button">Verstanden</button>';document.body.appendChild(notice);notice.querySelector("button").onclick=()=>notice.remove();}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",warnOldIosStandaloneInstallation,{once:true});else warnOldIosStandaloneInstallation();
+
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initCloudSync,{once:true});else initCloudSync();
