@@ -68,7 +68,8 @@ async function closeDay(topic = currentClosingTopic) {
   }
 
   // Nur wenn kein Ordner ausgewählt ist: Safari/iPad nutzt Teilen/Sichern.
-  if (!folderStorageSelected && isSafariBrowser() && typeof File === "function" && navigator.share && navigator.canShare) {
+  const isiPadClose=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
+  if (!folderStorageSelected && !isiPadClose && isSafariBrowser() && typeof File === "function" && navigator.share && navigator.canShare) {
     try {
       const csvFile = new File([csvContent], fileName, { type: "text/csv" });
       const pdfFile = new File([pdfBlob], pdfFileName, { type: "application/pdf" });
@@ -86,6 +87,10 @@ async function closeDay(topic = currentClosingTopic) {
 
   // Browser ohne gemeinsamen Datei-Dialog: CSV ausgeben und die PDF danach
   // separat herunterladen. Bei Teilfehlern werden beide Dateien erneut ausgegeben.
+  if (!folderStorageSelected && exportResult === "failed" && isiPadClose) {
+    showToast("Bitte zuerst einen Speicherordner wählen. CSV und PDF werden auf dem iPad nicht mehr über eine Dateivorschau ausgegeben.","error");
+    return;
+  }
   if (!folderStorageSelected && exportResult === "failed") {
     exportResult = await exportCsvFile(fileName, csvContent, false);
     if (exportResult !== "failed" && exportResult !== "cancelled") downloadBlob(pdfFileName, pdfBlob);

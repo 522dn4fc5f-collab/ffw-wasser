@@ -8,13 +8,24 @@ async function buildTerminPackage({baseName,csvName,csvContent,pdfName,pdfBlob,d
   zip.file("paket-info.json",JSON.stringify({format:"FFW-Wasser-Terminpaket",version:"1.0",createdAt:new Date().toISOString(),files:Object.keys(zip.files)},null,2));
   return zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6},mimeType:"application/zip"});
 }
-async function saveTerminPackage(fileName,blob){document.querySelectorAll("#operationPdfPreviewDialog,.operation-pdf-preview-dialog").forEach(node=>node.remove());
+async function saveTerminPackage(fileName,blob){
+  document.querySelectorAll("#operationPdfPreviewDialog,.operation-pdf-preview-dialog").forEach(node=>node.remove());
   const handle=effectiveCsvDirectoryHandle?.()||effectivePdfDirectoryHandle?.()||null;
-  if(handle){try{if(!(await ensureDirectoryWritePermission(handle)))return "failed";const fh=await handle.getFileHandle(fileName,{create:true}),w=await fh.createWritable();await w.write(blob);await w.close();return "saved";}catch(error){console.error(error);return "failed";}}
-  try{if(typeof File==="function"&&navigator.share&&navigator.canShare){const file=new File([blob],fileName,{type:"application/zip"});if(navigator.canShare({files:[file]})){await navigator.share({files:[file]});return "shared";}}}catch(error){if(error?.name==="AbortError")return "cancelled";}
+  if(handle){
+    try{
+      if(!(await ensureDirectoryWritePermission(handle)))return "failed";
+      // getFileHandle(create:true) liefert auch die bestehende Datei. createWritable()
+      // ersetzt deren Inhalt direkt, ohne Safari-Vorschau oder blob:-Seite.
+      const fileHandle=await handle.getFileHandle(fileName,{create:true});
+      const writable=await fileHandle.createWritable({keepExistingData:false});
+      await writable.write(blob);
+      await writable.close();
+      return "saved";
+    }catch(error){console.error(error);return "failed";}
+  }
   const isiPad=/iPad|Macintosh/i.test(navigator.userAgent||"")&&("ontouchend" in document);
   if(isiPad){
-    showToast("Auf dem iPad bitte einen Speicherordner wählen oder den Teilen-Dialog verwenden. Eine leere Browser-Vorschau wird nicht mehr geöffnet.","error");
+    showToast("Bitte zuerst einen Speicherordner wählen. Nur so kann das Terminpaket ohne Dateivorschau direkt gespeichert oder ersetzt werden.","error");
     return "failed";
   }
   try{downloadBlob(fileName,blob);return "downloaded";}catch(error){return "failed";}
