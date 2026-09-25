@@ -521,7 +521,7 @@ function ensureStagedHomeFlow(){
   }
   const entriesPanel=byId("entries")?.closest("article,section,.panel");if(entriesPanel){entriesPanel.classList.add("flow-stage-2-support","today-entries-panel");
     const controls=byId("saveButton")?.closest(".batch-selection-controls");
-    if(controls&&!byId("desktopSaveButtonDock")){const dock=document.createElement("div");dock.id="desktopSaveButtonDock";dock.className="desktop-save-button-dock flow-stage-2-support";entriesPanel.insertAdjacentElement("afterend",dock);dock.appendChild(controls);}
+    if(controls&&!byId("desktopSaveButtonDock")){const dock=document.createElement("div");dock.id="desktopSaveButtonDock";dock.className="desktop-save-button-dock flow-stage-2-support";entriesPanel.insertAdjacentElement("beforebegin",dock);dock.appendChild(controls);}else if(controls&&byId("desktopSaveButtonDock")?.nextElementSibling!==entriesPanel){entriesPanel.insertAdjacentElement("beforebegin",byId("desktopSaveButtonDock"));}
   }
   const resetPanel=byId("resetTodayParticipantsButton")?.closest("article,section,.panel");if(resetPanel)resetPanel.classList.add("flow-stage-2-support");
   if(!byId("homeStageFinish")){

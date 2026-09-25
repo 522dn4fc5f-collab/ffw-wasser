@@ -1841,3 +1841,26 @@ html body .participant-command-header .compact-menu{
   #topVisitors .ranking-row>strong{align-items:flex-start!important;flex-direction:column!important}
   #topVisitors .ranking-row>strong small{text-align:left!important}
 }
+
+/* Feuerwehr Wasser 2.20.21: Mengenfelder für eingesetzte Geräte */
+.operation-field-hint{margin:0 0 12px;color:#52636e;font-size:.84rem}
+.operation-device-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.operation-device-amount{display:grid!important;grid-template-columns:minmax(0,1fr) 72px;align-items:center;gap:10px;margin:0!important;padding:10px 11px;border:1px solid #b8c3c9;border-radius:9px;background:#f6f8f9;font-weight:750}
+.operation-device-amount span{min-width:0;overflow-wrap:anywhere}
+.operation-device-amount input{width:72px!important;min-height:46px;padding:8px;text-align:center;font-size:16px}
+@media(max-width:900px){.operation-device-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.operation-device-grid{grid-template-columns:1fr}.operation-device-amount{grid-template-columns:minmax(0,1fr) 76px}.operation-device-amount input{width:76px!important}}
+
+/* Feuerwehr Wasser 2.20.22: Auswahlaktion oberhalb der Anmeldungen */
+#attendanceView .action-column{display:flex!important;flex-direction:column!important;gap:12px!important}
+#attendanceView #desktopSaveButtonDock{order:1!important;position:static!important;width:100%!important;margin:0!important;padding:12px!important;border:1px solid #b7c8bd!important;border-top:5px solid #19783a!important;border-radius:13px!important;background:#fff!important;box-shadow:0 3px 10px rgba(0,0,0,.07)!important;transform:none!important}
+#attendanceView #desktopSaveButtonDock .batch-selection-controls{display:grid!important;gap:8px!important;margin:0!important;padding:0!important;border:0!important}
+#attendanceView #desktopSaveButtonDock #saveButton{position:static!important;inset:auto!important;width:100%!important;min-height:58px!important;margin:0!important;transform:none!important;box-shadow:none!important}
+#attendanceView .participant-entries-panel{order:2!important;margin:0!important}
+#attendanceView .action-column{position:sticky!important;top:64px!important;align-self:start!important;max-height:calc(100dvh - 76px)!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important}
+@media(max-width:760px){
+ #attendanceView .action-column{position:static!important;top:auto!important;max-height:none!important;overflow:visible!important}
+ #attendanceView #desktopSaveButtonDock{display:block!important;position:static!important;width:100%!important}
+ #attendanceView #desktopSaveButtonDock .batch-selection-controls{display:grid!important}
+ #attendanceView #desktopSaveButtonDock #saveButton{position:static!important;width:100%!important;max-width:none!important;transform:none!important}
+}
