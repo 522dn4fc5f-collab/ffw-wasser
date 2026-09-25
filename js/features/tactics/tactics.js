@@ -299,7 +299,7 @@ function openTacticsPresentation(){
  const assignedIds=new Set(currentTacticsSlots.filter(slot=>slot.member).map(slot=>slot.member.id));
  const reserve=tacticsPresentMembers().filter(member=>!assignedIds.has(member.id)&&member.id!==currentAtueMember?.id);
  const atueMarkup=currentAtueMember?`<span>${escapeHtml(nameForTile(currentAtueMember))} · ATÜ</span>`:"";
- const reserveMarkup=reserve.map(member=>`<span>${escapeHtml(nameForTile(member))} · weitere Person</span>`).join("");
+ const reserveMarkup=reserve.map(member=>`<span>${escapeHtml(nameForTile(member))}</span>`).join("");
  dialog.innerHTML=`<div class="tactics-presentation-shell"><header><div><small>Allgemeine Probe</small><h2>Mannschaftseinteilung</h2></div><button type="button" data-close-presentation aria-label="Vorschau schließen">×</button></header><main>${tacticsPresentationCard("LF10","Gruppenbesetzung",GROUP_ROLES)}${tacticsPresentationCard("TSF","Staffelbesetzung",STAFF_ROLES)}</main>${reserve.length||currentAtueMember?`<footer><b>Weitere Anwesende</b><div class="tactics-presentation-additional">${reserveMarkup}${atueMarkup}</div></footer>`:""}</div>`;
  document.body.appendChild(dialog);dialog.querySelector("[data-close-presentation]").onclick=()=>dialog.close();dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener("close",()=>dialog.remove(),{once:true});dialog.showModal();
 }
