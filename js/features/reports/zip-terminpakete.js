@@ -107,10 +107,15 @@ window.finishOperationZip=async function(){
   }catch(error){console.error("Einsatzabschluss fehlgeschlagen",error);showToast(`Einsatz konnte nicht abgeschlossen werden. Daten bleiben erhalten.${error?.message?` (${error.message})`:""}`,"error");}
   finally{button.disabled=false;}
 };
-// Auch bestehende Formulare und andere Aufrufer immer auf ZIP-only festlegen.
-finishOperation=window.finishOperationZip;
-const operationFinishButton=byId("operationFinish");
-if(operationFinishButton)operationFinishButton.onclick=()=>window.finishOperationZip();
+// Dynamisch erzeugte Einsatzformulare und Korrekturformulare zuverlässig anbinden.
+// Ereignisdelegation funktioniert auch dann, wenn der Button erst später entsteht.
+document.addEventListener("click",event=>{
+  const button=event.target.closest?.("#operationFinish");
+  if(!button)return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  window.finishOperationZip();
+},true);
 
 /* ZIP-Auswahl in der Historie automatisch entpacken. */
 async function importTerminPackageFile(file){

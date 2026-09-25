@@ -1917,3 +1917,14 @@ html body .participant-command-header .compact-menu{
     margin-top:0!important;
   }
 }
+
+/* Feuerwehr Wasser 2.20.28: rechte Karten exakt neben „Personen markieren“ */
+@media (min-width: 761px) {
+  #attendanceView .action-column {
+    margin-top: 316px !important;
+    top: 64px !important;
+  }
+}
+@media (max-width: 760px) {
+  #attendanceView .action-column { margin-top: 0 !important; }
+}

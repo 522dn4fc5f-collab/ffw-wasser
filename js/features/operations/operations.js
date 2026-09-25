@@ -27,7 +27,11 @@ function ensureOperationForm(){
  <div id="operationValidation" class="operation-validation" hidden></div><div class="operation-actions"><button class="outline-button" id="operationBack" type="button">Zurück zu Schritt 2</button><button class="primary-button" id="operationFinish" type="button">Einsatz abschließen · CSV + PDF</button></div>`;
  byId("attendanceView").appendChild(section);
  byId("operationBack").onclick=()=>setHomeFlowStage(2);
- byId("operationFinish").onclick=()=>window.finishOperationZip?.();
+ byId("operationFinish").onclick=event=>{
+   event.preventDefault();
+   if(typeof window.finishOperationZip!=="function")return showToast("ZIP-Speicherfunktion ist nicht verfügbar. Bitte Seite neu laden.","error");
+   window.finishOperationZip();
+ };
  byId("opAtueUsed").addEventListener("change",event=>{
    const person=String(byId("opAtuePerson")?.value||"").trim();
    if(event.target.checked&&person){documentReportReady=false;showDocumentReportPanel();}
