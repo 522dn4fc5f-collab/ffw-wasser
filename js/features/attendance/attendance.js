@@ -431,6 +431,7 @@ function setHomeFlowStage(stage){
   homeFlowStage=stage;
   const sessionPanel=document.querySelector("#attendanceView .home-session-type-panel");
   const workspace=byId("attendanceSelectionWorkspace");
+  const attendanceLayout=document.querySelector("#attendanceView>.attendance-layout");
   const tactics=byId("tacticsView");
   const finish=byId("homeStageFinish");
 
@@ -446,6 +447,7 @@ function setHomeFlowStage(stage){
   };
 
   applyVisibility(sessionPanel,stage===1,"block");
+  applyVisibility(attendanceLayout,stage===2,"grid");
   applyVisibility(workspace,stage===2,"grid");
   applyVisibility(byId("rfidCsvImport"),stage===2,"block");
   applyVisibility(byId("attendanceStatusToolbar"),stage===2,"flex");
@@ -477,6 +479,14 @@ function setHomeFlowStage(stage){
   if(stage===3&&sessionType==="Einsatz"){showOperationForm();}
   if(stage===3&&sessionType==="Allgemeine Probe"){
     tacticsClosingPending=true;renderTactics();byId("tacticsCloseActions").hidden=false;
+    requestAnimationFrame(()=>{
+      const target=byId("tacticsView");if(!target)return;
+      const navHeight=document.querySelector(".top-nav")?.getBoundingClientRect().height||0;
+      const progressHeight=byId("homeFlowProgress")?.getBoundingClientRect().height||0;
+      const top=window.scrollY+target.getBoundingClientRect().top-navHeight-progressHeight-12;
+      window.scrollTo({top:Math.max(0,top),left:0,behavior:"smooth"});
+      target.setAttribute("tabindex","-1");target.focus({preventScroll:true});
+    });
   }
   updatePrimaryAction();
   window.syncHeaderProbeSummary?.();
@@ -575,7 +585,12 @@ function ensureStagedHomeFlow(){
     step3ActionButton.textContent="Weiter zu Schritt 3";
     step3ActionButton.classList.add("step-3-action-button");
     step3Action.appendChild(step3ActionButton);
-    workspace.appendChild(step3Action);
+    const actionColumn=document.querySelector("#attendanceView .action-column");
+    const entriesPanel=byId("entries")?.closest("article,section,.panel");
+    if(actionColumn&&entriesPanel){
+      entriesPanel.insertAdjacentElement("afterend",step3Action);
+      step3Action.classList.add("step-3-action-side");
+    }else workspace.appendChild(step3Action);
     step3Action.hidden=false;
     step3Action.removeAttribute("aria-hidden");
   }

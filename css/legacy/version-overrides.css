@@ -8349,3 +8349,16 @@ html body .participant-command-header .compact-menu {
   #attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#attendanceSelectionWorkspace{padding-bottom:16px!important}
   #attendanceView:has(#homeFlowProgress[data-current-stage="3"]) #step3ActionArea.step-3-action-area{margin:0 0 8px!important}
 }
+
+/* Produktiv: Schritt-3-Aktion rechts mitfuehren und Taktik ohne Leerraum fokussieren */
+@media(min-width:761px){
+  #attendanceView .action-column{position:sticky!important;top:86px!important;align-self:start!important}
+  #attendanceView .step-3-action-area.step-3-action-side{position:static!important;width:100%!important;margin:12px 0 0!important;grid-template-columns:1fr!important;padding:16px!important;transform:none!important}
+  #attendanceView .step-3-action-side #exportResetButton{margin-top:4px!important}
+}
+@media(max-width:760px){#attendanceView .step-3-action-area.step-3-action-side{position:static!important;width:100%!important;margin:12px 0 0!important;grid-template-columns:1fr!important;transform:none!important}}
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"])>.attendance-layout{display:none!important;min-height:0!important;height:0!important;margin:0!important;padding:0!important}
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#homeFlowProgress{margin-bottom:6px!important}
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#tacticsView,
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#operationAssignmentStep{margin:0!important;min-height:0!important;align-self:start!important;scroll-margin-top:140px!important}
+#attendanceView>#tacticsView.home-inline-tactics{padding-top:0!important}
