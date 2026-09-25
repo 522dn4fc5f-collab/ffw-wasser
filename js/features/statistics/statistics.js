@@ -16,11 +16,111 @@ function statisticsRolesFromValue(value){
 }
 function statisticsAssignmentCount(rows){return rows.filter(row=>row.status==="Anwesend").reduce((sum,row)=>sum+statisticsRolesFromValue(row.role).length,0);}
 
+function statisticsOperationRows(item){
+  const data=item?.operationData;
+  if(item?.sessionType!=="Einsatz"||!data)return [];
+  const date=String(data.date||item.createdAt||"").slice(0,10);
+  const time=String(data.times?.alarm||"");
+  const topic=[data.type,data.location].filter(Boolean).join(" · ")||item.topic||"Einsatz";
+  const assignments=data.assignments||{},roles=data.assignmentRoles||{};
+  const atueName=String(data.atuePerson||"").trim();
+  return [...new Set(Array.isArray(data.members)?data.members:[])].map(name=>{
+    const normalizedName=String(name||"").trim();
+    const role=String(roles[normalizedName]||(atueName&&normalizedName===atueName?"ATÜ":""));
+    return {date,time,name:normalizedName,sessionType:"Einsatz",status:"Anwesend",role,topic,vehicle:assignments[normalizedName]||"",operationId:data.id||item.id||""};
+  }).filter(row=>row.name);
+}
 function statisticsArchiveData() {
-  return csvArchive.map(item => ({ item, rows: parseCsvRows(item.content) })).filter(data => data.rows.length);
+  return csvArchive.map(item => {
+    const operationRows=statisticsOperationRows(item);
+    return {item,rows:operationRows.length?operationRows:parseCsvRows(item.content)};
+  }).filter(data => data.rows.length);
 }
 function renderMetric(containerId, label, value, tone = "neutral") {
   return `<div class="metric-row metric-${tone}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+}
+const STATISTICS_TYPE_COLORS=Object.freeze({
+  "Allgemeine Probe":"#176b36",
+  "Sonderprobe":"#2477bd",
+  "Unterricht":"#65439b",
+  "Ausschuss Sitzung":"#4d5d65",
+  "Einsatz":"#d97706",
+  "Unbekannt":"#7b8790"
+});
+const STATISTICS_CHART_COLORS=["#176b36","#2477bd","#65439b","#4d5d65","#d97706","#13899a","#b38b12","#7b8790"];
+function statisticsTypeColor(name,index=0){return STATISTICS_TYPE_COLORS[name]||STATISTICS_CHART_COLORS[index%STATISTICS_CHART_COLORS.length];}
+function statisticsChartEntries(map){return [...map.entries()].filter(([,value])=>Number(value)>0).sort((a,b)=>b[1]-a[1]);}
+function renderDonutChart(entries,label){
+  const data=entries.filter(([,value])=>Number(value)>0),total=data.reduce((sum,[,value])=>sum+Number(value),0);
+  if(!total)return `<p class="empty-state">Keine Daten vorhanden.</p>`;
+  let offset=0;const circles=data.map(([name,value],index)=>{const amount=Number(value),length=amount/total*100,start=offset,color=statisticsTypeColor(name,index);offset+=length;return `<circle cx="60" cy="60" r="48" pathLength="100" fill="none" stroke="${color}" stroke-width="22" stroke-dasharray="${length} ${100-length}" stroke-dashoffset="${-start}" transform="rotate(-90 60 60)"><title>${escapeHtml(name)}: ${amount}</title></circle>`;}).join("");
+  return `<div class="statistics-donut-layout"><svg class="statistics-donut" viewBox="0 0 120 120" role="img" aria-label="${escapeHtml(label)}">${circles}<circle cx="60" cy="60" r="34" fill="#fff"></circle><text x="60" y="57" text-anchor="middle" class="donut-total">${total}</text><text x="60" y="71" text-anchor="middle" class="donut-caption">gesamt</text></svg><div class="statistics-chart-legend">${data.map(([name,value],index)=>`<div><i style="--chart-color:${statisticsTypeColor(name,index)}"></i><span>${escapeHtml(name)}</span><strong>${value}</strong></div>`).join("")}</div></div>`;
+}
+function renderBarChart(entries,label,color="#2477bd"){
+  const data=entries.filter(([,value])=>Number(value)>0),max=Math.max(1,...data.map(([,value])=>Number(value)));
+  if(!data.length)return `<p class="empty-state">Keine Daten vorhanden.</p>`;
+  return `<div class="statistics-bars" role="img" aria-label="${escapeHtml(label)}">${data.map(([name,value])=>`<div class="statistics-bar-row"><span>${escapeHtml(name)}</span><div><i style="width:${Math.max(3,Number(value)/max*100)}%;background:${color}"></i></div><strong>${value}</strong></div>`).join("")}</div>`;
+}
+function renderMonthlyColumns(rows,label){
+  const types=["Allgemeine Probe","Sonderprobe","Unterricht","Ausschuss Sitzung","Einsatz"],monthly=Object.fromEntries(types.map(type=>[type,Array(12).fill(0)])),seen=new Set();
+  rows.forEach(data=>{const date=String(data.rows[0]?.date||data.item.createdAt||""),month=Number(date.slice(5,7))-1;if(month<0||month>11)return;const key=data.item.id||`${date}|${data.item.topic||""}`;if(seen.has(key))return;seen.add(key);const type=data.rows[0]?.sessionType||data.item.sessionType||"Unbekannt";if(!monthly[type])monthly[type]=Array(12).fill(0);monthly[type][month]++;});
+  const totals=Array.from({length:12},(_,month)=>Object.values(monthly).reduce((sum,values)=>sum+(values[month]||0),0)),max=Math.max(1,...totals),months=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  const activeTypes=Object.keys(monthly).filter(type=>monthly[type].some(Boolean));
+  return `<div class="statistics-monthly-chart" role="img" aria-label="${escapeHtml(label)}"><div class="monthly-columns monthly-stacked-columns">${months.map((month,index)=>`<div class="monthly-group"><div class="monthly-stack" title="${month}: ${totals[index]} Aktivitäten">${activeTypes.map((type,typeIndex)=>monthly[type][index]?`<i style="height:${monthly[type][index]/max*100}%;background:${statisticsTypeColor(type,typeIndex)}"><span class="sr-only">${escapeHtml(type)}: ${monthly[type][index]}</span></i>`:"").join("")}</div><span>${month}</span></div>`).join("")}</div><div class="statistics-inline-legend">${activeTypes.map((type,index)=>`<span><i style="background:${statisticsTypeColor(type,index)}"></i>${escapeHtml(type)}</span>`).join("")}</div></div>`;
+}
+function ensureStatisticsCharts(){
+  const view=byId("settingsStatisticsView")||byId("statisticsView"),grid=view?.querySelector(".statistics-grid");
+  if(grid&&!byId("statisticsVisualDashboard")){const panel=document.createElement("article");panel.id="statisticsVisualDashboard";panel.className="panel statistics-panel statistics-visual-dashboard";panel.innerHTML=`<div class="panel-heading"><span class="step blue">D</span><h3>Grafische Jahresübersicht</h3></div><div class="statistics-chart-grid"><section><h4>Übungen und Sitzungen</h4><div data-chart-types></div></section><section class="chart-wide"><h4>Termine je Monat</h4><div data-chart-months></div></section><section class="chart-wide"><h4>Funktionsverteilung</h4><div data-chart-roles></div></section></div>`;grid.prepend(panel);}
+  const preview=byId("individualStatisticsPreview");
+  if(preview&&!byId("individualVisualDashboard")){const panel=document.createElement("section");panel.id="individualVisualDashboard";panel.className="individual-statistics-section individual-visual-dashboard";panel.innerHTML=`<h4>Grafische Übersicht</h4><div class="statistics-chart-grid"><section><h5>Aktivitäten und Einsätze</h5><div data-individual-chart-types></div></section><section><h5>Funktionen</h5><div data-individual-chart-roles></div></section></div>`;preview.prepend(panel);}
+}
+function renderStatisticsCharts(yearData,presentRows){
+  ensureStatisticsCharts();
+  const types=new Map(),roles=new Map();yearData.filter(data=>(data.rows[0]?.sessionType||data.item.sessionType)!=="Einsatz").forEach(data=>{const type=data.rows[0]?.sessionType||data.item.sessionType||"Unbekannt";types.set(type,(types.get(type)||0)+1);});presentRows.filter(row=>row.sessionType!=="Einsatz").forEach(row=>statisticsRolesFromValue(row.role).forEach(role=>roles.set(role,(roles.get(role)||0)+1)));
+  const panel=byId("statisticsVisualDashboard");if(!panel)return;panel.querySelector("[data-chart-types]").innerHTML=renderDonutChart(statisticsChartEntries(types),"Verteilung der Übungen und Sitzungen");panel.querySelector("[data-chart-months]").innerHTML=renderMonthlyColumns(yearData,"Übungen, Sitzungen und Einsätze je Monat");panel.querySelector("[data-chart-roles]").innerHTML=renderBarChart(statisticsChartEntries(roles),"Verteilung der Funktionen","#176b36");
+}
+function renderIndividualStatisticsCharts(rows){
+  ensureStatisticsCharts();const types=new Map(),roles=new Map();rows.forEach(row=>{types.set(row.sessionType||"Unbekannt",(types.get(row.sessionType||"Unbekannt")||0)+1);statisticsRolesFromValue(row.role).forEach(role=>roles.set(role,(roles.get(role)||0)+1));});const panel=byId("individualVisualDashboard");if(!panel)return;panel.querySelector("[data-individual-chart-types]").innerHTML=renderDonutChart(statisticsChartEntries(types),"Persönliche Aktivitäten und Einsätze");panel.querySelector("[data-individual-chart-roles]").innerHTML=renderBarChart(statisticsChartEntries(roles),"Persönliche Funktionsverteilung","#65439b");
+}
+function ensureOperationStatisticsSections(){
+  const view=byId("settingsStatisticsView")||byId("statisticsView");
+  const grid=view?.querySelector(".statistics-grid");
+  if(grid&&!byId("statisticsOperationSummary")){
+    const panel=document.createElement("article");panel.id="statisticsOperationSummary";panel.className="panel statistics-panel operation-statistics-summary";
+    panel.innerHTML=`<div class="panel-heading"><span class="step operation-step">E</span><h3>Einsatzstatistik</h3></div><div class="statistics-kpis operation-statistics-kpis"><div><span>Einsätze</span><strong data-operation-count>0</strong></div><div><span>Teilnahmen</span><strong data-operation-participations>0</strong></div><div><span>mit ATÜ</span><strong data-operation-atue>0</strong></div></div><h4>Einsatzarten</h4><div class="metric-list" data-operation-types></div><p class="empty-state" data-operation-empty>Keine Einsätze im gewählten Jahr.</p>`;
+    grid.prepend(panel);
+  }
+  const individual=byId("individualStatisticsPreview");
+  if(individual&&!byId("individualOperationStatistics")){
+    const panel=document.createElement("section");panel.id="individualOperationStatistics";panel.className="individual-statistics-section individual-operation-statistics";
+    panel.innerHTML=`<h4>Persönliche Einsatzstatistik</h4><div class="statistics-kpis"><div><span>Einsätze</span><strong data-individual-operation-count>0</strong></div><div><span>Funktionen</span><strong data-individual-operation-roles>0</strong></div><div><span>ATÜ</span><strong data-individual-operation-atue>0</strong></div></div><div class="metric-list" data-individual-operation-functions></div><p class="empty-state" data-individual-operation-empty>Keine Einsatzteilnahme im gewählten Jahr.</p>`;
+    const recent=byId("individualRecentVisits")?.closest(".individual-statistics-section,section");
+    if(recent)recent.insertAdjacentElement("beforebegin",panel);else individual.appendChild(panel);
+  }
+}
+function renderSeparatedOperationStatistics(yearData){
+  ensureOperationStatisticsSections();
+  const operations=yearData.filter(data=>(data.rows[0]?.sessionType||data.item.sessionType)==="Einsatz");
+  const rows=operations.flatMap(data=>data.rows).filter(row=>row.status==="Anwesend");
+  const types=new Map();operations.forEach(data=>{const label=data.item.operationData?.type||data.rows[0]?.topic||"Einsatz";types.set(label,(types.get(label)||0)+1);});
+  const panel=byId("statisticsOperationSummary");if(!panel)return;
+  panel.querySelector("[data-operation-count]").textContent=operations.length;
+  panel.querySelector("[data-operation-participations]").textContent=rows.length;
+  panel.querySelector("[data-operation-atue]").textContent=operations.filter(data=>data.item.operationData?.atueUsed).length;
+  panel.querySelector("[data-operation-types]").innerHTML=[...types.entries()].sort((a,b)=>b[1]-a[1]).map(([name,count])=>renderMetric("",name,count,"red")).join("");
+  panel.querySelector("[data-operation-empty]").hidden=operations.length>0;
+}
+function renderIndividualOperationStatistics(rows){
+  ensureOperationStatisticsSections();
+  const operations=rows.filter(row=>row.sessionType==="Einsatz"&&row.status==="Anwesend");
+  const unique=new Set(operations.map(row=>row.operationId||`${row.date}|${row.topic}`));
+  const roles=new Map();operations.forEach(row=>{if(row.role)roles.set(row.role,(roles.get(row.role)||0)+1);});
+  const panel=byId("individualOperationStatistics");if(!panel)return;
+  panel.querySelector("[data-individual-operation-count]").textContent=unique.size;
+  panel.querySelector("[data-individual-operation-roles]").textContent=[...roles.values()].reduce((sum,value)=>sum+value,0);
+  panel.querySelector("[data-individual-operation-atue]").textContent=operations.filter(row=>row.role==="ATÜ").length;
+  panel.querySelector("[data-individual-operation-functions]").innerHTML=[...roles.entries()].sort((a,b)=>b[1]-a[1]).map(([name,count])=>renderMetric("",name,count,"red")).join("");
+  panel.querySelector("[data-individual-operation-empty]").hidden=operations.length>0;
 }
 function renderStatistics() {
   renderStatisticsYearSelect();
@@ -29,6 +129,8 @@ function renderStatistics() {
   const all = statisticsArchiveData();
   const yearData = all.filter(data => String(data.rows[0]?.date || data.item.createdAt || "").startsWith(year));
   const allYearRows=yearData.flatMap(data=>data.rows),presentYearRows=allYearRows.filter(row=>row.status==="Anwesend"),assignmentTotal=statisticsAssignmentCount(presentYearRows),changedRows=presentYearRows.filter(row=>/2\. Füllung:/.test(row.role||""));
+  renderSeparatedOperationStatistics(yearData);
+  renderStatisticsCharts(yearData,presentYearRows);
   let audit=byId("statisticsAssignmentAudit");
   if(!audit){audit=document.createElement("section");audit.id="statisticsAssignmentAudit";audit.className="panel statistics-assignment-audit";const target=byId("statisticsView")?.querySelector(".statistics-grid")||byId("statisticsView");target?.prepend(audit);}
   if(audit)audit.innerHTML=`<div class="panel-heading"><span class="step blue">F</span><div><h3>Funktionsauswertung</h3><small>Teilnahmen werden einmal, ausgeübte Funktionen je Füllung gezählt.</small></div></div><div class="statistics-assignment-metrics"><div><strong>${presentYearRows.length}</strong><span>Anwesenheitszeilen</span></div><div><strong>${assignmentTotal}</strong><span>gezählte Funktionen</span></div><div><strong>${changedRows.length}</strong><span>Personen mit zweiter Füllung</span></div></div>`;
@@ -54,10 +156,10 @@ function renderStatistics() {
   byId("teamStrength").textContent = activeMembers.length;
   byId("teamStrengthDetail").textContent = `${activeMembers.length} aktive Mitglieder`;
   byId("yearProbeCount").textContent = yearData.length;
-  byId("yearProbeDetail").textContent = `${all.length} Probe${all.length === 1 ? "" : "n"} insgesamt im Archiv`;
+  byId("yearProbeDetail").textContent = `${all.filter(data=>(data.rows[0]?.sessionType||data.item.sessionType)!=="Einsatz").length} Übungen / Sitzungen · ${all.filter(data=>(data.rows[0]?.sessionType||data.item.sessionType)==="Einsatz").length} Einsätze im Archiv`;
   const average = yearData.length ? presentRows.length / yearData.length : null;
   byId("averageAttendance").textContent = average === null ? "–" : average.toFixed(1).replace(".", ",");
-  byId("averageAttendanceDetail").textContent = `anwesende Einsatzkräfte je Probe`;
+  byId("averageAttendanceDetail").textContent = `anwesende Kräfte je Termin`;
   const ageRows = rows.filter(row => row.status !== "Betrifft nicht" && ageMembers.some(member => nameForStorage(member) === row.name || nameForTile(member) === row.name));
   const agePresentRows = ageRows.filter(row => row.status === "Anwesend");
   const ageExcusedRows = ageRows.filter(row => row.status === "Entschuldigt");
@@ -74,7 +176,7 @@ function renderStatistics() {
   byId("ageAttendanceRanking").innerHTML = [...ageVisits.entries()].sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0],"de")).map(([name,count],index)=>renderMetric("", `${index+1}. ${name}`, `${count} Teilnahme${count===1?"":"n"}`, count>0?"good":"neutral")).join("");
   byId("ageAttendanceEmpty").hidden = ageMembers.length > 0;
   const dates = yearData.map(data => data.rows[0]?.date).filter(Boolean).sort();
-  byId("statisticsPeriod").textContent = yearData.length ? `Auswertung ${year}${dates.length ? ` · ${dates[0]} bis ${dates[dates.length - 1]}` : ""}` : `Noch keine abgeschlossene Probe für ${year} im lokalen Archiv.`;
+  byId("statisticsPeriod").textContent = yearData.length ? `Auswertung ${year}${dates.length ? ` · ${dates[0]} bis ${dates[dates.length - 1]}` : ""}` : `Noch kein abgeschlossener Termin für ${year} im lokalen Archiv.`;
 
   const memberStats=activeMembers.map(member=>{
     const names=new Set([nameForStorage(member),nameForTile(member)]);
@@ -89,7 +191,7 @@ function renderStatistics() {
   ranked.forEach((item,index)=>{const key=`${item.percent.toFixed(6)}|${item.count}`;if(key !== previousKey) competitionRank=index+1;item.rank=competitionRank;previousKey=key;});
   const medals={1:"🥇",2:"🥈",3:"🥉"},medalClasses={1:"ranking-gold",2:"ranking-silver",3:"ranking-bronze"};
   const top=byId("topVisitors");
-  top.innerHTML=ranked.map(item=>{const pc=`${item.percent.toFixed(1).replace(".",",")} %`;const medal=medals[item.rank]?`<span class="ranking-trophy ${medalClasses[item.rank]}" aria-label="Platz ${item.rank}">${medals[item.rank]}</span>`:"";return `<div class="ranking-row ${medalClasses[item.rank]||""}"><span class="ranking-position">${item.rank}</span>${medal}<span class="ranking-name">${escapeHtml(item.name)}<small>Einsatz ${item.operational} · Orga ${item.organization}</small></span><strong><span>${item.count} / ${item.relevant}</span><small>${pc} der betreffenden Proben</small></strong></div>`;}).join("");
+  top.innerHTML=ranked.map(item=>{const pc=`${item.percent.toFixed(1).replace(".",",")} %`;const medal=medals[item.rank]?`<span class="ranking-trophy ${medalClasses[item.rank]}" aria-label="Platz ${item.rank}">${medals[item.rank]}</span>`:"";return `<div class="ranking-row ${medalClasses[item.rank]||""}"><span class="ranking-position">${item.rank}</span>${medal}<span class="ranking-name">${escapeHtml(item.name)}<small>Teilnahme ${item.operational} · Orga ${item.organization}</small></span><strong><span>${item.count} / ${item.relevant}</span><small>${pc} der betreffenden Proben</small></strong></div>`;}).join("");
   byId("topVisitorsEmpty").hidden = ranked.length > 0;
 
   const targets = getRoleTargets();
@@ -122,12 +224,13 @@ function renderStatistics() {
   }).join("");
   byId("openFunctionsEmpty").hidden = groupedTargets.size > 0;
 
-  const types = new Map(); yearData.forEach(data => { const type=data.rows[0]?.sessionType || data.item.sessionType || "Unbekannt"; types.set(type,(types.get(type)||0)+1); });
+  const nonOperationYearData=yearData.filter(data=>(data.rows[0]?.sessionType||data.item.sessionType)!=="Einsatz");
+  const types = new Map(); nonOperationYearData.forEach(data => { const type=data.rows[0]?.sessionType || data.item.sessionType || "Unbekannt"; types.set(type,(types.get(type)||0)+1); });
   byId("probeTypes").innerHTML = [...types.entries()].sort((a,b)=>b[1]-a[1]).map(([type,count]) => renderMetric("",type,count,"blue")).join("");
   byId("probeTypesEmpty").hidden = types.size > 0;
 
   const topics = new Map();
-  yearData.forEach(data => {
+  nonOperationYearData.forEach(data => {
     const topic = String(data.item.topic || data.rows[0]?.topic || "").trim();
     if (topic) topics.set(topic, (topics.get(topic) || 0) + 1);
   });
@@ -206,7 +309,7 @@ function renderIndividualStatistics(memberId) {
   const total = present.length + excused.length + missing.length;
   const rate = total ? present.length / total * 100 : null;
   byId("individualMemberName").textContent = nameForTile(member);
-  byId("individualStatisticsPeriod").textContent = `Kalenderjahr ${year} · ${yearData.length} abgeschlossene Probe${yearData.length === 1 ? "" : "n"}`;
+  byId("individualStatisticsPeriod").textContent = `Kalenderjahr ${year} · ${yearData.filter(data=>(data.rows[0]?.sessionType||data.item.sessionType)!=="Einsatz").length} Übungen / Sitzungen · ${yearData.filter(data=>(data.rows[0]?.sessionType||data.item.sessionType)==="Einsatz").length} Einsätze`;
   byId("individualAttendanceRate").textContent = rate === null ? "–" : `${rate.toFixed(1).replace(".", ",")} %`;
   byId("individualAttendanceDetail").textContent = total ? `${present.length} von ${total} möglichen Teilnahmen` : "Noch keine Daten";
   byId("individualPresentCount").textContent = present.length;
@@ -227,6 +330,9 @@ function renderIndividualStatistics(memberId) {
     return `<div class="metric-row metric-${tone}"><span>${escapeHtml(item.role)}</span><strong>${item.actual} / ${item.target}${remaining ? ` · noch ${remaining}` : " · erreicht"}</strong></div>`;
   }).join("");
   byId("individualRoleTargetsEmpty").hidden = targetRows.length > 0;
+
+  renderIndividualOperationStatistics(rows);
+  renderIndividualStatisticsCharts(rows);
 
   const types = new Map();
   rows.forEach(row => types.set(row.sessionType || "Unbekannt", (types.get(row.sessionType || "Unbekannt") || 0) + 1));

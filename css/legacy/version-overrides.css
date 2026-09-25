@@ -8362,3 +8362,34 @@ html body .participant-command-header .compact-menu {
 #attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#tacticsView,
 #attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#operationAssignmentStep{margin:0!important;min-height:0!important;align-self:start!important;scroll-margin-top:140px!important}
 #attendanceView>#tacticsView.home-inline-tactics{padding-top:0!important}
+
+/* Produktiv: Einsaetze in Gesamt- und Mitgliederstatistik klar abgrenzen */
+.operation-statistics-summary{grid-column:1/-1!important;border-top-color:#d97706!important;background:#fffaf0!important}
+.operation-statistics-summary .operation-step{background:#d97706!important}
+.operation-statistics-kpis{margin-bottom:14px!important}
+.individual-operation-statistics{grid-column:1/-1!important;padding:16px!important;border:2px solid #e8b66e!important;border-radius:12px!important;background:#fffaf0!important}
+.individual-operation-statistics h4{margin:0 0 12px!important;color:#8a4b08!important}
+@media print{body.printing-statistics .operation-statistics-summary,body.printing-individual-statistics .individual-operation-statistics{display:block!important;break-inside:avoid!important}}
+
+/* Produktiv: responsive Diagramme in der Statistik */
+.statistics-visual-dashboard{grid-column:1/-1!important;border-top-color:#2477bd!important}
+.statistics-chart-grid{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(0,1.5fr);gap:18px}
+.statistics-chart-grid>section{min-width:0;padding:14px;border:1px solid #cbd5da;border-radius:12px;background:#f8fafb}
+.statistics-chart-grid h4,.statistics-chart-grid h5{margin:0 0 12px;color:#35444b}.statistics-chart-grid .chart-wide{grid-column:auto}
+.statistics-donut-layout{display:grid;grid-template-columns:minmax(150px,210px) minmax(150px,1fr);align-items:center;gap:16px}.statistics-donut{width:100%;max-width:210px;overflow:visible}.donut-total{font-size:20px;font-weight:900;fill:#263238}.donut-caption{font-size:8px;font-weight:700;fill:#66747b}
+.statistics-chart-legend{display:grid;gap:7px}.statistics-chart-legend>div{display:grid;grid-template-columns:12px minmax(0,1fr) auto;align-items:center;gap:8px;font-size:.82rem}.statistics-chart-legend i{width:10px;height:10px;border-radius:50%;background:var(--chart-color)}
+.statistics-bars{display:grid;gap:8px}.statistics-bar-row{display:grid;grid-template-columns:minmax(92px,150px) minmax(100px,1fr) 38px;align-items:center;gap:9px;font-size:.82rem}.statistics-bar-row>div{height:18px;overflow:hidden;border-radius:999px;background:#e3e8ea}.statistics-bar-row i{display:block;height:100%;border-radius:999px}.statistics-bar-row strong{text-align:right}
+.statistics-monthly-chart{min-height:240px}.monthly-columns{height:205px;display:grid;grid-template-columns:repeat(12,minmax(24px,1fr));align-items:end;gap:6px;padding:12px 6px 0;border-left:2px solid #9ba8ae;border-bottom:2px solid #9ba8ae}.monthly-group{height:100%;display:grid;grid-template-rows:1fr 22px;align-items:end;gap:4px;text-align:center}.monthly-pair{height:100%;display:flex;align-items:end;justify-content:center;gap:3px}.monthly-pair i{display:block;width:min(16px,42%);min-height:0;border-radius:5px 5px 0 0}.monthly-normal{background:#2477bd}.monthly-operation{background:#d97706}.monthly-group span{font-size:.68rem;font-weight:800}.statistics-inline-legend{display:flex;justify-content:center;gap:18px;margin-top:10px;font-size:.78rem}.statistics-inline-legend i{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:-2px;border-radius:3px}.statistics-inline-legend .normal{background:#2477bd}.statistics-inline-legend .operation{background:#d97706}
+.individual-visual-dashboard{grid-column:1/-1!important;padding:16px!important;border:2px solid #9db8c5!important;border-radius:12px!important;background:#f5fafc!important}.individual-visual-dashboard>h4{margin:0 0 14px;color:#315565}
+@media(max-width:900px){.statistics-chart-grid{grid-template-columns:1fr}.statistics-chart-grid .chart-wide{grid-column:1}.statistics-donut-layout{grid-template-columns:minmax(140px,190px) 1fr}}
+@media(max-width:560px){.statistics-donut-layout{grid-template-columns:1fr}.statistics-donut{margin:auto}.statistics-bar-row{grid-template-columns:86px minmax(70px,1fr) 30px}.monthly-columns{gap:3px;padding-left:3px;padding-right:3px}.monthly-group span{font-size:.58rem}.statistics-inline-legend{flex-wrap:wrap}}
+@media print{.statistics-visual-dashboard,.individual-visual-dashboard{display:block!important;break-inside:auto!important}.statistics-chart-grid{grid-template-columns:1fr 1fr!important}.statistics-monthly-chart{break-inside:avoid}.statistics-donut-layout{grid-template-columns:170px 1fr}.monthly-columns{height:170px}}
+
+/* Produktiv: konsistente Farben und kombinierte Monatsbalken */
+.monthly-stacked-columns .monthly-group{grid-template-rows:1fr 22px!important}
+.monthly-stack{height:100%;display:flex;flex-direction:column-reverse;justify-content:flex-start;align-items:stretch;width:min(34px,78%);margin:0 auto;overflow:hidden;border-radius:6px 6px 0 0;background:#e3e8ea;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.monthly-stack>i{display:block!important;width:100%!important;min-height:0;border-radius:0!important;border-top:1px solid rgba(255,255,255,.65)}
+.statistics-inline-legend{flex-wrap:wrap!important}
+.statistics-inline-legend span{white-space:nowrap}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+@media(max-width:560px){.monthly-stack{width:min(25px,88%)}}

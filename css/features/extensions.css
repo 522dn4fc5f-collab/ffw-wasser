@@ -873,3 +873,17 @@
 
 /* 2.19.1: Abschlussvorschau entfernt. */
 .operation-pdf-preview-dialog{display:none!important}
+
+/* Produktiv: Info-Anzeige links unten direkt ueber Datensync */
+.safety-info-button{
+  left:max(12px,env(safe-area-inset-left))!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:calc(max(12px,env(safe-area-inset-bottom)) + 70px)!important;
+}
+@media(max-width:540px){
+  .safety-info-button{
+    left:max(10px,env(safe-area-inset-left))!important;
+    bottom:calc(max(10px,env(safe-area-inset-bottom)) + 68px)!important;
+  }
+}
