@@ -7,7 +7,7 @@ let tacticsChangeSlots = [];
 const GROUP_ROLES = TacticsEngine.GROUP_ROLES;
 const STAFF_ROLES = TacticsEngine.STAFF_ROLES;
 function tacticsPresentMembers() {
-  const names = new Set(todayEntries().filter(entry => entry.status === "Anwesend" && entry.role !== "Organisation").flatMap(entry => [entry.storedName, entry.displayName].filter(Boolean)));
+  const names = new Set(todayEntries().filter(entry => entry.status === "Anwesend" && entry.role !== "Orga").flatMap(entry => [entry.storedName, entry.displayName].filter(Boolean)));
   return members.filter(member => !member.ageDepartment && (names.has(nameForStorage(member)) || names.has(nameForTile(member))));
 }
 function tacticsYearRoleCounts() {
@@ -208,10 +208,10 @@ function refreshTacticsManualView() {
   updateTacticalUnitCards(group, staff);
   const assignedIds=new Set(currentTacticsSlots.filter(x=>x.member).map(x=>x.member.id));
   const reserve=tacticsPresentMembers().filter(member=>!assignedIds.has(member.id)&&member.id!==currentAtueMember?.id);
-  const organizers=todayEntries().filter(entry=>entry.status==="Anwesend"&&entry.role==="Organisation");
+  const organizers=todayEntries().filter(entry=>entry.status==="Anwesend"&&entry.role==="Orga");
   const organizerNames=[...new Set(organizers.map(entry=>entry.displayName||entry.storedName||entry.name).filter(Boolean))];
   const reserveMarkup=reserve.map(member=>`<span draggable="true" data-drag-member="${escapeHtml(member.id)}">${escapeHtml(nameForTile(member))} · Reserve</span>`).join("");
-  const organizerMarkup=organizerNames.map(name=>`<span class="tactics-organizer-entry">${escapeHtml(name)} · Organisation</span>`).join("");
+  const organizerMarkup=organizerNames.map(name=>`<span class="tactics-organizer-entry">${escapeHtml(name)} · Orga</span>`).join("");
   byId("reserveCrew").innerHTML=reserveMarkup+organizerMarkup;byId("reserveCount").textContent=reserve.length+organizerNames.length;byId("reserveEmpty").hidden=reserve.length+organizerNames.length>0;
   rebuildTacticsAssignmentsFromSlots();
   renderAtueSlot();
@@ -287,6 +287,20 @@ function updateTacticsAlternatives(){
   const text=byId("tacticsAlternativeText");
   if(text&&show)text.textContent="Auf keinem Fahrzeug kann eine vollständige Staffel 1/5 besetzt werden. Die Probe kann als Sonderprobe oder als Unterricht abgeschlossen werden.";
 }
+
+function tacticsPresentationCard(vehicle,title,roles){
+ const slots=currentTacticsSlots.filter(slot=>slot.vehicle===vehicle);
+ return `<section class="tactics-presentation-vehicle"><header><span>${escapeHtml(vehicle)}</span><h3>${escapeHtml(title)}</h3></header><div class="tactics-presentation-slots">${roles.map(role=>{const slot=slots.find(item=>item.role===role),name=slot?.member?nameForTile(slot.member):"nicht besetzt";return `<div class="tactics-presentation-slot${slot?.member?" filled":" open"}"><b>${escapeHtml(role)}</b><strong>${escapeHtml(name)}</strong></div>`;}).join("")}</div></section>`;
+}
+function openTacticsPresentation(){
+ if(sessionType!=="Allgemeine Probe")return;
+ document.querySelectorAll("#tacticsPresentationDialog").forEach(node=>node.remove());
+ const dialog=document.createElement("dialog");dialog.id="tacticsPresentationDialog";dialog.className="tactics-presentation-dialog";
+ const reserve=currentTacticsSlots.filter(slot=>slot.member&&slot.role==="Reserve").map(slot=>slot.member);
+ dialog.innerHTML=`<div class="tactics-presentation-shell"><header><div><small>Allgemeine Probe</small><h2>Mannschaftseinteilung</h2></div><button type="button" data-close-presentation aria-label="Vorschau schließen">×</button></header><main>${tacticsPresentationCard("LF10","Gruppenbesetzung",GROUP_ROLES)}${tacticsPresentationCard("TSF","Staffelbesetzung",STAFF_ROLES)}</main>${reserve.length?`<footer><b>Weitere Anwesende</b><span>${reserve.map(member=>escapeHtml(nameForTile(member))).join(" · ")}</span></footer>`:""}</div>`;
+ document.body.appendChild(dialog);dialog.querySelector("[data-close-presentation]").onclick=()=>dialog.close();dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener("close",()=>dialog.remove(),{once:true});dialog.showModal();
+}
+
 function renderTactics() {
   breathingProtectionPlanned=Boolean(byId("breathingProtectionPlanned")?.checked);
   const present=tacticsPresentMembers(), counts=tacticsYearRoleCounts(), targets=getRoleTargets();
@@ -295,7 +309,7 @@ function renderTactics() {
   if(canKeepCurrentTactics(present)) {
     fillOpenSlotsWithoutReordering(people);
     refreshTacticsManualView();
-    byId("tacticsSummary").textContent=`${present.length} anwesende Einsatzkräfte · ${sessionType}`;
+    byId("tacticsSummary").textContent=`${present.length} anwesende Einsatzkräfte · ${sessionType}`;const presentationButton=byId("openTacticsPresentation");if(presentationButton)presentationButton.hidden=sessionType!=="Allgemeine Probe";
     byId("tacticsRecommendation").innerHTML=`<strong>Empfehlung</strong><p>Bestehende Fahrzeugbesetzung beibehalten. Nachzügler werden nur auf noch freie, passende Positionen gesetzt; bereits zugeteilte Personen werden nicht umgesetzt.</p>`;
     updateTacticsAlternatives();
     return;
@@ -326,7 +340,7 @@ function renderTactics() {
   else if(!currentAtueMember){currentAtueMember=people.find(p=>!p.assigned&&p.member.atueQualified&&getMemberRoles(p.member).includes("Melder"))?.member||people.find(p=>!p.assigned&&p.member.atueQualified)?.member||null;}
   currentTacticsSlots=protectCriticalVehicleSlots([...group.map(item=>({vehicle:"LF10",role:item.role,member:item.member})),...staff.map(item=>({vehicle:"TSF",role:item.role,member:item.member}))]);
   refreshTacticsManualView();
-  byId("tacticsSummary").textContent=`${present.length} anwesende Einsatzkräfte · ${sessionType}`;
+  byId("tacticsSummary").textContent=`${present.length} anwesende Einsatzkräfte · ${sessionType}`;const presentationButton=byId("openTacticsPresentation");if(presentationButton)presentationButton.hidden=sessionType!=="Allgemeine Probe";
   if(sessionType==="Allgemeine Probe" && !hasCompleteStaffelOnAnyVehicle()) recommendation="Auf keinem Fahrzeug kann eine vollständige Staffel 1/5 besetzt werden. Als Alternative stehen Sonderprobe oder Unterricht zur Auswahl.";
   byId("tacticsRecommendation").innerHTML=`<strong>Empfehlung</strong><p>${escapeHtml(recommendation)}</p>`;
   updateTacticsAlternatives();
@@ -338,12 +352,12 @@ function lfWaterTeamComplete() {
 }
 function convertCurrentProbeToSpecial() {
   sessionType="Sonderprobe";
-  entries=entries.map(entry=>entry.sessionId!==ensureCurrentSessionId()?entry:{...entry,sessionType:"Sonderprobe",role:entry.role==="Organisation"?"Organisation":"",status:entry.status==="Anwesend"?"Anwesend":entry.status});
+  entries=entries.map(entry=>entry.sessionId!==ensureCurrentSessionId()?entry:{...entry,sessionType:"Sonderprobe",role:entry.role==="Orga"?"Orga":"",status:entry.status==="Anwesend"?"Anwesend":entry.status});
   saveEntries(); renderSessionType();
 }
 function convertCurrentProbeToTraining(){
   sessionType="Unterricht";
-  entries=entries.map(entry=>entry.sessionId!==ensureCurrentSessionId()?entry:{...entry,sessionType:"Unterricht",role:entry.role==="Organisation"?"Organisation":entry.status==="Anwesend"?"Unterricht":""});
+  entries=entries.map(entry=>entry.sessionId!==ensureCurrentSessionId()?entry:{...entry,sessionType:"Unterricht",role:entry.role==="Orga"?"Orga":entry.status==="Anwesend"?"Unterricht":""});
   saveEntries();renderSessionType();renderEntries();updatePrimaryAction();window.syncHeaderProbeSummary?.();
 }
 async function finishTacticsAlternative(type){
@@ -359,7 +373,7 @@ async function finishTacticsAlternative(type){
 function applyCalculatedTacticsFunctions() {
   entries = entries.map(entry => {
     if (entry.sessionId !== ensureCurrentSessionId() || entry.status !== "Anwesend") return entry;
-    if (entry.role === "Organisation") return entry;
+    if (entry.role === "Orga") return entry;
     if(breathingProtectionPlanned&&currentAtueMember && (entry.storedName===nameForStorage(currentAtueMember)||entry.displayName===nameForTile(currentAtueMember)))return {...entry,role:"ATÜ"};
     const assignment = currentTacticsAssignments.get(entry.storedName);
     return assignment ? { ...entry, role:assignment.role||"Reserve", vehicle:assignment.vehicle, tacticsRoleLabel:assignment.roleLabel, secondVehicle:assignment.secondVehicle, secondRole:assignment.secondRole } : { ...entry, role:"Reserve" };
@@ -384,3 +398,5 @@ async function finalizeProbeFromTactics(){
 
 byId("breathingProtectionPlanned")?.addEventListener("change",event=>{breathingProtectionPlanned=event.target.checked;if(!breathingProtectionPlanned)currentAtueMember=null;currentTacticsSlots=[];tacticsChangeSlots=[];currentTacticsAssignments=new Map();renderTactics();});
 initializeTacticsDragDrop();
+
+byId("openTacticsPresentation")?.addEventListener("click",openTacticsPresentation);

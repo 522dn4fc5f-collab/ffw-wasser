@@ -264,7 +264,7 @@
 #homeFlowProgress[data-current-stage="3"] [data-flow-indicator="2"]:hover{transform:translateY(-1px);filter:brightness(.97)}
 
 
-/* FFW 2.9.6: Organisation bei weiteren Anwesenden und flexible Schritt-3-Kennzeichnungen */
+/* FFW 2.9.6: Orga bei weiteren Anwesenden und flexible Schritt-3-Kennzeichnungen */
 #tacticsView .tactics-organizer-entry{border-color:#c9a852!important;background:#fff8dc!important;color:#59450e!important;font-weight:850!important;cursor:default!important}
 #tacticsView .panel-heading>.step.yellow,
 #tacticsView .panel-heading .step.yellow{width:auto!important;min-width:44px!important;max-width:100%!important;height:auto!important;min-height:34px!important;padding:6px 10px!important;line-height:1.05!important;white-space:nowrap!important;flex:0 0 auto!important}
@@ -583,7 +583,7 @@
   color:#176b36!important;
   box-shadow:0 -4px 10px rgba(28,52,62,.07)!important;
 }
-#attendanceSelectionWorkspace .members-panel.organisation-sheet{
+#attendanceSelectionWorkspace .members-panel.orga-sheet{
   position:relative!important;
   z-index:2!important;
   margin-top:0!important;
@@ -596,7 +596,7 @@
   #attendanceSelectionWorkspace #rolesPanel.status-tab-rail{margin-left:5px!important;margin-right:5px!important}
   #attendanceSelectionWorkspace #attendanceStatusToolbar{gap:3px!important;padding-left:4px!important;padding-right:4px!important}
   #attendanceSelectionWorkspace #attendanceStatusToolbar [data-role]{min-height:42px!important;padding:8px 10px!important;font-size:.75rem!important}
-  #attendanceSelectionWorkspace .members-panel.organisation-sheet{border-radius:12px!important}
+  #attendanceSelectionWorkspace .members-panel.orga-sheet{border-radius:12px!important}
 }
 
 

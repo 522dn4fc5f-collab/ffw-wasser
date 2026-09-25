@@ -1,12 +1,12 @@
 /* Nur Desktop mit Maus: Personenkarten wieder kompakt. iPad/Touch bleibt gross. */
 @media (hover:hover) and (pointer:fine){
   #members .member-subgrid,
-  #attendanceSelectionWorkspace .organisation-sheet .member-subgrid{
+  #attendanceSelectionWorkspace .orga-sheet .member-subgrid{
     grid-template-columns:repeat(6,minmax(0,1fr))!important;
     gap:8px!important;
   }
   #members .member-subgrid .choice-button,
-  #attendanceSelectionWorkspace .organisation-sheet .choice-button{
+  #attendanceSelectionWorkspace .orga-sheet .choice-button{
     min-height:72px!important;
     height:auto!important;
     padding:10px 8px!important;
@@ -19,7 +19,7 @@
     transform:none!important;
   }
   #members .member-subgrid .choice-button.selected,
-  #attendanceSelectionWorkspace .organisation-sheet .choice-button.selected{
+  #attendanceSelectionWorkspace .orga-sheet .choice-button.selected{
     transform:none!important;
   }
   #members .member-subgrid .choice-button.recorded,
@@ -29,19 +29,19 @@
 }
 @media (hover:hover) and (pointer:fine) and (max-width:1200px){
   #members .member-subgrid,
-  #attendanceSelectionWorkspace .organisation-sheet .member-subgrid{
+  #attendanceSelectionWorkspace .orga-sheet .member-subgrid{
     grid-template-columns:repeat(5,minmax(0,1fr))!important;
   }
 }
 @media (hover:hover) and (pointer:fine) and (max-width:980px){
   #members .member-subgrid,
-  #attendanceSelectionWorkspace .organisation-sheet .member-subgrid{
+  #attendanceSelectionWorkspace .orga-sheet .member-subgrid{
     grid-template-columns:repeat(4,minmax(0,1fr))!important;
   }
 }
 
 
-/* Version 2.0.6: direkte Organisationsfarbe auf markierten Personenkarten */
+/* Version 2.0.6: direkte Orgasfarbe auf markierten Personenkarten */
 #members .choice-button.organization-selected,
 #members .choice-button.selected.organization-selected,
 .participant-file-card .choice-button.organization-selected{

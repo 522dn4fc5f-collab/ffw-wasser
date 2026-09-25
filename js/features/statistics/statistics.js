@@ -17,7 +17,7 @@ function statisticsRolesFromValue(value){
 function statisticsAssignmentCount(rows){return rows.filter(row=>row.status==="Anwesend").reduce((sum,row)=>sum+statisticsRolesFromValue(row.role).length,0);}
 
 function statisticsArchiveData() {
-  return csvArchive.filter(item => item.sessionType !== "Einsatz").map(item => ({ item, rows: parseCsvRows(item.content) })).filter(data => data.rows.length);
+  return csvArchive.map(item => ({ item, rows: parseCsvRows(item.content) })).filter(data => data.rows.length);
 }
 function renderMetric(containerId, label, value, tone = "neutral") {
   return `<div class="metric-row metric-${tone}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
@@ -81,7 +81,7 @@ function renderStatistics() {
     const personalRows=rows.filter(row=>names.has(row.name));
     const relevant=personalRows.filter(row=>row.status !== "Betrifft nicht");
     const present=relevant.filter(row=>row.status === "Anwesend");
-    const organization=present.filter(row=>row.role === "Organisation").length;
+    const organization=present.filter(row=>row.role === "Orga").length;
     return {name:nameForStorage(member),count:present.length,relevant:relevant.length,organization,operational:present.length-organization,percent:relevant.length?present.length/relevant.length*100:0};
   });
   const ranked=memberStats.filter(item=>item.count>0).sort((a,b)=>b.percent-a.percent||b.count-a.count||a.name.localeCompare(b.name,"de")).slice(0,5);
@@ -89,7 +89,7 @@ function renderStatistics() {
   ranked.forEach((item,index)=>{const key=`${item.percent.toFixed(6)}|${item.count}`;if(key !== previousKey) competitionRank=index+1;item.rank=competitionRank;previousKey=key;});
   const medals={1:"🥇",2:"🥈",3:"🥉"},medalClasses={1:"ranking-gold",2:"ranking-silver",3:"ranking-bronze"};
   const top=byId("topVisitors");
-  top.innerHTML=ranked.map(item=>{const pc=`${item.percent.toFixed(1).replace(".",",")} %`;const medal=medals[item.rank]?`<span class="ranking-trophy ${medalClasses[item.rank]}" aria-label="Platz ${item.rank}">${medals[item.rank]}</span>`:"";return `<div class="ranking-row ${medalClasses[item.rank]||""}"><span class="ranking-position">${item.rank}</span>${medal}<span class="ranking-name">${escapeHtml(item.name)}<small>Einsatz ${item.operational} · Organisation ${item.organization}</small></span><strong><span>${item.count} / ${item.relevant}</span><small>${pc} der betreffenden Proben</small></strong></div>`;}).join("");
+  top.innerHTML=ranked.map(item=>{const pc=`${item.percent.toFixed(1).replace(".",",")} %`;const medal=medals[item.rank]?`<span class="ranking-trophy ${medalClasses[item.rank]}" aria-label="Platz ${item.rank}">${medals[item.rank]}</span>`:"";return `<div class="ranking-row ${medalClasses[item.rank]||""}"><span class="ranking-position">${item.rank}</span>${medal}<span class="ranking-name">${escapeHtml(item.name)}<small>Einsatz ${item.operational} · Orga ${item.organization}</small></span><strong><span>${item.count} / ${item.relevant}</span><small>${pc} der betreffenden Proben</small></strong></div>`;}).join("");
   byId("topVisitorsEmpty").hidden = ranked.length > 0;
 
   const targets = getRoleTargets();

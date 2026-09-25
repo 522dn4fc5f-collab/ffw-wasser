@@ -5,7 +5,7 @@
  * eine ZIP-Datei nach außen.
  */
 function csvRoleForEntry(entry, member) {
-  if (entry.role === "Organisation") return "Organisation";
+  if (entry.role === "Orga") return "Orga";
   if (entry.tacticsRoleLabel) return entry.tacticsRoleLabel;
   if (entry.role !== "Maschinist") return entry.role || "";
   const vehicles = Array.isArray(member.machinistVehicles)
