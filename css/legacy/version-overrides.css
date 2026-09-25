@@ -2061,3 +2061,21 @@ html body .participant-command-header .compact-menu{
     margin-top:8px!important;
   }
 }
+
+/* Feuerwehr Wasser 2.20.40: deutlichere Statusfarben */
+#attendanceSelectionWorkspace.status-present{--folder-accent:#08752f;--folder-paper:#cfeeda;--folder-line:#159447}
+#attendanceSelectionWorkspace.status-excused{--folder-accent:#b95c00;--folder-paper:#ffe0b3;--folder-line:#de7900}
+#attendanceSelectionWorkspace.status-organization{--folder-accent:#65439b;--folder-paper:#dfd2f2;--folder-line:#8260b8}
+#attendanceSelectionWorkspace.status-not-applicable{--folder-accent:#4d5d65;--folder-paper:#dbe2e5;--folder-line:#687a83}
+#attendanceSelectionWorkspace.status-present #attendanceStatusToolbar .attendance-status-tab.selected{background:#cfeeda!important;border-color:#08752f!important;border-bottom-color:#cfeeda!important;color:#075d28!important;box-shadow:0 -4px 12px rgba(8,117,47,.25)!important}
+#attendanceSelectionWorkspace.status-excused #attendanceStatusToolbar .attendance-status-tab.selected{background:#ffe0b3!important;border-color:#b95c00!important;border-bottom-color:#ffe0b3!important;color:#7a3c00!important;box-shadow:0 -4px 12px rgba(185,92,0,.27)!important}
+#attendanceSelectionWorkspace.status-organization #attendanceStatusToolbar .attendance-status-tab.selected{background:#dfd2f2!important;border-color:#65439b!important;border-bottom-color:#dfd2f2!important;color:#49306f!important;box-shadow:0 -4px 12px rgba(101,67,155,.26)!important}
+#attendanceSelectionWorkspace.status-not-applicable #attendanceStatusToolbar .attendance-status-tab.selected{background:#dbe2e5!important;border-color:#4d5d65!important;border-bottom-color:#dbe2e5!important;color:#344148!important;box-shadow:0 -4px 12px rgba(77,93,101,.24)!important}
+#attendanceSelectionWorkspace.status-present .participant-file-card{background:#e5f6eb!important;border-color:#159447!important}
+#attendanceSelectionWorkspace.status-excused .participant-file-card{background:#fff0d8!important;border-color:#de7900!important}
+#attendanceSelectionWorkspace.status-organization .participant-file-card{background:#eee7f8!important;border-color:#8260b8!important}
+#attendanceSelectionWorkspace.status-not-applicable .participant-file-card{background:#edf1f3!important;border-color:#687a83!important}
+#floatingAttendanceStatusToolbar.status-present .attendance-status-tab.selected{background:#cfeeda!important;border-color:#08752f!important;border-bottom-color:#cfeeda!important;color:#075d28!important}
+#floatingAttendanceStatusToolbar.status-excused .attendance-status-tab.selected{background:#ffe0b3!important;border-color:#b95c00!important;border-bottom-color:#ffe0b3!important;color:#7a3c00!important}
+#floatingAttendanceStatusToolbar.status-organization .attendance-status-tab.selected{background:#dfd2f2!important;border-color:#65439b!important;border-bottom-color:#dfd2f2!important;color:#49306f!important}
+#floatingAttendanceStatusToolbar.status-not-applicable .attendance-status-tab.selected{background:#dbe2e5!important;border-color:#4d5d65!important;border-bottom-color:#dbe2e5!important;color:#344148!important}

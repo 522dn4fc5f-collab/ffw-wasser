@@ -292,10 +292,20 @@ async function saveArchiveCorrection(){
   else if(csvOverwritten)showToast("Korrektur gespeichert. Die CSV wurde überschrieben; PDF wurde neu ausgegeben.");
   else showToast("Korrektur gespeichert. CSV und PDF wurden neu ausgegeben.");
 }
+function historyNormalizeDate(value){
+  const raw=String(value||"").trim();
+  let match=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(match)return `${match[1]}-${match[2]}-${match[3]}`;
+  match=raw.match(/^(\d{2})[\/.](\d{2})[\/.](\d{4})$/);
+  if(match)return `${match[3]}-${match[2]}-${match[1]}`;
+  const parsed=new Date(raw);
+  return Number.isNaN(parsed.getTime())?"":`${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,"0")}-${String(parsed.getDate()).padStart(2,"0")}`;
+}
 function historyDateFromItem(item){
   const rows=parseCsvRows(item.content);
-  return rows[0]?.date || String(item.createdAt||"").slice(0,10);
+  return historyNormalizeDate(item.operationData?.date||rows[0]?.date||String(item.createdAt||"").slice(0,10));
 }
+function historyDateLabel(item){return formatDisplayDate(historyDateFromItem(item));}
 function historyYearFromItem(item){return historyDateFromItem(item).slice(0,4)||"Unbekannt";}
 function historyCountsForItem(item){
   const rows=parseCsvRows(item.content);
@@ -347,7 +357,7 @@ function renderHistory(){
     const yearOpen=year===currentYear?" open":"";
     const monthHtml=[...months.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([month,items])=>{
       const monthOpen=month===currentMonth?" open":"";
-      return `<details class="history-month"${monthOpen}><summary><span>${escapeHtml(historyMonthLabel(month))}</span><small>${items.length} Bericht${items.length===1?"":"e"}</small><i aria-hidden="true"></i></summary><div class="history-list">${items.map(item=>{const date=historyDateFromItem(item),topic=item.topic||parseCsvRows(item.content)[0]?.topic||"Ohne Thema";return `<article class="history-item${item.revisions?.length?" history-item-corrected":""}"><div class="history-item-details"><strong>${escapeHtml(date)} · ${escapeHtml(item.sessionType||"Probe")}</strong><span>${escapeHtml(topic)}</span><small>${escapeHtml(item.fileName)}${item.revisions?.length?` · ${item.revisions.length} Korrektur(en)`:""}</small></div><div class="history-item-actions"><button class="primary-button" type="button" data-history-pdf="${escapeHtml(item.id)}">PDF ansehen</button><button class="secondary-button" type="button" data-history-csv="${escapeHtml(item.id)}">CSV ausgeben</button><button class="outline-button" type="button" data-history-correct="${escapeHtml(item.id)}" title="Aktualisiert CSV und zugehöriges PDF">${item.sessionType==="Einsatz"?"Einsatz korrigieren":"Eintrag korrigieren"}</button><button class="danger-button" type="button" data-history-delete="${escapeHtml(item.id)}">Löschen</button></div></article>`;}).join("")}</div></details>`;
+      return `<details class="history-month"${monthOpen}><summary><span>${escapeHtml(historyMonthLabel(month))}</span><small>${items.length} Bericht${items.length===1?"":"e"}</small><i aria-hidden="true"></i></summary><div class="history-list">${items.map(item=>{const date=historyDateLabel(item),topic=item.topic||parseCsvRows(item.content)[0]?.topic||"Ohne Thema";return `<article class="history-item${item.revisions?.length?" history-item-corrected":""}"><div class="history-item-details"><strong>${escapeHtml(date)} · ${escapeHtml(item.sessionType||"Probe")}</strong><span>${escapeHtml(topic)}</span><small>${escapeHtml(item.fileName)}${item.revisions?.length?` · ${item.revisions.length} Korrektur(en)`:""}</small></div><div class="history-item-actions"><button class="primary-button" type="button" data-history-pdf="${escapeHtml(item.id)}">PDF ansehen</button><button class="secondary-button" type="button" data-history-csv="${escapeHtml(item.id)}">CSV ausgeben</button><button class="outline-button" type="button" data-history-correct="${escapeHtml(item.id)}" title="Aktualisiert CSV und zugehöriges PDF">${item.sessionType==="Einsatz"?"Einsatz korrigieren":"Eintrag korrigieren"}</button><button class="danger-button" type="button" data-history-delete="${escapeHtml(item.id)}">Löschen</button></div></article>`;}).join("")}</div></details>`;
     }).join("");
     return `<details class="history-year"${yearOpen}><summary class="history-year-heading"><h3>${escapeHtml(year)}</h3><span>${yearCount} Bericht${yearCount===1?"":"e"}</span><i aria-hidden="true"></i></summary><div class="history-months">${monthHtml}</div></details>`;
   }).join("");
