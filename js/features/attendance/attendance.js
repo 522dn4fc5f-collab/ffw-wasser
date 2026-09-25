@@ -357,15 +357,50 @@ function renderRoles(){
   toolbar.hidden=!showStatusTabs;
   toolbar.setAttribute("aria-hidden",String(!showStatusTabs));
   toolbar.style.display=showStatusTabs?"flex":"none";
+  syncFloatingAttendanceStatusToolbar();
 
   const legacyPanel=byId("rolesPanel");if(legacyPanel){legacyPanel.hidden=true;legacyPanel.style.display="none";}
 }
 
 
+
+function syncFloatingAttendanceStatusToolbar(){
+  const source=byId("attendanceStatusToolbar");
+  let floating=byId("floatingAttendanceStatusToolbar");
+  if(!floating){
+    floating=document.createElement("nav");
+    floating.id="floatingAttendanceStatusToolbar";
+    floating.className="attendance-status-toolbar floating-attendance-status-toolbar";
+    floating.setAttribute("aria-label","Teilnahmestatus ständig sichtbar");
+    floating.hidden=true;
+    document.body.appendChild(floating);
+  }
+  if(source)floating.innerHTML=source.innerHTML;
+  updateFloatingAttendanceStatusToolbar();
+}
+function updateFloatingAttendanceStatusToolbar(){
+  const source=byId("attendanceStatusToolbar"),floating=byId("floatingAttendanceStatusToolbar"),view=byId("attendanceView");
+  if(!source||!floating||homeFlowStage!==2||source.hidden||view?.hidden){if(floating)floating.hidden=true;return;}
+  const rect=source.getBoundingClientRect();
+  const top=window.innerWidth<=760?60:64;
+  const workspace=byId("attendanceSelectionWorkspace")?.getBoundingClientRect();
+  const shouldFloat=rect.top<top&&workspace&&workspace.bottom>top+floating.offsetHeight+12;
+  floating.hidden=!shouldFloat;
+  if(!shouldFloat)return;
+  floating.style.top=`${top}px`;
+  floating.style.left=`${Math.max(8,rect.left)}px`;
+  floating.style.width=`${Math.min(rect.width,window.innerWidth-16)}px`;
+}
+if(!window.__floatingAttendanceStatusBound){
+  window.__floatingAttendanceStatusBound=true;
+  window.addEventListener("scroll",updateFloatingAttendanceStatusToolbar,{passive:true});
+  window.addEventListener("resize",updateFloatingAttendanceStatusToolbar,{passive:true});
+}
+
 if(!window.__attendanceStatusToolbarBound){
   window.__attendanceStatusToolbarBound=true;
   document.addEventListener("click",event=>{
-    const button=event.target.closest("#attendanceStatusToolbar [data-role]");
+    const button=event.target.closest(".attendance-status-toolbar [data-role]");
     if(!button)return;
     event.preventDefault();
     chosenRole=button.dataset.role;chosenMemberId="";chosenMemberIds.clear();

@@ -1955,3 +1955,29 @@ html body .participant-command-header .compact-menu{
     overscroll-behavior-x:contain!important;
   }
 }
+
+/* Feuerwehr Wasser 2.20.32: robuste schwebende Status-Reiter */
+#attendanceView #attendanceStatusToolbar:not([hidden]):not([aria-hidden="true"]){
+  position:relative!important;
+  top:auto!important;
+  z-index:3!important;
+  box-shadow:none!important;
+}
+#floatingAttendanceStatusToolbar.floating-attendance-status-toolbar{
+  position:fixed!important;
+  z-index:1005!important;
+  display:flex!important;
+  margin:0!important;
+  padding:6px 8px!important;
+  border:1px solid #b9c5ca!important;
+  border-radius:0 0 12px 12px!important;
+  background:#f4f7f8!important;
+  box-shadow:0 8px 18px rgba(24,35,41,.22)!important;
+  box-sizing:border-box!important;
+}
+#floatingAttendanceStatusToolbar[hidden]{display:none!important}
+#floatingAttendanceStatusToolbar .attendance-status-tab{flex:1 1 0!important;min-width:0!important}
+@media(max-width:760px){
+ #floatingAttendanceStatusToolbar.floating-attendance-status-toolbar{overflow-x:auto!important;padding:5px 6px!important}
+ #floatingAttendanceStatusToolbar .attendance-status-tab{flex:0 0 118px!important}
+}

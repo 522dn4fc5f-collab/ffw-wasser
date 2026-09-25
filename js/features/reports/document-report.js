@@ -4,7 +4,7 @@ let pendingDocumentReport=null;
 function resetDocumentReportState(){documentReportPages.forEach(page=>{if(page.url)URL.revokeObjectURL(page.url);});documentReportPages=[];documentReportReady=false;pendingDocumentReport=null;manualCropGesture=null;if(manualCropState?.bitmap)manualCropState.bitmap.close?.();manualCropState=null;const cropDialog=byId("manualDocumentCropDialog");if(cropDialog?.open)cropDialog.close();const panel=byId("documentReportPanel");if(panel){panel.hidden=true;const pages=byId("documentReportPages");if(pages)pages.innerHTML="";const status=byId("documentReportStatus");if(status)status.textContent="Noch keine Seite aufgenommen.";}}
 function hasActiveAtue(){
   if(sessionType==="Allgemeine Probe")return Boolean(breathingProtectionPlanned&&currentAtueMember);
-  if(sessionType==="Einsatz")return Boolean(byId("opAtueUsed")?.checked&&String(byId("opAtuePerson")?.value||"").trim());
+  if(sessionType==="Einsatz")return Boolean(byId("opAtueUsed")?.checked&&!byId("opAtueDepartment")?.checked&&String(byId("opAtuePerson")?.value||"").trim());
   return false;
 }
 function documentReportRequired(){return sessionType==="Ausschuss Sitzung"||hasActiveAtue();}
