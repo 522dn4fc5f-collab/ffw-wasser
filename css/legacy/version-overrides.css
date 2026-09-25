@@ -8267,3 +8267,33 @@ html body .participant-command-header .compact-menu {
 .tactics-presentation-slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tactics-presentation-slot{min-height:78px;display:grid;grid-template-columns:72px 1fr;align-items:center;gap:8px;padding:10px 14px;border:2px solid #aebbc1;border-radius:12px;background:#f3f6f7}.tactics-presentation-slot b{font-size:clamp(1.1rem,2vw,1.7rem);color:#0b612b}.tactics-presentation-slot strong{font-size:clamp(1.05rem,1.7vw,1.55rem);overflow-wrap:anywhere}.tactics-presentation-slot.open{opacity:.62}.tactics-presentation-shell>footer{display:flex;gap:14px;padding:14px 22px;border-top:2px solid #b9c4c8;background:#fff;font-size:1.15rem}.tactics-presentation-shell>footer span{font-weight:750}
 @media(max-width:900px){.tactics-presentation-shell>main{grid-template-columns:1fr;overflow:auto}.tactics-presentation-slots{grid-template-columns:repeat(2,minmax(0,1fr))}.tactics-presentation-dialog{height:calc(100dvh - 10px);width:calc(100vw - 10px)}}
 @media(max-width:580px){.tactics-presentation-slots{grid-template-columns:1fr}.tactics-presentation-slot{min-height:64px}.tactics-heading-actions{justify-content:stretch}.tactics-heading-actions button{width:100%}}
+
+/* Produktiv: Funktionen und Namen in der Mannschaftsvorschau sauber trennen */
+.tactics-presentation-slot{
+  grid-template-columns:minmax(64px,max-content) minmax(0,1fr)!important;
+  column-gap:14px!important;
+  overflow:hidden!important;
+}
+.tactics-presentation-slot b{
+  min-width:0!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+}
+.tactics-presentation-slot strong{
+  display:block!important;
+  min-width:0!important;
+  max-width:100%!important;
+  line-height:1.18!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+  hyphens:auto!important;
+}
+@media(max-width:1100px){
+  .tactics-presentation-slot{
+    grid-template-columns:1fr!important;
+    align-content:center!important;
+    gap:5px!important;
+  }
+  .tactics-presentation-slot b,
+  .tactics-presentation-slot strong{width:100%!important}
+}
