@@ -374,6 +374,22 @@ if(!window.__attendanceStatusToolbarBound){
 }
 
 function setHomeFlowStage(stage){
+  // Beim Verlassen eines noch nicht abgeschlossenen Einsatzes zu Home bzw.
+  // Schritt 1 werden die zu diesem Einsatz erfassten Teilnehmer verworfen.
+  // So beginnt eine spätere Einsatzwahl immer mit einer leeren Teilnehmerliste.
+  if(stage===1&&sessionType==="Einsatz"&&currentOperationId){
+    const abandonedOperationId=currentOperationId;
+    entries=entries.filter(entry=>entry.operationId!==abandonedOperationId);
+    saveEntries();
+    resetDocumentReportState?.();
+    resetOperationState?.();
+    chosenMemberId="";
+    chosenMemberIds.clear();
+    chosenRole="";
+    renderEntries();
+    renderMembers();
+    updateSelection();
+  }
   homeFlowStage=stage;
   const sessionPanel=document.querySelector("#attendanceView .home-session-type-panel");
   const workspace=byId("attendanceSelectionWorkspace");

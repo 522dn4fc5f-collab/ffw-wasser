@@ -88,11 +88,18 @@ finishOperation=async function(){
   if(check.warnings.length&&!confirm(check.warnings.join("\n")+"\n\nTrotzdem fortfahren?"))return;
   const button=byId("operationFinish");button.disabled=true;
   try{
-    const stamp=(d.times.alarm||new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})).replace(":","-"),base=`FFW-Wasser_${d.date}_${stamp}_Einsatz`,csvName=`${base}.csv`,pdfName=`${base}.pdf`,csv=operationCsv(d),pdf=await operationPdfBlob(d);
+    const previous=editingOperationArchiveId?csvArchive.find(entry=>entry.id===editingOperationArchiveId):null;
+    const stamp=(d.times.alarm||new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})).replace(":","-");
+    const generatedBase=`FFW-Wasser_${d.date}_${stamp}_Einsatz`;
+    const previousBase=String(previous?.packageFileName||previous?.fileName||"").replace(/\.(zip|csv|pdf)$/i,"");
+    const base=previousBase||generatedBase,zipName=`${base}.zip`,csvName=`${base}.csv`,pdfName=`${base}.pdf`,csv=operationCsv(d),pdf=await operationPdfBlob(d);
     const completed=await showOperationPdfPreview(pdf,pdfName,async()=>{
-      const zip=await buildTerminPackage({baseName:base,csvName,csvContent:csv,pdfName,pdfBlob:pdf,documentReport:typeof pendingDocumentReport!=="undefined"?pendingDocumentReport:null,packageType:"Einsatz",operationData:d}),result=await saveTerminPackage(`${base}.zip`,zip);
+      // Neu und Korrektur speichern ausschließlich ein ZIP. Bei der Korrektur
+      // bleibt der ursprüngliche Paketname erhalten, damit die Datei im
+      // ausgewählten Ordner ersetzt statt als CSV/PDF-Doppel ausgegeben wird.
+      const zip=await buildTerminPackage({baseName:base,csvName,csvContent:csv,pdfName,pdfBlob:pdf,documentReport:typeof pendingDocumentReport!=="undefined"?pendingDocumentReport:null,packageType:"Einsatz",operationData:d}),result=await saveTerminPackage(zipName,zip);
       if(result==="failed"||result==="cancelled"){showToast("Das Einsatz-Terminpaket konnte nicht gespeichert werden. Daten bleiben erhalten.","error");return false;}
-      const previous=editingOperationArchiveId?csvArchive.find(entry=>entry.id===editingOperationArchiveId):null,item={id:previous?.id||makeId(),fileName:csvName,pdfFileName:pdfName,content:csv,sessionType:"Einsatz",topic:`${d.type} · ${d.location}`,createdAt:previous?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),presentCount:d.members.length,excusedCount:0,missingCount:0,operationData:d,hasImportedPdf:true,revisions:[...(previous?.revisions||[]),...(previous?[{correctedAt:new Date().toISOString(),reason:"Einsatzbericht korrigiert",previousOperationData:previous.operationData}]:[])]};
+      const item={id:previous?.id||makeId(),packageFileName:zipName,fileName:csvName,pdfFileName:pdfName,content:csv,sessionType:"Einsatz",topic:`${d.type} · ${d.location}`,createdAt:previous?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),presentCount:d.members.length,excusedCount:0,missingCount:0,operationData:d,hasImportedPdf:true,revisions:[...(previous?.revisions||[]),...(previous?[{correctedAt:new Date().toISOString(),reason:"Einsatzbericht korrigiert",previousOperationData:previous.operationData}]:[])]};
       try{await saveImportedReportPdf(item.id,new File([pdf],pdfName,{type:"application/pdf"}));await commitPendingDocumentReport?.(item.id);csvArchive=previous?csvArchive.map(entry=>entry.id===item.id?item:entry):[item,...csvArchive];saveArchive();}catch(error){console.error("Lokales Einsatzarchiv konnte nach erfolgreichem Speichern nicht vollständig ergänzt werden",error);}
       entries=entries.filter(e=>e.operationId!==currentOperationId);saveEntries();resetDocumentReportState();resetOperationState();renderEntries();renderMembers();renderStatistics();renderHistory();setHomeFlowStage(1);showView("attendanceView");showToast(previous?"Korrigiertes Einsatz-Terminpaket wurde gespeichert.":"Einsatz-Terminpaket wurde gespeichert.");return true;
     });

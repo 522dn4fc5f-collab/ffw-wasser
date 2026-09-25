@@ -1864,3 +1864,43 @@ html body .participant-command-header .compact-menu{
  #attendanceView #desktopSaveButtonDock .batch-selection-controls{display:grid!important}
  #attendanceView #desktopSaveButtonDock #saveButton{position:static!important;width:100%!important;max-width:none!important;transform:none!important}
 }
+
+/* Feuerwehr Wasser 2.20.24: Auswahlkarte nur in Schritt 2, mobil wieder passend */
+#attendanceView #desktopSaveButtonDock[hidden],
+#attendanceView #desktopSaveButtonDock[aria-hidden="true"],
+#attendanceView .today-entries-panel[hidden],
+#attendanceView .today-entries-panel[aria-hidden="true"]{
+  display:none!important;
+}
+@media(max-width:760px){
+  #attendanceView .action-column{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    position:static!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  #attendanceView #desktopSaveButtonDock:not([hidden]):not([aria-hidden="true"]){
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:0 0 12px!important;
+    padding:10px!important;
+    box-sizing:border-box!important;
+  }
+  #attendanceView #desktopSaveButtonDock .batch-selection-controls,
+  #attendanceView #desktopSaveButtonDock #saveButton{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+  }
+  #attendanceView .today-entries-panel:not([hidden]):not([aria-hidden="true"]){
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    box-sizing:border-box!important;
+  }
+}
