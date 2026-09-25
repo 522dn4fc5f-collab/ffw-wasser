@@ -8,6 +8,7 @@ function operationSessionKey(){return currentOperationId||"";}
 function startOperationSession(){if(currentOperationId&&entries.some(e=>e.operationId===currentOperationId))return;currentOperationId=`op-${today()}-${Date.now()}-${Math.random().toString(16).slice(2)}`;safeStorage.setItem("fw_v1_current_operation_id",currentOperationId);currentOperationDraft=null;}
 function operationEntries(){return entries.filter(e=>e.operationId===currentOperationId);}
 function operationNames(){return operationEntries().filter(e=>e.status==="Anwesend").map(e=>e.storedName||e.displayName);}
+function operationProtocolName(value){const name=String(value||"").trim();if(!name.includes(","))return name;const [last,...firstParts]=name.split(",");const first=firstParts.join(",").trim();return [first,last.trim()].filter(Boolean).join(" ");}
 function ensureOperationForm(){
  let section=byId("operationReportForm");if(section)return section;
  section=document.createElement("section");section.id="operationReportForm";section.className="panel operation-report-form";section.hidden=true;
@@ -75,8 +76,8 @@ async function operationPdfBlob(d){
   const ops=['0 0 0 RG 0 0 0 rg'];opPageHeader(ops,1);let y=750;
   opField(ops,'Einsatz Nr.',d.number||'XX / 2026',45,y);y-=23;opField(ops,'Einsatzart',d.type,45,y);y-=23;opField(ops,'Einsatzstelle',d.location,45,y);y-=23;opField(ops,'Einsatzleiter',d.leader,45,y);y-=23;opField(ops,'ZvD',d.zvd,45,y);y-=23;opField(ops,'Verursacher / Geschädigte',d.affected,45,y,138);y-=23;opField(ops,'Anschrift',d.address,45,y);y-=29;
   y=opSection(ops,'Alarmierung',y+8);const methods=['Schleife','telefonisch','per Funk','mündlich','selbst'];methods.forEach((m,i)=>opCheckbox(ops,48+i*99,y,m,d.alarmMethods.includes(m)));y-=22;opField(ops,'Schleifennummer',d.loop,45,y);y-=28;
-  y=opSection(ops,'Uhrzeiten',y+8);y=opTableRow(ops,y,['Alarm','Ausgerückt','Einsatzstelle','Einsatzende','Eingerückt'],[103,103,103,103,103],20,true);y=opTableRow(ops,y,[d.times.alarm,d.times.departed,d.times.arrived,d.times.ended,d.times.returned],[103,103,103,103,103],22);opPdfText(ops,45,y-15,8,`Datum: ${d.date}`);y-=34;
-  y=opSection(ops,'Lage und Zustand beim Eintreffen',y+8);opParagraph(ops,48,y,d.situation,91,5);y-=68;
+  y=opSection(ops,'Uhrzeiten',y+8);y=opTableRow(ops,y,['Alarm','Ausgerückt','Einsatzstelle','Einsatzende','Eingerückt'],[103,103,103,103,103],20,true);y=opTableRow(ops,y,[d.times.alarm,d.times.departed,d.times.arrived,d.times.ended,d.times.returned],[103,103,103,103,103],22);y-=20;opPdfText(ops,45,y,8,`Datum: ${formatDisplayDate(d.date)}`);y-=24;
+  y=opSection(ops,'Lage und Zustand beim Eintreffen',y);opParagraph(ops,48,y,d.situation,91,5);y-=68;
   y=opSection(ops,'Löschmittel und Wasserentnahme',y+8);opPdfText(ops,48,y,8.4,`C-Rohre: ${d.pipes.c||0}     B-Rohre: ${d.pipes.b||0}     Wasserwerfer: ${d.pipes.monitor||0}     Kleinlöschgeräte: ${d.pipes.small||0}`);y-=20;['Tank','Hydrant','Offenes Gewässer','Löschteich'].forEach((w,i)=>opCheckbox(ops,48+i*126,y,w,d.waterSources.includes(w)));y-=28;
   y=opSection(ops,'Eingesetzte Geräte',y+8);const dev=OP_DEVICES;for(let row=0;row<3;row++){for(let col=0;col<4;col++){const item=dev[row*4+col];const amount=Number(d.deviceAmounts?.[item]??(d.devices.includes(item)?1:0));opCheckbox(ops,48+col*126,y-row*18,`${item}${amount>0?` (${amount})`:""}`,amount>0);}}y-=62;opField(ops,'Sonstige Geräte',d.otherDevices,45,y);y-=28;
   y=opSection(ops,'Angaben bei Öleinsätzen',y+8);y=opTableRow(ops,y,['Öl-ex hart','Oel-ex 82','Flüssigreiniger','Entsorgung'],[129,129,129,128],18,true);y=opTableRow(ops,y,[`${d.oil.hard||0} Sack`,`${d.oil.oil82||0} Sack`,`${d.oil.cleaner||0} Liter`,`${d.oil.disposal||0} Euro`],[129,129,129,128],20);
@@ -85,13 +86,13 @@ async function operationPdfBlob(d){
  {
   const ops=['0 0 0 RG 0 0 0 rg'];opPageHeader(ops,2);let y=750;
   y=opSection(ops,'Verlauf der Tätigkeit (Brandbekämpfung / Löscherfolg / Technische Rettung / Hilfeleistung)',y+8);opParagraph(ops,48,y,d.actions,91,10);y-=132;
-  y=opSection(ops,'Mannschaft',y+8);opPdfText(ops,48,y,9,`Mannschaftsstärke: ${d.members.length}`,true);y-=18;opParagraph(ops,48,y,d.members.join(', '),91,4);y-=62;
+  y=opSection(ops,'Mannschaft',y+8);opPdfText(ops,48,y,9,`Mannschaftsstärke: ${d.members.length}`,true);y-=18;opParagraph(ops,48,y,d.members.map(operationProtocolName).join(', '),91,4);y-=62;
   y=opSection(ops,'Eingesetzte Fahrzeuge',y+8);opCheckbox(ops,48,y,'EM 5/47 TSF',d.vehicles.includes('EM 5/47 TSF'));opCheckbox(ops,230,y,'EM 5/42 LF10',d.vehicles.includes('EM 5/42 LF10'));y-=22;opField(ops,'Weitere Fahrzeuge',d.otherVehicles,45,y);y-=29;
   y=opSection(ops,'Personalangaben bei Menschenrettung, Unglücksfällen oder Verletzungen',y+8);opParagraph(ops,48,y,d.persons,91,4);y-=62;
   y=opSection(ops,'Besondere Vorkommnisse',y+8);opParagraph(ops,48,y,d.special,91,4);y-=62;
   y=opSection(ops,'Weitere Kräfte und Behörden',y+8);const agencies=[...d.agencies,d.otherAgencies].filter(Boolean);opParagraph(ops,48,y,agencies.join(', '),91,5);y-=75;
-  y=opSection(ops,'Einsatzleitung und Atemschutz',y+8);opField(ops,'Einsatzleiter',d.leader,45,y);y-=21;opField(ops,'ZvD',d.zvd,45,y);y-=21;opField(ops,'Atemschutzüberwachung',d.atueUsed?`Ja, ${d.atuePerson}`:'Nein',45,y,138);y-=38;
-  opPdfText(ops,45,y,8.5,`Emmendingen, ${d.date}`,true);
+  y=opSection(ops,'Einsatzleitung und Atemschutz',y+8);opField(ops,'Einsatzleiter',d.leader,45,y);y-=21;opField(ops,'ZvD',d.zvd,45,y);y-=21;opField(ops,'Atemschutzüberwachung',d.atueUsed?(d.atueDepartment?'Ja, durch Abt. Emmendingen':`Ja, ${d.atuePerson}`):'Nein',45,y,138);y-=38;
+  opPdfText(ops,45,y,8.5,`Emmendingen, ${formatDisplayDate(d.date)}`,true);
   streams.push(ops.join('\n'));
  }
  for(const stream of streams){const bytes=opPdfBytes(stream),cid=add(opPdfBytes(`<< /Length ${bytes.length} >>\nstream\n${stream}\nendstream`));pageIds.push(add(opPdfBytes(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${font} 0 R /F2 ${bold} 0 R >> >> /Contents ${cid} 0 R >>`)));}
@@ -102,7 +103,7 @@ async function showOperationPdfPreview(blob,fileName,onFinalUpload){
   document.querySelectorAll("#operationPdfPreviewDialog,.operation-pdf-preview-dialog").forEach(node=>{try{node.close?.();}catch(error){}node.remove();});
   return Boolean(await onFinalUpload());
 }
-function operationCsv(d){const header=["Datum","Alarmzeit","Einsatznummer","Einsatzart","Einsatzstelle","Name","Status","Fahrzeuge","Geräte","Einsatzleiter","Einsatzende"],rows=d.members.map(name=>[d.date,d.times.alarm,d.number,d.type,d.location,name,"Anwesend",[...d.vehicles,d.otherVehicles].filter(Boolean).join(", "),[...OP_DEVICES.map(device=>{const amount=Number(d.deviceAmounts?.[device]??(d.devices.includes(device)?1:0));return amount>0?`${device}: ${amount}`:"";}),d.otherDevices].filter(Boolean).join(", "),d.leader,d.times.ended]);return '\ufeff'+[header,...rows].map(r=>r.map(csvCell).join(';')).join('\r\n');}
+function operationCsv(d){const header=["Datum","Alarmzeit","Einsatznummer","Einsatzart","Einsatzstelle","Name","Status","Fahrzeuge","Geräte","Einsatzleiter","Einsatzende"],rows=d.members.map(name=>[formatDisplayDate(d.date),d.times.alarm,d.number,d.type,d.location,name,"Anwesend",[...d.vehicles,d.otherVehicles].filter(Boolean).join(", "),[...OP_DEVICES.map(device=>{const amount=Number(d.deviceAmounts?.[device]??(d.devices.includes(device)?1:0));return amount>0?`${device}: ${amount}`:"";}),d.otherDevices].filter(Boolean).join(", "),d.leader,d.times.ended]);return '\ufeff'+[header,...rows].map(r=>r.map(csvCell).join(';')).join('\r\n');}
 async function finishOperation(){
   // Sicherheitsdelegation: Der Einsatzabschluss darf niemals CSV und PDF
   // einzeln ausgeben. Die einzige Implementierung liegt im ZIP-Modul.

@@ -376,6 +376,9 @@ function syncFloatingAttendanceStatusToolbar(){
     document.body.appendChild(floating);
   }
   if(source)floating.innerHTML=source.innerHTML;
+  const workspace=byId("attendanceSelectionWorkspace");
+  floating.classList.remove("status-present","status-excused","status-not-applicable","status-organization");
+  ["status-present","status-excused","status-not-applicable","status-organization"].forEach(name=>{if(workspace?.classList.contains(name))floating.classList.add(name);});
   updateFloatingAttendanceStatusToolbar();
 }
 function updateFloatingAttendanceStatusToolbar(){
