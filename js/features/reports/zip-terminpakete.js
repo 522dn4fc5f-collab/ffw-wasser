@@ -80,7 +80,7 @@ closeDay=async function(topic=currentClosingTopic){
 };
 
 /* Einsatzabschluss: direkt speichern, archivieren und anschließend zu Home zurückkehren. */
-finishOperation=async function(){
+window.finishOperationZip=async function(){
   const d=collectOperationData();
   if(d.atueUsed&&!documentReportReady){showDocumentReportPanel();showToast("Bitte zuerst den Bericht der Atemschutzüberwachung fotografieren oder auswählen.","error");return;}
   const check=validateOperation(d),box=byId("operationValidation");box.hidden=!(check.errors.length||check.warnings.length);box.innerHTML=[...check.errors.map(x=>`<p class="error">${escapeHtml(x)}</p>`),...check.warnings.map(x=>`<p class="warning">${escapeHtml(x)}</p>`)].join("");
@@ -107,6 +107,10 @@ finishOperation=async function(){
   }catch(error){console.error("Einsatzabschluss fehlgeschlagen",error);showToast(`Einsatz konnte nicht abgeschlossen werden. Daten bleiben erhalten.${error?.message?` (${error.message})`:""}`,"error");}
   finally{button.disabled=false;}
 };
+// Auch bestehende Formulare und andere Aufrufer immer auf ZIP-only festlegen.
+finishOperation=window.finishOperationZip;
+const operationFinishButton=byId("operationFinish");
+if(operationFinishButton)operationFinishButton.onclick=()=>window.finishOperationZip();
 
 /* ZIP-Auswahl in der Historie automatisch entpacken. */
 async function importTerminPackageFile(file){

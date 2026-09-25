@@ -27,7 +27,7 @@ function ensureOperationForm(){
  <div id="operationValidation" class="operation-validation" hidden></div><div class="operation-actions"><button class="outline-button" id="operationBack" type="button">Zurück zu Schritt 2</button><button class="primary-button" id="operationFinish" type="button">Einsatz abschließen · CSV + PDF</button></div>`;
  byId("attendanceView").appendChild(section);
  byId("operationBack").onclick=()=>setHomeFlowStage(2);
- byId("operationFinish").onclick=finishOperation;
+ byId("operationFinish").onclick=()=>window.finishOperationZip?.();
  byId("opAtueUsed").addEventListener("change",event=>{
    const person=String(byId("opAtuePerson")?.value||"").trim();
    if(event.target.checked&&person){documentReportReady=false;showDocumentReportPanel();}
@@ -99,27 +99,15 @@ async function showOperationPdfPreview(blob,fileName,onFinalUpload){
 }
 function operationCsv(d){const header=["Datum","Alarmzeit","Einsatznummer","Einsatzart","Einsatzstelle","Name","Status","Fahrzeuge","Geräte","Einsatzleiter","Einsatzende"],rows=d.members.map(name=>[d.date,d.times.alarm,d.number,d.type,d.location,name,"Anwesend",[...d.vehicles,d.otherVehicles].filter(Boolean).join(", "),[...OP_DEVICES.map(device=>{const amount=Number(d.deviceAmounts?.[device]??(d.devices.includes(device)?1:0));return amount>0?`${device}: ${amount}`:"";}),d.otherDevices].filter(Boolean).join(", "),d.leader,d.times.ended]);return '\ufeff'+[header,...rows].map(r=>r.map(csvCell).join(';')).join('\r\n');}
 async function finishOperation(){
- const d=collectOperationData();
- if(d.atueUsed&&!documentReportReady){showDocumentReportPanel();showToast("Bitte zuerst den Bericht der Atemschutzüberwachung fotografieren oder auswählen.","error");return;}
- const check=validateOperation(d),box=byId("operationValidation");box.hidden=!(check.errors.length||check.warnings.length);box.innerHTML=[...check.errors.map(x=>`<p class="error">${escapeHtml(x)}</p>`),...check.warnings.map(x=>`<p class="warning">${escapeHtml(x)}</p>`)].join("");
- if(check.errors.length)return showToast("Bitte die Pflichtangaben und Hinweise prüfen.","error");
- if(check.warnings.length&&!confirm(check.warnings.join("\n")+"\n\nTrotzdem fortfahren?"))return;
- const button=byId("operationFinish");button.disabled=true;
- try{
-  const stamp=(d.times.alarm||new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})).replace(":","-"),base=`FFW-Wasser_${d.date}_${stamp}_Einsatz`,csvName=`${base}.csv`,pdfName=`${base}.pdf`,csv=operationCsv(d),pdf=await operationPdfBlob(d);
-  const completed=await showOperationPdfPreview(pdf,pdfName,async()=>{
-   const folderSelected=Boolean(csvDirectoryHandle||pdfDirectoryHandle);let ok=true;
-   if(folderSelected){ok=await writeCsvToSelectedFolder(csvName,csv)&&await saveBlobToSelectedFolder(pdfName,pdf);}
-   else{const result=await exportCsvFile(csvName,csv,false);ok=!['failed','cancelled'].includes(result);if(ok)downloadBlob(pdfName,pdf);}
-   if(!ok){showToast("CSV und PDF konnten nicht final gespeichert werden. Daten bleiben erhalten.","error");return false;}
-   const previous=editingOperationArchiveId?csvArchive.find(entry=>entry.id===editingOperationArchiveId):null;const item={id:previous?.id||makeId(),fileName:csvName,pdfFileName:pdfName,content:csv,sessionType:"Einsatz",topic:`${d.type} · ${d.location}`,createdAt:previous?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),presentCount:d.members.length,excusedCount:0,missingCount:0,operationData:d,hasImportedPdf:true,revisions:[...(previous?.revisions||[]),...(previous?[{correctedAt:new Date().toISOString(),reason:"Einsatzbericht korrigiert",previousOperationData:previous.operationData}]:[])]};
-   await saveImportedReportPdf(item.id,new File([pdf],pdfName,{type:"application/pdf"}));await commitPendingDocumentReport?.(item.id);csvArchive=previous?csvArchive.map(entry=>entry.id===item.id?item:entry):[item,...csvArchive];saveArchive();entries=entries.filter(e=>e.operationId!==currentOperationId);saveEntries();
-   resetDocumentReportState();resetOperationState();renderEntries();renderMembers();renderStatistics();renderHistory();setHomeFlowStage(1);showToast(previous?"Korrigierter Einsatzbericht wurde final hochgeladen und archiviert.":"Einsatzbericht wurde final hochgeladen und archiviert.");return true;
-  });
-  if(!completed)showToast("Finales Hochladen abgebrochen. Einsatzdaten bleiben zur Bearbeitung erhalten.","error");
- }catch(error){console.error("Einsatzabschluss fehlgeschlagen",error);const detail=error?.message?` (${error.message})`:"";showToast(`Einsatz konnte nicht abgeschlossen werden. Daten bleiben erhalten.${detail}`,"error");}
- finally{button.disabled=false;}
+  // Sicherheitsdelegation: Der Einsatzabschluss darf niemals CSV und PDF
+  // einzeln ausgeben. Die einzige Implementierung liegt im ZIP-Modul.
+  if(typeof window.finishOperationZip!=="function"){
+    showToast("ZIP-Terminpaket-Funktion ist noch nicht geladen.","error");
+    return false;
+  }
+  return window.finishOperationZip();
 }
+
 function resetOperationState(){safeStorage.setItem("fw_v1_current_operation_id","");currentOperationId="";currentOperationDraft=null;editingOperationArchiveId="";const s=byId("operationReportForm");if(s){s.remove();}chosenMemberIds.clear();chosenMemberId="";chosenRole="";currentProbeDate=systemToday();}
 function operationStatisticsData(year){return csvArchive.filter(i=>i.sessionType==="Einsatz"&&String(i.operationData?.date||i.createdAt).startsWith(year));}
 function renderOperationStatistics(){const year=selectedStatisticsYear||String(new Date().getFullYear()),items=operationStatisticsData(year),box=byId("operationStatisticsPanel");if(!box)return;const types=new Map(),membersMap=new Map();items.forEach(i=>{const d=i.operationData||{};types.set(d.type||"Unbekannt",(types.get(d.type||"Unbekannt")||0)+1);(d.members||[]).forEach(n=>membersMap.set(n,(membersMap.get(n)||0)+1));});box.querySelector("[data-op-count]").textContent=items.length;box.querySelector("[data-op-atue]").textContent=items.filter(i=>i.operationData?.atueUsed).length;box.querySelector("[data-op-types]").innerHTML=[...types.entries()].sort((a,b)=>b[1]-a[1]).map(([n,c])=>renderMetric("",n,c,"red")).join("");box.querySelector("[data-op-members]").innerHTML=[...membersMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([n,c])=>renderMetric("",n,c,"blue")).join("");}
