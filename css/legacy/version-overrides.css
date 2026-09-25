@@ -8297,3 +8297,55 @@ html body .participant-command-header .compact-menu {
   .tactics-presentation-slot b,
   .tactics-presentation-slot strong{width:100%!important}
 }
+
+/* Produktiv: Atemschutzkarte und ATÜ auch in der großen Mannschaftsvorschau */
+.tactics-presentation-breathing{grid-column:1/-1;padding:18px;border:2px solid #b38b12;border-radius:16px;background:#fff8dc}
+.tactics-presentation-breathing>header{display:flex;align-items:center;gap:14px;margin-bottom:14px}.tactics-presentation-breathing>header span{padding:10px 14px;border-radius:10px;color:#171100;background:#f0c43c;font-weight:950}.tactics-presentation-breathing h3{margin:0;font-size:clamp(1.4rem,2.3vw,2.2rem)}
+.tactics-presentation-breathing-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.tactics-presentation-breathing-grid>div{display:grid;gap:6px;min-width:0;padding:14px;border:2px solid #d8bf70;border-radius:12px;background:#fff}.tactics-presentation-breathing-grid b{font-size:1rem;color:#675000}.tactics-presentation-breathing-grid strong{font-size:clamp(1.2rem,2vw,1.8rem);overflow-wrap:anywhere}
+@media(max-width:700px){.tactics-presentation-breathing-grid{grid-template-columns:1fr}}
+
+/* Produktiv: Atemschutz und ATUE dauerhaft auf der Taktik-Hauptseite */
+#tacticsView #tacticsAtue{display:block!important;visibility:visible!important;opacity:1!important}
+#tacticsView #tacticsAtue[hidden]{display:block!important}
+
+/* Produktiv: weitere Personen in der Mannschaftsvorschau */
+.tactics-presentation-shell>footer{align-items:flex-start}
+.tactics-presentation-additional{display:flex;flex-wrap:wrap;gap:8px 12px;min-width:0}
+.tactics-presentation-additional span{display:inline-flex;padding:7px 11px;border:1px solid #a9b8be;border-radius:999px;background:#eef3f5;font-weight:800;overflow-wrap:anywhere}
+
+/* Produktiv: Schrittanzeige und jeweilige Karte bei allen Terminarten kompakt zusammenhalten */
+#attendanceView>#homeFlowProgress{
+  margin-bottom:8px!important;
+}
+#attendanceView:has(#homeFlowProgress[data-current-stage="1"])>.home-session-type-panel,
+#attendanceView:has(#homeFlowProgress[data-current-stage="2"])>#attendanceSelectionWorkspace,
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#attendanceSelectionWorkspace,
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#operationAssignmentStep,
+#attendanceView:has(#homeFlowProgress[data-current-stage="4"])>#operationReportForm{
+  margin-top:0!important;
+  padding-top:0!important;
+  align-self:start!important;
+}
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#attendanceSelectionWorkspace{
+  padding-bottom:24px!important;
+}
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"]) #step3ActionArea.step-3-action-area{
+  margin-top:0!important;
+  margin-bottom:10px!important;
+}
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"]) #step3ActionArea.step-3-action-area>.panel,
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"]) .step-3-action-panel{
+  margin-top:0!important;
+}
+#attendanceView:has(#homeFlowProgress[data-current-stage="1"])>.home-session-type-panel:first-of-type,
+#attendanceView:has(#homeFlowProgress[data-current-stage="2"])>#attendanceSelectionWorkspace>:first-child,
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#attendanceSelectionWorkspace>:first-child,
+#attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#operationAssignmentStep,
+#attendanceView:has(#homeFlowProgress[data-current-stage="4"])>#operationReportForm{
+  margin-block-start:0!important;
+}
+@media(max-width:760px){
+  #attendanceView>#homeFlowProgress{margin-bottom:6px!important}
+  #attendanceView:has(#homeFlowProgress[data-current-stage="3"])>#attendanceSelectionWorkspace{padding-bottom:16px!important}
+  #attendanceView:has(#homeFlowProgress[data-current-stage="3"]) #step3ActionArea.step-3-action-area{margin:0 0 8px!important}
+}

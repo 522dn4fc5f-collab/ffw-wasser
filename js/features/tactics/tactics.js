@@ -189,7 +189,7 @@ function updateTacticsRecommendationAfterManualChange() {
   const box=byId("tacticsRecommendation");
   if(box) box.innerHTML=`<strong>Empfehlung</strong><p>${escapeHtml(currentTacticsRecommendationText())}</p>`;
 }
-function renderAtueSlot(){const slot=byId("atueSlot");if(!slot)return;const card=slot.closest("#tacticsAtue");if(card)card.hidden=!breathingProtectionPlanned;if(!breathingProtectionPlanned)currentAtueMember=null;slot.classList.toggle("crew-filled",Boolean(currentAtueMember));slot.classList.toggle("crew-open",!currentAtueMember);slot.classList.toggle("crew-draggable",Boolean(currentAtueMember));if(currentAtueMember){slot.draggable=true;slot.dataset.dragMember=currentAtueMember.id;}else{slot.draggable=false;delete slot.dataset.dragMember;}slot.querySelector("strong").textContent=currentAtueMember?nameForTile(currentAtueMember):"nicht besetzt";slot.querySelector("small").textContent=currentAtueMember?"Atemschutzüberwachung":"Geeignete Person mit ATÜ-Zusatzfunktion hierher ziehen.";}
+function renderAtueSlot(){const slot=byId("atueSlot");if(!slot)return;const card=slot.closest("#tacticsAtue");if(card)card.hidden=false;if(!breathingProtectionPlanned)currentAtueMember=null;slot.classList.toggle("crew-filled",Boolean(currentAtueMember));slot.classList.toggle("crew-open",!currentAtueMember);slot.classList.toggle("crew-draggable",Boolean(currentAtueMember));if(currentAtueMember){slot.draggable=true;slot.dataset.dragMember=currentAtueMember.id;}else{slot.draggable=false;delete slot.dataset.dragMember;}slot.querySelector("strong").textContent=currentAtueMember?nameForTile(currentAtueMember):"nicht besetzt";slot.querySelector("small").textContent=currentAtueMember?"Manuell eingeteilte Atemschutzüberwachung":"Geeignete übrige Person manuell als ATÜ einteilen.";}
 
 function ensureTacticsSideLayout(){
   const vehicles=document.querySelector("#tacticsView .tactics-vehicles");
@@ -219,7 +219,7 @@ function refreshTacticsManualView() {
 function findTacticsMember(id){return members.find(member=>member.id===id)||null;}
 function manualMoveTacticsMember(memberId,targetVehicle,targetRole){
   const member=findTacticsMember(memberId); if(!member)return;
-  if(targetVehicle==="ATUE"){if(!member.atueQualified)return showToast("Diese Person ist nicht für die Atemschutzüberwachung freigeschaltet.","error");const source=currentTacticsSlots.find(slot=>slot.member?.id===memberId);if(source)source.member=null;const displaced=currentAtueMember;currentAtueMember=member;if(displaced&&source)source.member=displaced;refreshTacticsManualView();updateTacticsRecommendationAfterManualChange();return;}
+  if(targetVehicle==="ATUE"){if(!breathingProtectionPlanned)return showToast("Bitte zuerst Atemschutz für diese Probe aktivieren.","error");if(!member.atueQualified)return showToast("Diese Person ist nicht für die Atemschutzüberwachung freigeschaltet.","error");const source=currentTacticsSlots.find(slot=>slot.member?.id===memberId);if(source)source.member=null;const displaced=currentAtueMember;currentAtueMember=member;if(displaced&&source)source.member=displaced;refreshTacticsManualView();updateTacticsRecommendationAfterManualChange();return;}
   if(BREATHING_ROLES.has(targetRole)&&breathingProtectionPlanned&&!hasValidBreathingClearance(member,today())){const state=breathingClearanceState(member,today()),label=state==="expired"?`am ${member.breathingClearanceUntil} abgelaufen`:"nicht gültig hinterlegt";if(!confirm(`Warnung: Die Atemschutzfreigabe von ${nameForTile(member)} ist ${label}. Trotzdem manuell auf ${targetRole} setzen?`))return;}
   if(currentAtueMember?.id===memberId)currentAtueMember=null;
   if(targetVehicle!=="RESERVE"&&!memberMayFillSlot(member,targetVehicle,targetRole))return showToast(deniedTacticsSlotMessage(member,targetVehicle,targetRole),"error");
@@ -296,8 +296,11 @@ function openTacticsPresentation(){
  if(sessionType!=="Allgemeine Probe")return;
  document.querySelectorAll("#tacticsPresentationDialog").forEach(node=>node.remove());
  const dialog=document.createElement("dialog");dialog.id="tacticsPresentationDialog";dialog.className="tactics-presentation-dialog";
- const reserve=currentTacticsSlots.filter(slot=>slot.member&&slot.role==="Reserve").map(slot=>slot.member);
- dialog.innerHTML=`<div class="tactics-presentation-shell"><header><div><small>Allgemeine Probe</small><h2>Mannschaftseinteilung</h2></div><button type="button" data-close-presentation aria-label="Vorschau schließen">×</button></header><main>${tacticsPresentationCard("LF10","Gruppenbesetzung",GROUP_ROLES)}${tacticsPresentationCard("TSF","Staffelbesetzung",STAFF_ROLES)}</main>${reserve.length?`<footer><b>Weitere Anwesende</b><span>${reserve.map(member=>escapeHtml(nameForTile(member))).join(" · ")}</span></footer>`:""}</div>`;
+ const assignedIds=new Set(currentTacticsSlots.filter(slot=>slot.member).map(slot=>slot.member.id));
+ const reserve=tacticsPresentMembers().filter(member=>!assignedIds.has(member.id)&&member.id!==currentAtueMember?.id);
+ const atueMarkup=currentAtueMember?`<span>${escapeHtml(nameForTile(currentAtueMember))} · ATÜ</span>`:"";
+ const reserveMarkup=reserve.map(member=>`<span>${escapeHtml(nameForTile(member))} · weitere Person</span>`).join("");
+ dialog.innerHTML=`<div class="tactics-presentation-shell"><header><div><small>Allgemeine Probe</small><h2>Mannschaftseinteilung</h2></div><button type="button" data-close-presentation aria-label="Vorschau schließen">×</button></header><main>${tacticsPresentationCard("LF10","Gruppenbesetzung",GROUP_ROLES)}${tacticsPresentationCard("TSF","Staffelbesetzung",STAFF_ROLES)}</main>${reserve.length||currentAtueMember?`<footer><b>Weitere Anwesende</b><div class="tactics-presentation-additional">${reserveMarkup}${atueMarkup}</div></footer>`:""}</div>`;
  document.body.appendChild(dialog);dialog.querySelector("[data-close-presentation]").onclick=()=>dialog.close();dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener("close",()=>dialog.remove(),{once:true});dialog.showModal();
 }
 
@@ -337,7 +340,6 @@ function renderTactics() {
   if(!group.length)group=GROUP_ROLES.map(role=>({role,member:null}));
   if(!staff.length)staff=STAFF_ROLES.map(role=>({role,member:null}));
   if(!breathingProtectionPlanned)currentAtueMember=null;
-  else if(!currentAtueMember){currentAtueMember=people.find(p=>!p.assigned&&p.member.atueQualified&&getMemberRoles(p.member).includes("Melder"))?.member||people.find(p=>!p.assigned&&p.member.atueQualified)?.member||null;}
   currentTacticsSlots=protectCriticalVehicleSlots([...group.map(item=>({vehicle:"LF10",role:item.role,member:item.member})),...staff.map(item=>({vehicle:"TSF",role:item.role,member:item.member}))]);
   refreshTacticsManualView();
   byId("tacticsSummary").textContent=`${present.length} anwesende Einsatzkräfte · ${sessionType}`;const presentationButton=byId("openTacticsPresentation");if(presentationButton)presentationButton.hidden=sessionType!=="Allgemeine Probe";
