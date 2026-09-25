@@ -62,7 +62,7 @@ async function saveTerminPackage(fileName,blob){
 async function packageFilesFromZip(file){const zip=await JSZip.loadAsync(file),files=[];for(const entry of Object.values(zip.files)){if(entry.dir||!/\.(csv|pdf)$/i.test(entry.name))continue;const blob=await entry.async("blob"),name=entry.name.split("/").pop();files.push(new File([blob],name,{type:/\.csv$/i.test(name)?"text/csv":"application/pdf",lastModified:file.lastModified||Date.now()}));}return files;}
 
 /* Probe-/Terminabschluss: nur ein ZIP-Paket nach außen speichern. */
-closeDay=async function(topic=currentClosingTopic){
+window.closeDay=async function(topic=currentClosingTopic){
   topic=String(topic||"").trim();if(!topic){openProbeTopicDialog();return;}
   const current=[...todayEntries()];if(!current.length)return showToast("Es sind noch keine Anmeldungen vorhanden.","error");
   const organizers=current.filter(e=>e.status==="Anwesend"&&e.role==="Organisation").length,present=current.filter(e=>e.status==="Anwesend"&&e.role!=="Organisation").length,excused=current.filter(e=>e.status==="Entschuldigt").length;

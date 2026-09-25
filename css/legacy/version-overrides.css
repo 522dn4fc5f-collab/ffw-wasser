@@ -1928,3 +1928,30 @@ html body .participant-command-header .compact-menu{
 @media (max-width: 760px) {
   #attendanceView .action-column { margin-top: 0 !important; }
 }
+
+/* Feuerwehr Wasser 2.20.31: Status-Reiter in Schritt 2 mitführen */
+#attendanceView #attendanceStatusToolbar:not([hidden]):not([aria-hidden="true"]){
+  position:sticky!important;
+  top:64px!important;
+  z-index:35!important;
+  margin-top:0!important;
+  background:#f4f7f8!important;
+  box-shadow:0 8px 10px -10px rgba(24,35,41,.55)!important;
+}
+#attendanceView #attendanceStatusToolbar::before{
+  content:"";
+  position:absolute;
+  inset:-8px 0 auto;
+  height:8px;
+  background:#f4f7f8;
+}
+@media(max-width:760px){
+  #attendanceView #attendanceStatusToolbar:not([hidden]):not([aria-hidden="true"]){
+    top:60px!important;
+    z-index:40!important;
+    padding-top:6px!important;
+    padding-bottom:6px!important;
+    overflow-x:auto!important;
+    overscroll-behavior-x:contain!important;
+  }
+}
